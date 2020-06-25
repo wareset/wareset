@@ -1,0 +1,27 @@
+{
+  "name": "wareset",
+  "version": "0.0.0",
+  "description": "> TODO: description",
+  "author": "cftcview <cftcview@gmail.com>",
+  "homepage": "https://github.com/wareset/wareset#readme",
+  "license": "ISC",
+  "main": "dist/wareset.js",
+  "module": "dist/wareset.module.js",
+  "directories": {
+    "lib": "dist",
+    "test": "__tests__"
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wareset/wareset.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "bugs": {
+    "url": "https://github.com/wareset/wareset/issues"
+  }
+}
