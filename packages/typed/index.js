@@ -13,7 +13,10 @@ function __eq(proto, type) {
 
 const getProto = (value) => {
   if (__is_void(value)) return value;
-  return value.prototype || Object.getPrototypeOf(value);
+  return (
+    (typeof value === 'function' && value.prototype) ||
+    Object.getPrototypeOf(value)
+  );
 };
 const getProtos = (value) => {
   if (__is_void(value)) return [value];
@@ -22,39 +25,28 @@ const getProtos = (value) => {
   return protos;
 };
 
-// const is = (value, ...type) => {
-//   if (!type.length) return [getProto(value)];
-//   return __eq(getProto(value), type[0]);
-// };
-// is.check = (value, args) => {
-//   if (!is(value, args)) throw new Error();
-//   return value;
-// };
-
-const typedOf = (value, ...types) => {
+function typedOf(value, ...types) {
   if (!types.length) return getProtos(value);
   types = __get_types(types);
   return getProtos(value).some((proto) => {
     return types.some((type) => __eq(proto, type));
   });
-};
+}
 typedOf.check = (value, ...args) => {
-  if (!typedOf(value, ...args)) throw new Error();
-  return value;
+  if (!args.length || typedOf(value, ...args)) return value;
+  throw new Error();
 };
 
 function typed(value, ...types) {
-  if (!types.length) return [getProto(value)];
+  if (!types.length) return getProto(value);
   const proto = getProto(value);
   return __get_types(types).some((type) => __eq(proto, type));
 }
 typed.check = (value, ...args) => {
-  if (!typed(value, ...args)) throw new Error();
-  return value;
+  if (!args.length || typed(value, ...args)) return value;
+  throw new Error();
 };
-typed.proto = getProto;
-typed.protos = getProtos;
-// typed.is = is;
+
 typed.of = typedOf;
 
 module.exports = typed;
