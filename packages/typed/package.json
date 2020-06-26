@@ -1,7 +1,7 @@
 {
   "name": "@wareset/typed",
   "version": "0.0.2-alpha.0",
-  "description": "> TODO: description",
+  "description": "Checking and comparing with the prototype",
   "author": "cftcview <cftcview@gmail.com>",
   "homepage": "https://github.com/wareset/wareset#readme",
   "license": "MIT",
