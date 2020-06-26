@@ -1,18 +1,11 @@
 {
-  "name": "@wareset/type",
+  "name": "@wareset/typed",
   "version": "0.0.2-alpha.0",
   "description": "> TODO: description",
   "author": "cftcview <cftcview@gmail.com>",
   "homepage": "https://github.com/wareset/wareset#readme",
-  "license": "ISC",
-  "main": "lib/type.js",
-  "directories": {
-    "lib": "lib",
-    "test": "__tests__"
-  },
-  "files": [
-    "lib"
-  ],
+  "license": "MIT",
+  "main": "index.js",
   "publishConfig": {
     "access": "public"
   },
@@ -20,11 +13,7 @@
     "type": "git",
     "url": "git+https://github.com/wareset/wareset.git"
   },
-  "scripts": {
-    "test": "echo \"Error: run tests from root\" && exit 1"
-  },
   "bugs": {
     "url": "https://github.com/wareset/wareset/issues"
-  },
-  "gitHead": "afe25cd6d92fda223547aaa4ea5f23c6964ebe81"
+  }
 }

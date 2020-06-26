@@ -1,11 +1,11 @@
-# `@wareset/type`
+# `@wareset/typed`
 
 > TODO: description
 
 ## Usage
 
 ```js
-const type = require('@wareset/type');
+const typed = require('@wareset/typed');
 
 // TODO: DEMONSTRATE API
 ```
