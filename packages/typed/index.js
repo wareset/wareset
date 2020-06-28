@@ -86,3 +86,4 @@ typed.of = typedOf;
 
 exports.default = typed;
 module.exports = exports.default;
+module.exports.default = exports.default;
