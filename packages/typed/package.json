@@ -6,6 +6,7 @@
   "homepage": "https://github.com/wareset/wareset#readme",
   "license": "MIT",
   "main": "index.js",
+  "module": "index.mjs",
   "publishConfig": {
     "access": "public"
   },
@@ -15,5 +16,12 @@
   },
   "bugs": {
     "url": "https://github.com/wareset/wareset/issues"
+  },
+  "scripts": {
+    "build": "babel index.mjs -o index.js"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0"
   }
 }
