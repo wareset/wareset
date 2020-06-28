@@ -85,3 +85,4 @@ typed.check = function (value) {
 typed.of = typedOf;
 
 exports.default = typed;
+module.exports = exports.default;
