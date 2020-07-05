@@ -19,8 +19,5 @@
   },
   "bugs": {
     "url": "https://github.com/wareset/wareset/issues"
-  },
-  "dependencies": {
-    "@wareset/typed": "^0.0.2-alpha.0"
   }
 }
