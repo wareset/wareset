@@ -1,0 +1,33 @@
+{
+  "name": "@wareset/router",
+  "version": "0.0.0",
+  "description": "Router for nodejs",
+  "author": "cftcview <cftcview@gmail.com>",
+  "homepage": "https://github.com/wareset/wareset#readme",
+  "license": "MIT",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wareset/wareset.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wareset/wareset/issues"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "encodeurl": "^1.0.2",
+    "express": "^4.17.1",
+    "helmet": "^3.23.3",
+    "path-to-regexp": "^1.0.0",
+    "uuid": "^8.2.0"
+  }
+}
