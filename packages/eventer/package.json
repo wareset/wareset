@@ -1,0 +1,31 @@
+{
+  "name": "@wareset/eventer",
+  "version": "0.0.0",
+  "description": "Additional events for mobile and desktop",
+  "author": "cftcview <cftcview@gmail.com>",
+  "homepage": "https://github.com/wareset/wareset#readme",
+  "license": "MIT",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wareset/wareset.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wareset/wareset/issues"
+  },
+  "scripts": {
+    "build": "babel index.mjs -o index.js"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-plugin-add-module-exports": "^1.0.2",
+    "babel-preset-env": "^1.7.0"
+  }
+}
