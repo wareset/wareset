@@ -1,5 +1,5 @@
-function __get_types(types = []) {
-  return Array.isArray(types[0]) ? [...types.shift(), ...types] : types;
+function __get_types(t = []) {
+  return Array.isArray(t[0] && t.length) ? [...t.shift(), ...t] : t;
 }
 function __is_void(value) {
   return value === undefined || value === null;

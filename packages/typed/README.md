@@ -76,7 +76,8 @@ console.log(typed.of(String)) /* or */, console.log(typed.of('string'));
 console.log(typed(() => {}));
 /* RETURN: */ [Function.prototype, Object.prototype];
 console.log(typed(async () => {}));
-/* RETURN: */ [AsyncFunction.prototype, Function.prototype, Object.prototype];
+/* RETURN: */
+[AsyncFunction.prototype, Function.prototype, Object.prototype];
 
 const H1 = document.createElement('h1');
 console.log(typed.of(H1));

@@ -7,9 +7,9 @@ Object.defineProperty(exports, "__esModule", {
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function __get_types() {
-  var types = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+  var t = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
 
-  return Array.isArray(types[0]) ? [].concat(_toConsumableArray(types.shift()), _toConsumableArray(types)) : types;
+  return Array.isArray(t[0] && t.length) ? [].concat(_toConsumableArray(t.shift()), _toConsumableArray(t)) : t;
 }
 function __is_void(value) {
   return value === undefined || value === null;
