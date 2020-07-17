@@ -1,2 +1,2 @@
 # wareset
-head repo
+Set of functional accessories
