@@ -22,7 +22,7 @@ const helmetDefault = require('helmet');
 
 let isFunc = (x) => typeof x === 'function';
 
-const noop = () => {};
+// const noop = () => {};
 
 class WaresetRouter {
   constructor({
@@ -110,13 +110,16 @@ class WaresetRouter {
   onRequest(req, res) {
     (req.res = res), (res.req = req);
     __fix_res(res), __fix_req(req);
-    this._parsers.forEach((fn) => fn(req, res, noop));
+    // this._parsers.forEach((fn) => fn(req, res, noop));
+
 
     const method = req.method;
     const path = path_normalize(req.path || req.url.split('?')[0]);
 
-    // const routes = [...this._parsers];
-    const routes = [];
+    // console.log(path);
+
+    const routes = [...this._parsers];
+    // const routes = [];
     const loop = (() => {
       let i = -1;
       const fn = check_patterns.bind(this);

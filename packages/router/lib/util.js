@@ -15,7 +15,7 @@ function method_normalize(x) {
 
 function path_normalize(x) {
   if (x[0] !== '/') x = '/' + x;
-  if (x[x.length - 1] === '/') x = x.slice(0, -1);
+  if (x.length > 1 && x[x.length - 1] === '/') x = x.slice(0, -1);
   return x;
 }
 
