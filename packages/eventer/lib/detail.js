@@ -25,8 +25,8 @@ function createDetail(_e) {
     console.error(err);
   }
 
-  const preventDefault = () => _e.preventDefault();
-  const stopPropagation = () => _e.stopPropagation();
+  // const preventDefault = () => _e.preventDefault();
+  // const stopPropagation = () => _e.stopPropagation();
 
   let which = 1;
   let radiusX = 5 * DPR;
@@ -114,10 +114,16 @@ function createDetail(_e) {
     direction,
     directions: { x: directionX, y: directionY },
 
+    stopped: false,
+
     ...{ radiusX, radiusY },
     ...{ srcEvent, target, DPR, which },
-    ...{ preventDefault, stopPropagation },
+    // ...{ preventDefault, stopPropagation },
     ...{ pointSize: (radiusX + radiusY) / 2 / DPR },
+  };
+
+  DETAIL_WRAPPER.detail.stopPropagation = () => {
+    DETAIL_WRAPPER.detail.stopped = true;
   };
 }
 

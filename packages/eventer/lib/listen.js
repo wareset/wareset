@@ -11,6 +11,11 @@ function callback(e) {
   createDetail(e), hover_and_focus(e), mouse_and_touch(e);
 }
 
+// function contextmenu(e) {
+//   e.preventDefault();
+//   console.log(e);
+// }
+
 let isListened;
 function listen(is = true) {
   if (!!is === isListened || typeof window === 'undefined') return;
@@ -18,14 +23,16 @@ function listen(is = true) {
 
   const method = is ? document.addEventListener : document.removeEventListener;
 
-  method('mousedown', callback, false);
-  method('mousemove', callback, false);
-  method('mouseup', callback, false);
+  method('contextmenu', callback);
 
-  method('touchstart', callback, false);
-  method('touchmove', callback, false);
-  method('touchend', callback, false);
-  method('touchcancel', callback, false);
+  method('mousedown', callback);
+  method('mousemove', callback);
+  method('mouseup', callback);
+
+  method('touchstart', callback);
+  method('touchmove', callback);
+  method('touchend', callback);
+  method('touchcancel', callback);
 }
 
 module.exports = listen;

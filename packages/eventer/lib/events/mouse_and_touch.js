@@ -94,10 +94,35 @@ function pinch(e) {
   preDispatch('pinch', e.target);
 }
 
+function contextmenu(e) {
+  const is = (v) => v && (v[0] || v[3]);
+
+  let el = e.target;
+  while (el) {
+    const self = TARGETS.get(el);
+    if (
+      self &&
+      (is(self['start']) ||
+        is(self['tap']) ||
+        is(self['tap:double']) ||
+        is(self['drag']) ||
+        is(self['drag:start']))
+    ) {
+      e.preventDefault();
+    }
+    el = el.parentElement;
+  }
+}
+
 const FUNCS = { start, end, move, drag, pinch };
 
 function mouse_and_touch(e) {
   const type = getType(e);
+
+  if (type === 'contextmenu') {
+    contextmenu(e);
+    return;
+  }
 
   if (!(type === 'move' || type === 'drag') || IS_DRAGGING) {
     clearTimeout(pressTimeout);

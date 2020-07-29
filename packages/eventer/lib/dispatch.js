@@ -2,33 +2,39 @@ const { DETAIL_WRAPPER } = require('./detail');
 const { TARGETS } = require('./constants');
 
 function dispatch(type, func, _target) {
-  let isStop = false;
   if (Array.isArray(func)) {
-    func.forEach((v) => {
-      isStop = dispatch(type, v, _target) || isStop;
-    });
-    return isStop;
+    func.forEach((v) => dispatch(type, v, _target));
+    return;
   }
 
-  if (typeof func !== 'function') throw new Error();
+  if (typeof func === 'object') {
+    const isTouch = DETAIL_WRAPPER.detail.device === 'touch';
+    const which = isTouch ? 1 : DETAIL_WRAPPER.detail.srcEvent.which || 0;
+    if (which && func[which]) dispatch(type, func[which], _target);
+    if (func[0]) dispatch(type, func[0], _target);
+    return;
+  }
 
   const target = _target || DETAIL_WRAPPER.detail.target;
-  isStop = !!func({ ...DETAIL_WRAPPER.detail, type, target /*, _EVENTER*/ });
-
-  return isStop;
+  !!func({ ...DETAIL_WRAPPER.detail, type, target });
 }
 
 let targetLast;
 function preDispatch(type, target) {
-  let self;
   let el = target;
   if (el === document.body.parentElement && targetLast) el = targetLast;
   targetLast = el;
+  const isTouch = DETAIL_WRAPPER.detail.device === 'touch';
+  const which = isTouch ? 1 : DETAIL_WRAPPER.detail.srcEvent.which || 0;
+  let issetEvent = false;
   while (el) {
-    self = TARGETS.get(el);
-    if (self && self[type]) {
-      if (dispatch(type, self[type], el)) return;
-      // if (e && e.target === el) return;
+    if (DETAIL_WRAPPER.detail.stopped) return;
+    const self = TARGETS.get(el);
+    if (self && self[type] && (self[type][0] || self[type][which])) {
+      if (!issetEvent) {
+        (issetEvent = true), DETAIL_WRAPPER.detail.srcEvent.preventDefault();
+      }
+      dispatch(type, self[type], el);
     }
     el = el.parentElement;
   }

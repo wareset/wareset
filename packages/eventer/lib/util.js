@@ -1,8 +1,10 @@
 function getDevice(e) {
-  return e.type.slice(0, 5);
+  return e.type === 'contextmenu' ? 'mouse' : e.type.slice(0, 5);
 }
 
 function getType(e) {
+  if (e.type === 'contextmenu') return e.type;
+
   let type = e.type.slice(5);
 
   if (e.touches && e.touches.length > 1) return (type = 'pinch');
@@ -18,4 +20,8 @@ function getType(e) {
   return type;
 }
 
-module.exports = { getDevice, getType };
+function getWhich(type) {
+  return +(type.match(/\:(\d+)/) || ['', 0])[1];
+}
+
+module.exports = { getDevice, getType, getWhich };
