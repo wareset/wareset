@@ -1,0 +1,28 @@
+{
+  "name": "@wareset/unique",
+  "version": "1.0.0",
+  "description": "Array filter",
+  "author": "cftcview <cftcview@gmail.com>",
+  "homepage": "https://github.com/wareset/wareset#readme",
+  "license": "MIT",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "keywords": [
+    "array",
+    "unique",
+    "filter"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wareset/wareset.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wareset/wareset/issues"
+  }
+}
