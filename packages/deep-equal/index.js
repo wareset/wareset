@@ -7,8 +7,6 @@ module.exports = function equal(a, b, deep = true) {
   const proto = typed(a);
   if (!typed(b, proto)) return false;
 
-  console.log(12);
-
   const deep2 = typeof deep !== 'number' ? deep : deep <= 0 ? 0 : deep--;
 
   let keys;
