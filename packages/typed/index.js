@@ -12,7 +12,7 @@ function __eq(proto, type) {
 
 function get_proto(value) {
   if (__is_void(value)) return value;
-  return value.__proto__ || Object.getPrototypeOf(value);
+  return Object.getPrototypeOf(value);
 }
 function get_protos(value) {
   if (__is_void(value)) return [value];
