@@ -1,15 +1,13 @@
 {
   "name": "@wareset/typed",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "Checking and comparing with the prototype",
   "author": "cftcview <cftcview@gmail.com>",
   "homepage": "https://github.com/wareset/wareset#readme",
   "license": "MIT",
   "main": "index.js",
-  "module": "index.mjs",
   "files": [
-    "index.js",
-    "index.mjs"
+    "index.js"
   ],
   "keywords": [
     "type",
@@ -27,13 +25,5 @@
   },
   "bugs": {
     "url": "https://github.com/wareset/wareset/issues"
-  },
-  "scripts": {
-    "build": "babel index.mjs -o index.js"
-  },
-  "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-plugin-add-module-exports": "^1.0.2",
-    "babel-preset-env": "^1.7.0"
   }
 }
