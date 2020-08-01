@@ -1,0 +1,31 @@
+{
+  "name": "@wareset/deep-equal",
+  "version": "0.0.1",
+  "description": "Fast deep equal",
+  "author": "cftcview <cftcview@gmail.com>",
+  "homepage": "https://github.com/wareset/wareset#readme",
+  "license": "MIT",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "keywords": [
+    "fast",
+    "deep",
+    "equal"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wareset/wareset.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wareset/wareset/issues"
+  },
+  "dependencies": {
+    "@wareset/typed": "^0.0.7"
+  }
+}
