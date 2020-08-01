@@ -6,8 +6,10 @@ function _filter(v, k, a) {
   return a.indexOf(v) === k;
 }
 
+const DEFAULT_PATTERN = ['', null, undefined];
+
 function unique(arr, k, a) {
-  const fn = _filter.bind(this || ['', null, undefined]);
+  const fn = _filter.bind(this || DEFAULT_PATTERN);
   return a ? fn(arr, k, a) : arr.filter(fn);
 }
 
