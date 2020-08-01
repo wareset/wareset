@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -20,30 +20,24 @@ function __eq(proto, type) {
   return proto === type.prototype || proto.constructor === type.constructor;
 }
 
-function getProto(value) {
+function get_proto(value) {
   if (__is_void(value)) return value;
-  return (
-    // Needed for primitives (constructors), AsyncFuncion and Generator.
-    typeof value === 'function' && value.prototype ||
-    // TODO: This method is 10 times faster and is available in all browsers. Leave him?
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/proto
-    value.__proto__ || Object.getPrototypeOf(value)
-  );
+  return value.__proto__ || Object.getPrototypeOf(value);
 }
-function getProtos(value) {
+function get_protos(value) {
   if (__is_void(value)) return [value];
   var protos = [];
-  while (value = getProto(value)) {
+  while (value = get_proto(value)) {
     protos.push(value);
   }return protos;
 }
 
-function typedOf(value) {
+function typed_of(value) {
   for (var _len = arguments.length, types = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
     types[_key - 1] = arguments[_key];
   }
 
-  var protos = getProtos(value);
+  var protos = get_protos(value);
   if (!types.length) return protos;
   types = __get_types(types);
   return protos.some(function (proto) {
@@ -52,17 +46,17 @@ function typedOf(value) {
     });
   });
 }
-typedOf.check = function (value) {
+typed_of.check = function (value) {
   for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
     args[_key2 - 1] = arguments[_key2];
   }
 
-  if (!args.length || typedOf.apply(undefined, [value].concat(args))) return value;
+  if (!args.length || typed_of.apply(undefined, [value].concat(args))) return value;
   throw new Error();
 };
 
 function typed(value) {
-  var proto = getProto(value);
+  var proto = get_proto(value);
 
   for (var _len3 = arguments.length, types = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
     types[_key3 - 1] = arguments[_key3];
@@ -82,7 +76,7 @@ typed.check = function (value) {
   throw new Error();
 };
 
-typed.of = typedOf;
+typed.of = typed_of;
 
 exports.default = typed;
 module.exports = exports.default;
