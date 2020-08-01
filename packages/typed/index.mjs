@@ -10,47 +10,39 @@ function __eq(proto, type) {
   return proto === type.prototype || proto.constructor === type.constructor;
 }
 
-function getProto(value) {
+function get_proto(value) {
   if (__is_void(value)) return value;
-  return (
-    // Needed for primitives (constructors), AsyncFuncion and Generator.
-    (typeof value === 'function' && value.prototype) ||
-    // TODO: This method is 10 times faster and is available in all browsers. Leave him?
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/proto
-    value.__proto__ ||
-    Object.getPrototypeOf(value)
-  );
+  return value.__proto__ || Object.getPrototypeOf(value);
 }
-function getProtos(value) {
+function get_protos(value) {
   if (__is_void(value)) return [value];
   const protos = [];
-  while ((value = getProto(value))) protos.push(value);
+  while ((value = get_proto(value))) protos.push(value);
+
   return protos;
 }
 
-function typedOf(value, ...types) {
-  const protos = getProtos(value);
+function typed_of(value, ...types) {
+  const protos = get_protos(value);
   if (!types.length) return protos;
   types = __get_types(types);
-  return protos.some((proto) => {
-    return types.some((type) => __eq(proto, type));
-  });
+  return protos.some(proto => types.some(type => __eq(proto, type)));
 }
-typedOf.check = (value, ...args) => {
-  if (!args.length || typedOf(value, ...args)) return value;
+typed_of.check = (value, ...args) => {
+  if (!args.length || typed_of(value, ...args)) return value;
   throw new Error();
 };
 
 function typed(value, ...types) {
-  const proto = getProto(value);
+  const proto = get_proto(value);
   if (!types.length) return proto;
-  return __get_types(types).some((type) => __eq(proto, type));
+  return __get_types(types).some(type => __eq(proto, type));
 }
 typed.check = (value, ...args) => {
   if (!args.length || typed(value, ...args)) return value;
   throw new Error();
 };
 
-typed.of = typedOf;
+typed.of = typed_of;
 
 export default typed;
