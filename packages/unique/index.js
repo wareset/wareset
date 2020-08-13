@@ -1,3 +1,8 @@
+function _global() {
+  return this;
+}
+const global = _global();
+
 function _filter(v, k, a) {
   for (const val of this) {
     if (v === val) return false;
@@ -9,7 +14,9 @@ function _filter(v, k, a) {
 const DEFAULT_PATTERN = ['', null, undefined];
 
 function unique(arr, k, a) {
-  const fn = _filter.bind(this || DEFAULT_PATTERN);
+  const self =
+    !this || !Array.isArray(this) || this === global ? DEFAULT_PATTERN : this;
+  const fn = _filter.bind(self);
   return a ? fn(arr, k, a) : arr.filter(fn);
 }
 
