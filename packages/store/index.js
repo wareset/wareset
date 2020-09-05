@@ -47,7 +47,7 @@ module.exports = function store(VAL, start = noop, deep = 0) {
   define(Writable, 'set', {
     writable: true,
     value: newValue => {
-      if (!equal(VAL, newValue, deep)) {
+      if ((!deep && typeof VAL === 'object') || !equal(VAL, newValue, deep)) {
         VAL = newValue;
         if (stop) {
           const run_queue = !QUEUE.length;
