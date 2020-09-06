@@ -1,6 +1,10 @@
-const equal = require('@wareset/deep-equal');
-
 function noop() {}
+function equal(a, b) {
+  return a != a
+    ? b == b
+    : a !== b || (a && typeof a === 'object') || typeof a === 'function';
+}
+
 const isVoid = v => v === null || v === undefined;
 const define = (obj, prop, _props) => {
   const props = {
@@ -13,9 +17,7 @@ const define = (obj, prop, _props) => {
 
 const QUEUE = [];
 
-module.exports = function store(VAL, start = noop, deep = 0) {
-  if (typeof start !== 'function') (deep = start), (start = noop);
-
+module.exports = function store(VAL, start = noop) {
   let stop = null;
   const subscribers = [];
 
@@ -47,7 +49,7 @@ module.exports = function store(VAL, start = noop, deep = 0) {
   define(Writable, 'set', {
     writable: true,
     value: newValue => {
-      if ((!deep && typeof VAL === 'object') || !equal(VAL, newValue, deep)) {
+      if (!equal(VAL, newValue)) {
         VAL = newValue;
         if (stop) {
           const run_queue = !QUEUE.length;
