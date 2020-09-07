@@ -1,6 +1,6 @@
 {
   "name": "@wareset/store",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A quick store like svelte/store/writable",
   "author": "cftcview <cftcview@gmail.com>",
   "homepage": "https://github.com/wareset/wareset#readme",
@@ -22,5 +22,9 @@
   },
   "bugs": {
     "url": "https://github.com/wareset/wareset/issues"
+  },
+  "dependencies": {
+    "@wareset/deep-equal": "^0.0.6",
+    "@wareset/typed": "^0.1.1"
   }
 }
