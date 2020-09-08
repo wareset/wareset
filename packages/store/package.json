@@ -1,12 +1,13 @@
 {
   "name": "@wareset/store",
-  "version": "0.1.0",
-  "description": "A quick store like svelte/store/writable",
+  "version": "0.1.1",
+  "description": "A quick store like svelte/store/writable but more functional",
   "author": "cftcview <cftcview@gmail.com>",
   "homepage": "https://github.com/wareset/wareset#readme",
   "license": "MIT",
   "main": "index.js",
   "files": [
+    "lib",
     "index.js",
     "README.md"
   ],
@@ -24,7 +25,6 @@
     "url": "https://github.com/wareset/wareset/issues"
   },
   "dependencies": {
-    "@wareset/deep-equal": "^0.0.6",
-    "@wareset/typed": "^0.1.1"
+    "@wareset/deep-equal": "^0.0.6"
   }
 }

@@ -1,24 +1,9 @@
-// const typed = require('@wareset/typed');
-const noop = () => {};
-const isVoid = v => v === null || v === undefined;
-
-const deepEqual = require('@wareset/deep-equal');
-const fastEqual = (a, b) => deepEqual(a, b, 0);
-const baseEqual = (a, b) => {
-  return !(
-    (a && (typeof a === 'object' || typeof a === 'function')) ||
-    !fastEqual(a, b)
-  );
-};
+const { QUEUE, WATCHERS_QUEUE } = require('./lib/consts.js');
+const { IS_STORE, SET_AND_WATCH_METHODS } = require('./lib/consts.js');
+const { noop, isVoid, thisIsStore, _define } = require('./lib');
+const { deepEqual, fastEqual, baseEqual } = require('./lib/equals.js');
 
 let _lastStore;
-const QUEUE = [];
-const WATCHERS_QUEUE = [];
-const IS_STORE = '__is_store__';
-
-const thisIsStore = check_store => {
-  return Array.isArray(check_store) && check_store[IS_STORE] === thisIsStore;
-};
 
 module.exports = function store(VAL, observed = [], start = noop) {
   if (typeof observed === 'function') (start = observed), (observed = []);
@@ -36,14 +21,7 @@ module.exports = function store(VAL, observed = [], start = noop) {
 
   // CREATE WRITABLE
   const Writable = [];
-  const define = (prop, _props) => {
-    const props = {
-      enumerable: false,
-      configurable: false,
-      ..._props
-    };
-    Object.defineProperty(Writable, prop, props);
-  };
+  const define = _define(Writable);
 
   const updateVAL = newVAL => {
     if (QUEUE.length > 250) {
@@ -72,7 +50,8 @@ module.exports = function store(VAL, observed = [], start = noop) {
 
     watchers.forEach(v => {
       if (WATCHERS_QUEUE.indexOf(v) >= 0 && fastEqual(v.$, VAL)) return;
-      WATCHERS_QUEUE.push(v), unwatchers.has(v) && v[unwatchers.get(v)](VAL);
+      WATCHERS_QUEUE.push(v);
+      unwatchers.has(v) && v.set[unwatchers.get(v)](VAL);
     });
     (_lastStore = Writable), (WATCHERS_QUEUE.length = 0);
 
@@ -92,7 +71,6 @@ module.exports = function store(VAL, observed = [], start = noop) {
   // CREATE STORE
   // STORE METHODS
   define('subscribe', {
-    writable: true,
     value: (_subscribe = noop) => {
       const subscribe = (...args) => {
         _lastStore = args[2];
@@ -120,51 +98,65 @@ module.exports = function store(VAL, observed = [], start = noop) {
       subscriber.unsubscribe = unsubscribe;
       return unsubscribe;
     }
-  });
+  }, 1);
 
   // SET AND UPDATE
-  define('setWeak', {
-    writable: true,
-    value: (newVAL, deep = 2) => {
-      return (!deepEqual(VAL, newVAL, deep) && updateVAL(newVAL)) || Writable;
-    }
-  });
-  define('updateWeak', {
-    writable: true,
-    value: (update, deep = 2) => Writable.setWeak(update(VAL), deep)
-  });
+  const set = newVAL => {
+    return (!baseEqual(VAL, newVAL) && updateVAL(newVAL)) || Writable;
+  };
+  set.Weak = (newVAL, deep = 2) => {
+    return (!deepEqual(VAL, newVAL, deep) && updateVAL(newVAL)) || Writable;
+  };
+  set.Sure = newVAL => {
+    return updateVAL(newVAL) || Writable;
+  };
 
-  define('set', {
-    writable: true,
-    value: newVAL => (!baseEqual(VAL, newVAL) && updateVAL(newVAL)) || Writable
-  });
-  define('update', {
-    writable: true,
-    value: update => Writable.set(update(VAL))
-  });
+  define('set', { value: set }, 1);
+  define('update', { value: fn => set(fn(VAL)) }, 1);
 
-  define('setSure', { writable: true, value: newVAL => updateVAL(newVAL) });
-  define('updateSure', {
-    writable: true,
-    value: update => Writable.setForce(update(VAL))
-  });
+  define('setWeak', { value: set.Weak }, 1);
+  define('updateWeak', { value: (fn, deep = 2) => set.Weak(fn(VAL), deep) }, 1);
 
-  define('next', { writable: true, value: Writable.set });
+  define('setSure', { value: set.Sure }, 1);
+  define('updateSure', { value: fn => set.Sure(fn(VAL)) }, 1);
 
   // WATCH
-  const watcher = (store, type = 'set') => {
+  const watcher = (store, type = SET_AND_WATCH_METHODS[0]) => {
     if (thisIsStore(store) && store !== Writable) {
       Writable.unwatcher(store);
       watchers.push(store), unwatchers.set(store, type);
       if (store._.watched.indexOf(Writable) < 0) store.watch(Writable);
-      store[type](VAL);
+      store.set[type](VAL);
     }
     return Writable;
   };
 
-  define('watcher', { writable: true, value: watcher });
+  const watch = (store, type = SET_AND_WATCH_METHODS[0]) => {
+    if (thisIsStore(store) && store !== Writable) {
+      Writable.unwatch(store), watched.push(store);
+      if (store._.watchers.indexOf(Writable) < 0) store.watcher[type](Writable);
+    }
+    return Writable;
+  };
+
+  const bridge = (store, type = SET_AND_WATCH_METHODS[0]) => {
+    if (store !== Writable) {
+      Writable.watch[type](store);
+      if (thisIsStore(store)) store.watch[type](Writable);
+    }
+    return Writable;
+  };
+
+  [set, watcher, watch, bridge].forEach(fn => (fn.default = fn));
+  const methods = { watcher, watch, bridge };
+  Object.keys(methods).forEach(method => {
+    SET_AND_WATCH_METHODS.forEach((v, k) => {
+      if (k) methods[method][v] = store => methods[method](store, v);
+      define(`${method}${k ? v : ''}`, { value: methods[method][v] }, 1);
+    });
+  });
+
   define('unwatcher', {
-    writable: true,
     value: store => {
       const index = watchers.indexOf(store);
       if (index >= 0) {
@@ -173,19 +165,9 @@ module.exports = function store(VAL, observed = [], start = noop) {
       }
       return Writable;
     }
-  });
+  }, 1);
 
-  const watch = (store, type = 'base') => {
-    if (thisIsStore(store) && store !== Writable) {
-      Writable.unwatch(store), watched.push(store);
-      if (store._.watchers.indexOf(Writable) < 0) store.watcher[type](Writable);
-    }
-    return Writable;
-  };
-
-  define('watch', { writable: true, value: watch });
   define('unwatch', {
-    writable: true,
     value: store => {
       const index = watched.indexOf(store);
       if (index >= 0) {
@@ -194,42 +176,22 @@ module.exports = function store(VAL, observed = [], start = noop) {
       }
       return Writable;
     }
-  });
+  }, 1);
 
-  const bridge = (store, type = 'base') => {
-    if (store !== Writable) {
-      Writable.watch[type](store);
-      if (thisIsStore(store)) store.watch[type](Writable);
-    }
-    return Writable;
-  };
-
-  ['base', 'Weak', 'Sure'].forEach((v, k) => {
-    watcher[v] = store => watcher(store, `set${!k ? '' : v}`);
-    watch[v] = store => watch(store, v);
-    bridge[v] = store => bridge(store, v);
-  });
-
-  define('bridge', { writable: true, value: bridge });
   define('unbridge', {
-    writable: true,
     value: store => {
       if (thisIsStore(store)) store.unwatch(Writable);
       Writable.unwatch(store);
       return Writable;
     }
-  });
+  }, 1);
 
   // GET VALUE
   define('enabled', { get: () => !!stop });
   define('get', { writable: true, value: () => VAL });
   define(IS_STORE, { writable: false, value: thisIsStore });
-  define('replaceObservers', {
-    writable: false,
-    value: replaceObservers
-  });
+  define('replaceObservers', { value: replaceObservers }, 0);
   define('_', {
-    writable: false,
     value: {
       get watched() {
         return [...watched];
@@ -244,7 +206,25 @@ module.exports = function store(VAL, observed = [], start = noop) {
         return [...subscribers];
       }
     }
-  });
+  }, 0);
+  define('next', { value: Writable.set }, 1);
+
+  define('unobservedAll', {
+    value: () => Writable.replaceObservers() && Writable
+  }, 1);
+  define('unwatchAll', {
+    value: () => watched.forEach(v => Writable.unwatch(v)) && Writable
+  }, 1);
+  define('unwatcherAll', {
+    value: () => watchers.forEach(v => Writable.unwatcher(v)) && Writable
+  }, 1);
+
+  define('reset', {
+    value: () => {
+      Writable.unobservedAll(), Writable.unwatchAll(), Writable.unwatcherAll();
+      return Writable;
+    }
+  }, 1);
 
   // GET VALUE AND SET NEW VALUE
   [0, '$', 'value'].forEach(v => {
@@ -258,9 +238,8 @@ module.exports = function store(VAL, observed = [], start = noop) {
   // TYPE COERCION
   ['valueOf', 'toString', 'toJSON'].forEach(v => {
     define(v, {
-      writable: true,
       value: (...a) => (isVoid(VAL) || !VAL[v] ? VAL : VAL[v](...a))
-    });
+    }, 1);
   });
 
   return Writable;
