@@ -8,7 +8,6 @@ let _lastStore;
 module.exports = function store(VAL, observed = [], start = noop) {
   if (typeof observed === 'function') (start = observed), (observed = []);
   if (thisIsStore(observed) || !Array.isArray(observed)) observed = [observed];
-  else observed = [...observed];
 
   const stores = () => observed.map(v => (thisIsStore(v) ? v.$ : v));
 
@@ -115,23 +114,6 @@ module.exports = function store(VAL, observed = [], start = noop) {
   update.Weak = (update, deep = 2) => set.Weak(update(VAL), deep);
   update.Sure = update => set.Sure(update(VAL));
 
-  // const set = (newVAL, deep = 2, type = SET_AND_WATCH_METHODS[0]) => {
-  //   switch (type) {
-  //     case SET_AND_WATCH_METHODS[0]:
-  //       return (!baseEqual(VAL, newVAL) && updateVAL(newVAL)) || Writable;
-  //     case SET_AND_WATCH_METHODS[1]:
-  //       return (!deepEqual(VAL, newVAL, deep) && updateVAL(newVAL)) || Writable;
-  //     case SET_AND_WATCH_METHODS[2]:
-  //       return updateVAL(newVAL) || Writable;
-  //     default:
-  //       throw new Error();
-  //   }
-  // };
-
-  // const update = (update, deep = 2, type = SET_AND_WATCH_METHODS[0]) => {
-  //   return set.Weak(update(VAL), deep, type);
-  // };
-
   // WATCH
   const watcher = (store, type = SET_AND_WATCH_METHODS[0]) => {
     if (thisIsStore(store) && store !== Writable) {
@@ -152,14 +134,12 @@ module.exports = function store(VAL, observed = [], start = noop) {
   };
 
   const bridge = (store, type = SET_AND_WATCH_METHODS[0]) => {
-    if (store !== Writable) {
-      Writable.watch[type](store);
-      if (thisIsStore(store)) store.watch[type](Writable);
+    if (thisIsStore(store) && store !== Writable) {
+      Writable.watch[type](store), store.watch[type](Writable);
     }
     return Writable;
   };
 
-  // [set, update, watcher, watch, bridge].forEach(fn => (fn.default = fn));
   const methods = { set, update, watcher, watch, bridge };
   Object.keys(methods).forEach(method => {
     SET_AND_WATCH_METHODS.forEach((v, k) => {
@@ -194,14 +174,14 @@ module.exports = function store(VAL, observed = [], start = noop) {
 
   define('unbridge', {
     value: store => {
-      if (thisIsStore(store)) store.unwatch(Writable);
-      Writable.unwatch(store);
+      if (thisIsStore(store)) store.unwatch(Writable), Writable.unwatch(store);
       return Writable;
     }
   }, 1);
 
   // GET VALUE
   define('enabled', { get: () => !!stop });
+  define('next', { get: () => Writable.set });
   define('get', { writable: true, value: () => VAL });
   define(IS_STORE, { writable: false, value: thisIsStore });
   define('replaceObservers', { value: replaceObservers }, 0);
@@ -221,7 +201,6 @@ module.exports = function store(VAL, observed = [], start = noop) {
       }
     }
   }, 0);
-  define('next', { value: Writable.set }, 1);
 
   define('unobservedAll', {
     value: () => (Writable.replaceObservers() || 1) && Writable
