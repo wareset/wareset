@@ -1,6 +1,6 @@
 {
   "name": "@wareset/store",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "A quick store like svelte/store/writable but more functional",
   "author": "cftcview <cftcview@gmail.com>",
   "homepage": "https://github.com/wareset/wareset#readme",

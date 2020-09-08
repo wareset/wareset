@@ -1,7 +1,7 @@
 const { QUEUE, WATCHERS_QUEUE } = require('./lib/consts.js');
 const { IS_STORE, SET_AND_WATCH_METHODS } = require('./lib/consts.js');
 const { noop, isVoid, thisIsStore, _define } = require('./lib');
-const { deepEqual, fastEqual, baseEqual } = require('./lib/equals.js');
+const { fastEqual, deepEqual, baseEqual } = require('./lib/equals.js');
 
 let _lastStore;
 
@@ -77,7 +77,7 @@ module.exports = function store(VAL, observed = [], start = noop) {
         return _subscribe(...args);
       };
 
-      const subscriber = { store: Writable, subscribe };
+      const subscriber = { subscribe };
       subscribers.push(subscriber);
 
       if (!stop && subscribers.length) {
@@ -111,14 +111,26 @@ module.exports = function store(VAL, observed = [], start = noop) {
     return updateVAL(newVAL) || Writable;
   };
 
-  define('set', { value: set }, 1);
-  define('update', { value: fn => set(fn(VAL)) }, 1);
+  const update = update => set(update(VAL));
+  update.Weak = (update, deep = 2) => set.Weak(update(VAL), deep);
+  update.Sure = update => set.Sure(update(VAL));
 
-  define('setWeak', { value: set.Weak }, 1);
-  define('updateWeak', { value: (fn, deep = 2) => set.Weak(fn(VAL), deep) }, 1);
+  // const set = (newVAL, deep = 2, type = SET_AND_WATCH_METHODS[0]) => {
+  //   switch (type) {
+  //     case SET_AND_WATCH_METHODS[0]:
+  //       return (!baseEqual(VAL, newVAL) && updateVAL(newVAL)) || Writable;
+  //     case SET_AND_WATCH_METHODS[1]:
+  //       return (!deepEqual(VAL, newVAL, deep) && updateVAL(newVAL)) || Writable;
+  //     case SET_AND_WATCH_METHODS[2]:
+  //       return updateVAL(newVAL) || Writable;
+  //     default:
+  //       throw new Error();
+  //   }
+  // };
 
-  define('setSure', { value: set.Sure }, 1);
-  define('updateSure', { value: fn => set.Sure(fn(VAL)) }, 1);
+  // const update = (update, deep = 2, type = SET_AND_WATCH_METHODS[0]) => {
+  //   return set.Weak(update(VAL), deep, type);
+  // };
 
   // WATCH
   const watcher = (store, type = SET_AND_WATCH_METHODS[0]) => {
@@ -147,11 +159,13 @@ module.exports = function store(VAL, observed = [], start = noop) {
     return Writable;
   };
 
-  [set, watcher, watch, bridge].forEach(fn => (fn.default = fn));
-  const methods = { watcher, watch, bridge };
+  // [set, update, watcher, watch, bridge].forEach(fn => (fn.default = fn));
+  const methods = { set, update, watcher, watch, bridge };
   Object.keys(methods).forEach(method => {
     SET_AND_WATCH_METHODS.forEach((v, k) => {
-      if (k) methods[method][v] = store => methods[method](store, v);
+      if (!k) methods[method].default = methods[method];
+      else if (k > 2) methods[method][v] = store => methods[method](store, v);
+
       define(`${method}${k ? v : ''}`, { value: methods[method][v] }, 1);
     });
   });
