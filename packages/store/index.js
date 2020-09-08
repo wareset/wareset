@@ -210,13 +210,13 @@ module.exports = function store(VAL, observed = [], start = noop) {
   define('next', { value: Writable.set }, 1);
 
   define('unobservedAll', {
-    value: () => Writable.replaceObservers() && Writable
+    value: () => (Writable.replaceObservers() || 1) && Writable
   }, 1);
   define('unwatchAll', {
-    value: () => watched.forEach(v => Writable.unwatch(v)) && Writable
+    value: () => (watched.forEach(v => Writable.unwatch(v)) || 1) && Writable
   }, 1);
   define('unwatcherAll', {
-    value: () => watchers.forEach(v => Writable.unwatcher(v)) && Writable
+    value: () => (watchers.forEach(v => Writable.unwatcher(v)) || 1) && Writable
   }, 1);
 
   define('reset', {
