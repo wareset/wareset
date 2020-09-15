@@ -126,7 +126,7 @@ module.exports = function WaresetStore(
         if (!inArr(store._.observed, Writable)) {
           store._.observe(Writable);
         }
-        store._.updateVAL(store.$, null, [1]);
+        store._.updateVAL(store._.VAL, null, [1]);
       }
     } else if (Array.isArray(store)) {
       unobservable(observables);
@@ -159,8 +159,7 @@ module.exports = function WaresetStore(
         }
       }
     } else if (Array.isArray(store)) {
-      unobserve(observed);
-      store.forEach(v => observe(v));
+      unobserve(observed), store.forEach(v => observe(v));
     }
     return Writable;
   };
@@ -187,11 +186,10 @@ module.exports = function WaresetStore(
         if (!inArr(store._.depended, Writable)) {
           store._.depend(Writable);
         }
-        store._.updateVAL(Writable.value, deep);
+        store._.updateVAL(Writable._.VAL, deep);
       }
     } else if (Array.isArray(store)) {
-      undependency(dependencies);
-      store.forEach(v => dependency(v, deep));
+      undependency(dependencies), store.forEach(v => dependency(v, deep));
     }
     return Writable;
   };
@@ -220,8 +218,7 @@ module.exports = function WaresetStore(
         }
       }
     } else if (Array.isArray(store)) {
-      undepend(depended);
-      store.forEach(v => depend(v, deep));
+      undepend(depended), store.forEach(v => depend(v, deep));
     }
     return Writable;
   };
@@ -238,12 +235,10 @@ module.exports = function WaresetStore(
   const bridge = (store, deep = -1) => {
     if (thisIsStore(store)) {
       if (store !== Writable) {
-        unbridge(store), depend(store, deep);
-        store.dependWeak(Writable, deep);
+        unbridge(store), depend(store, deep), store._.depend(Writable, deep);
       }
     } else if (Array.isArray(store)) {
-      dependency([]), depend([]);
-      store.forEach(v => bridge(v, deep));
+      dependency([]), depend([]), store.forEach(v => bridge(v, deep));
     }
     return Writable;
   };
@@ -282,6 +277,9 @@ module.exports = function WaresetStore(
   const _services_ = {
     get [IS_STORE]() {
       return thisIsStore;
+    },
+    get VAL() {
+      return VAL;
     },
     get previousVAL() {
       return previousVAL;
