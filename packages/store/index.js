@@ -1,18 +1,12 @@
-const { IS_STORE, DEFAULT_WEAK_SURE } = require('./lib/consts');
-const { noop, isVoid, thisIsStore, _define } = require('./lib');
+const { IS_STORE } = require('./lib/consts');
+const { noop, isVoid, thisIsStore, _define, inArr } = require('./lib');
 const equal = require('./lib/equal');
-
-const isNotValidParams = v => {
-  return thisIsStore(v) || !Array.isArray(v);
-};
 
 const QUEUE = [];
 let _lastStore;
 
-const inArr = (arr, v, k = 0) => arr.indexOf(v, k) !== -1;
-
-const _normalized_type = (v, type) => {
-  return `${v}${inArr(DEFAULT_WEAK_SURE, type, 1) ? type : ''}`;
+const _is_not_valid_params = v => {
+  return thisIsStore(v) || !Array.isArray(v);
 };
 
 module.exports = function WaresetStore(
@@ -24,8 +18,8 @@ module.exports = function WaresetStore(
   if (typeof _observed === 'function') (start = _observed), (_observed = []);
   if (typeof _depended === 'function') (start = _depended), (_depended = []);
 
-  _observed = isNotValidParams(_observed) ? [_observed] : [..._observed];
-  _depended = isNotValidParams(_depended) ? [_depended] : [..._depended];
+  _observed = _is_not_valid_params(_observed) ? [_observed] : [..._observed];
+  _depended = _is_not_valid_params(_depended) ? [_depended] : [..._depended];
 
   let stop = null;
   let previousVAL;
@@ -62,65 +56,272 @@ module.exports = function WaresetStore(
     }
   };
 
-  const updateVAL = (newVAL, deep = null, __choice__ = false) => {
-    // if (QUEUE.length > 1000) {
-    //   throw new Error(`@wareset/store - QUEUE > 1000 - ${QUEUE.length}`);
-    // }
-
+  const updateVAL = (newVAL, deep = null, _choice_ = false) => {
     const is_equal = equal(VAL, newVAL, deep);
     if (!equal(VAL, newVAL, 0)) previousVAL = VAL;
     VAL = newVAL;
 
-    if (is_equal) return Writable;
+    if (!is_equal) {
+      updating = true;
 
-    updating = true;
-
-    if ((!__choice__ || __choice__[2]) && dependencies.length) {
-      for (let i = dependencies.length; (i -= 2) >= 0; undefined) {
-        if (!dependencies[i]._.updating) {
-          dependencies[i].set[dependencies[i + 1]](VAL);
+      if ((!_choice_ || _choice_[2]) && dependencies.length) {
+        for (let i = dependencies.length; (i -= 2) >= 0; undefined) {
+          if (!dependencies[i]._.updating) {
+            dependencies[i]._.updateVAL(VAL, dependencies[i + 1]);
+          }
         }
       }
-    }
 
-    _lastStore = Writable;
+      _lastStore = Writable;
 
-    if ((!__choice__ || __choice__[0]) && stop && subscribers.length) {
-      _get_last_observed_values();
-      for (let i = subscribers.length; i-- > 0; undefined) {
-        (subscribers[i][1] = VAL), (subscribers[i][2] = last_observed_values);
-        (subscribers[i][4] = QUEUE.length), QUEUE.push(subscribers[i]);
-      }
-    }
-
-    if ((!__choice__ || __choice__[1]) && observables.length) {
-      for (let i = observables.length; (i -= 1) >= 0; undefined) {
-        if (!observables[i]._.updating) {
-          observables[i]._.updateVAL(observables[i].$, null, [1]);
+      if ((!_choice_ || _choice_[0]) && stop && subscribers.length) {
+        _get_last_observed_values();
+        for (let i = subscribers.length; i-- > 0; undefined) {
+          (subscribers[i][1] = VAL), (subscribers[i][2] = last_observed_values);
+          (subscribers[i][4] = QUEUE.length), QUEUE.push(subscribers[i]);
         }
       }
+
+      if ((!_choice_ || _choice_[1]) && observables.length) {
+        for (let i = observables.length; (i -= 1) >= 0; undefined) {
+          if (!observables[i]._.updating) {
+            observables[i]._.updateVAL(observables[i].$, null, [1]);
+          }
+        }
+      }
+
+      updating = false;
+
+      queueStart();
     }
-
-    updating = false;
-
-    queueStart();
 
     return Writable;
   };
 
+  // const self = {
+  //   Writable,
+  //   observables
+  // };
+
+  // OBSERVABLE
+  const unobservable = store => {
+    if (thisIsStore(store)) {
+      const index = observables.indexOf(store);
+      if (index !== -1) {
+        observables.slice(index, 1);
+        if (inArr(store._.observed, Writable)) store._.unobserve(Writable);
+      }
+    } else if (Array.isArray(store)) {
+      store.forEach(v => unobservable(v));
+    }
+    return Writable;
+  };
+  const observable = store => {
+    if (thisIsStore(store)) {
+      if (store !== Writable) {
+        unobservable(store), observables.push(store);
+        if (!inArr(store._.observed, Writable)) store._.observe(Writable);
+        store._.updateVAL(store.$, null, [1]);
+      }
+    } else if (Array.isArray(store)) {
+      unobservable(observables);
+      store.forEach(v => observable(v));
+    }
+    return Writable;
+  };
+
+  // OBSERVE
+  const unobserve = store => {
+    if (thisIsStore(store)) {
+      const index = observed.indexOf(store);
+      if (index !== -1) {
+        observed.splice(index, 1);
+        if (inArr(store._.observables, Writable)) {
+          store._.unobservable(Writable);
+        }
+      }
+    } else if (Array.isArray(store)) {
+      store.forEach(v => unobserve(v));
+    }
+    return Writable;
+  };
+  const observe = store => {
+    if (thisIsStore(store)) {
+      if (store !== Writable) {
+        unobserve(store), observed.push(store);
+        if (!inArr(store._.observables, Writable)) store._.observable(Writable);
+      }
+    } else if (Array.isArray(store)) {
+      unobserve(observed);
+      store.forEach(v => observe(v));
+    }
+    return Writable;
+  };
+
+  // DEPENDENCY
+  const undependency = store => {
+    if (thisIsStore(store)) {
+      const index = dependencies.indexOf(store);
+      if (index !== -1) {
+        dependencies.slice(index, 2);
+        if (inArr(store._.depended, Writable)) store._.undepend(Writable);
+      }
+    } else if (Array.isArray(store)) {
+      store.forEach(v => undependency(v));
+    }
+    return Writable;
+  };
+  const dependency = (store, deep = -1) => {
+    if (thisIsStore(store)) {
+      if (store !== Writable) {
+        undependency(store), dependencies.push(store, deep);
+        if (!inArr(store._.depended, Writable)) store._.depend(Writable);
+        store._.updateVAL(VAL, deep);
+      }
+    } else if (Array.isArray(store)) {
+      undependency(dependencies);
+      store.forEach(v => dependency(v, deep));
+    }
+    return Writable;
+  };
+
+  // DEPEND
+  const undepend = store => {
+    if (thisIsStore(store)) {
+      const index = depended.indexOf(store);
+      if (index !== -1) {
+        depended.splice(index, 1);
+        if (inArr(store._.dependencies, Writable)) {
+          store._.undependency(Writable);
+        }
+      }
+    } else if (Array.isArray(store)) {
+      store.forEach(v => undepend(v));
+    }
+    return Writable;
+  };
+  const depend = (store, deep = -1) => {
+    if (thisIsStore(store)) {
+      if (store !== Writable) {
+        undepend(store), depended.push(store);
+        if (!inArr(store._.dependencies, Writable)) {
+          store._.dependency(Writable, deep);
+        }
+      }
+    } else if (Array.isArray(store)) {
+      undepend(depended);
+      store.forEach(v => depend(v, deep));
+    }
+    return Writable;
+  };
+
+  // BRIDGE
+  const unbridge = store => {
+    if (thisIsStore(store)) {
+      store._.undepend(Writable), undepend(store);
+    } else if (Array.isArray(store)) {
+      store.forEach(v => unbridge(v));
+    }
+    return Writable;
+  };
+  const bridge = (store, deep = -1) => {
+    if (thisIsStore(store)) {
+      if (store !== Writable) {
+        unbridge(store);
+        depend(store, deep);
+        store.dependWeak(Writable, deep);
+      }
+    } else if (Array.isArray(store)) {
+      dependency([]), depend([]);
+      store.forEach(v => bridge(v, deep));
+    }
+    return Writable;
+  };
+
+  define('_', {
+    value: {
+      get [IS_STORE]() {
+        return thisIsStore;
+      },
+
+      get updating() {
+        return updating;
+      },
+
+      get previousVAL() {
+        return previousVAL;
+      },
+
+      get subscribers() {
+        return [...subscribers];
+      },
+
+      get depended() {
+        return [...depended];
+      },
+      get dependencies() {
+        return [...dependencies];
+      },
+      get observed() {
+        return [...observed];
+      },
+      get observables() {
+        return [...observables];
+      },
+
+      get updateVAL() {
+        return updateVAL;
+      },
+
+      get observable() {
+        return observable;
+      },
+      get unobservable() {
+        return unobservable;
+      },
+      get observe() {
+        return observe;
+      },
+      get unobserve() {
+        return unobserve;
+      },
+
+      get dependency() {
+        return dependency;
+      },
+      get undependency() {
+        return undependency;
+      },
+      get depend() {
+        return depend;
+      },
+      get undepend() {
+        return undepend;
+      },
+
+      get bridge() {
+        return bridge;
+      },
+      get unbridge() {
+        return unbridge;
+      }
+    }
+  }, 0);
+
   // CREATE STORE
+
   // STORE METHODS
   define('subscribe', {
-    value: (_subscribe = noop) => {
-      const subscribe = (...a) => {
+    value: (subscribe = noop) => {
+      const _subscribe_ = (...a) => {
         isBreak = true;
         // _lastStore = Writable;
-        const res = _subscribe(...a);
+        const res = subscribe(...a);
         (isBreak = false), queueStart();
         return res;
       };
 
-      const subscriber = [subscribe, Writable.get, _get_last_observed_values];
+      const subscriber = [_subscribe_, Writable.get, _get_last_observed_values];
       subscribers.push(subscriber);
 
       if (!stop && subscribers.length) {
@@ -139,244 +340,27 @@ module.exports = function WaresetStore(
     }
   }, 1);
 
-  // SET AND UPDATE
-  const set = newVAL => {
-    return updateVAL(newVAL, -1) || Writable;
-  };
-  const setWeak = (newVAL, deep = 0) => {
-    return updateVAL(newVAL, deep) || Writable;
-  };
-  const setSure = newVAL => {
-    return updateVAL(newVAL, null) || Writable;
-  };
-  set.default = (...a) => Writable.set(...a);
-  set.Weak = (...a) => Writable.setWeak(...a);
-  set.Sure = (...a) => Writable.setSure(...a);
+  // GET
+  define('get', { writable: true, value: () => VAL }, 1);
 
-  define('set', { value: set }, 1);
-  define('setWeak', { value: setWeak }, 1);
-  define('setSure', { value: setSure }, 1);
-
-  const update = update => set(update(VAL));
-  const updateWeak = (update, deep = 2) => setWeak(update(VAL), deep);
-  const updateSure = update => setSure(update(VAL));
-
-  update.default = (...a) => Writable.update(...a);
-  update.Weak = (...a) => Writable.updateWeak(...a);
-  update.Sure = (...a) => Writable.updateSure(...a);
-
-  define('update', { value: update }, 1);
-  define('updateWeak', { value: updateWeak }, 1);
-  define('updateSure', { value: updateSure }, 1);
-
-  const observable = store => {
-    if (thisIsStore(store)) {
-      if (store !== Writable) {
-        Writable.unobservable(store), observables.push(store);
-        if (!inArr(store._.observed, Writable)) store.observe(Writable);
-        store._.updateVAL(store.$, null, [1]);
-      }
-    } else if (Array.isArray(store)) {
-      Writable.unobservable(Writable._.observables);
-      store.forEach(v => Writable.observable(v));
-    }
-    return Writable;
-  };
-  define('observable', { value: observable }, 1);
-
-  const observe = store => {
-    if (thisIsStore(store)) {
-      if (store !== Writable) {
-        Writable.unobserve(store), observed.push(store);
-        if (!inArr(store._.observables, Writable)) store.observable(Writable);
-      }
-    } else if (Array.isArray(store)) {
-      Writable.unobserve(Writable._.observed);
-      store.forEach(v => Writable.observe(v));
-    }
-    return Writable;
-  };
-  define('observe', { value: observe }, 1);
-
-  // WATCH
-  const dependency = (store, type = DEFAULT_WEAK_SURE[0]) => {
-    if (thisIsStore(store)) {
-      if (store !== Writable) {
-        Writable.undependency(store), dependencies.push(store, type);
-        if (!inArr(store._.depended, Writable)) store.depend(Writable);
-        store[_normalized_type('set', type)](VAL);
-      }
-    } else if (Array.isArray(store)) {
-      Writable.undependency(Writable._.dependencies);
-      store.forEach(v => Writable.dependency(v, type));
-    }
-    return Writable;
-  };
-
-  const depend = (store, type = DEFAULT_WEAK_SURE[0]) => {
-    if (thisIsStore(store)) {
-      if (store !== Writable) {
-        Writable.undepend(store), depended.push(store);
-        if (!inArr(store._.dependencies, Writable)) {
-          store[_normalized_type('dependency', type)](Writable);
-        }
-      }
-    } else if (Array.isArray(store)) {
-      Writable.undepend(Writable._.depended);
-      store.forEach(v => Writable.depend(v, type));
-    }
-    return Writable;
-  };
-
-  const bridge = (store, type = DEFAULT_WEAK_SURE[0]) => {
-    if (thisIsStore(store)) {
-      if (store !== Writable) {
-        Writable.unbridge(store);
-        Writable[_normalized_type('depend', type)](store);
-        store[_normalized_type('depend', type)](Writable);
-      }
-    } else if (Array.isArray(store)) {
-      Writable.dependency([]), Writable.depend([]);
-      store.forEach(v => Writable.bridge(v, type));
-    }
-    return Writable;
-  };
-
-  const methods = { dependency, depend, bridge };
-  Object.keys(methods).forEach(method => {
-    DEFAULT_WEAK_SURE.forEach((v, k) => {
-      if (!k) methods[method].default = methods[method];
-      else methods[method][v] = store => methods[method](store, v);
-
-      define(`${method}${k ? v : ''}`, { value: methods[method][v] }, 1);
-    });
-  });
-
-  define('unobservable', {
-    value: store => {
-      if (thisIsStore(store)) {
-        const index = observables.indexOf(store);
-        if (index !== -1) {
-          observables.slice(index, 1);
-          if (inArr(store._.observed, Writable)) store.unobserve(Writable);
-        }
-      } else if (Array.isArray(store)) {
-        store.forEach(v => Writable.unobservable(v));
-      }
-      return Writable;
-    }
+  // SET
+  define('set', { value: newVAL => updateVAL(newVAL, -1) }, 1);
+  define('setWeak', {
+    value: (newVAL, deep = 0) => updateVAL(newVAL, deep)
   }, 1);
+  define('setSure', { value: newVAL => updateVAL(newVAL, null) }, 1);
 
-  define('unobserve', {
-    value: store => {
-      if (thisIsStore(store)) {
-        const index = observed.indexOf(store);
-        if (index !== -1) {
-          observed.splice(index, 1);
-          if (inArr(store._.observables, Writable)) {
-            store.unobservable(Writable);
-          }
-        }
-      } else if (Array.isArray(store)) {
-        store.forEach(v => Writable.unobserve(v));
-      }
-      return Writable;
-    }
+  // UPDATE
+  define('update', { value: update => updateVAL(update(VAL), -1) }, 1);
+  define('updateWeak', {
+    value: (update, deep = 0) => updateVAL(update(VAL), deep)
   }, 1);
+  define('updateSure', { value: update => updateVAL(update(VAL), null) }, 1);
 
-  define('undependency', {
-    value: store => {
-      if (thisIsStore(store)) {
-        const index = dependencies.indexOf(store);
-        if (index !== -1) {
-          dependencies.slice(index, 2);
-          if (inArr(store._.depended, Writable)) store.undepend(Writable);
-        }
-      } else if (Array.isArray(store)) {
-        store.forEach(v => Writable.undependency(v));
-      }
-      return Writable;
-    }
-  }, 1);
-
-  define('undepend', {
-    value: store => {
-      if (thisIsStore(store)) {
-        const index = depended.indexOf(store);
-        if (index !== -1) {
-          depended.splice(index, 1);
-          if (inArr(store._.dependencies, Writable)) {
-            store.undependency(Writable);
-          }
-        }
-      } else if (Array.isArray(store)) {
-        store.forEach(v => Writable.undepend(v));
-      }
-      return Writable;
-    }
-  }, 1);
-
-  define('unbridge', {
-    value: store => {
-      if (thisIsStore(store)) {
-        store.undepend(Writable), Writable.undepend(store);
-      } else if (Array.isArray(store)) {
-        store.forEach(v => Writable.unbridge(v));
-      }
-      return Writable;
-    }
-  }, 1);
-
-  // GET VALUE
+  // NEXT
   define('next', { get: () => Writable.set });
-  define('get', { writable: true, value: () => VAL });
 
-  define('_', {
-    value: {
-      get [IS_STORE]() {
-        return thisIsStore;
-      },
-
-      get depended() {
-        return [...depended];
-      },
-      get dependencies() {
-        return [...dependencies];
-      },
-      get observed() {
-        return [...observed];
-      },
-      get observables() {
-        return [...observables];
-      },
-
-      get subscribers() {
-        return [...subscribers];
-      },
-
-      get updating() {
-        return updating;
-      },
-
-      get previousVAL() {
-        return previousVAL;
-      },
-
-      get updateVAL() {
-        return updateVAL;
-      }
-    }
-  }, 0);
-
-  define('reset', {
-    value: () => {
-      Writable.observable([]), Writable.observe([]);
-      Writable.dependency([]), Writable.depend([]);
-      return Writable;
-    }
-  }, 1);
-
-  // GET VALUE AND SET NEW VALUE
+  // GET AND SET VALUE
   [0, '$', 'value'].forEach(v => {
     define(v, {
       enumerable: !v,
@@ -385,6 +369,33 @@ module.exports = function WaresetStore(
     });
   });
 
+  // OBSERVABLE
+  define('observable', { value: observable }, 1);
+  define('unobservable', { value: unobservable }, 1);
+  // OBSERVE
+  define('observe', { value: observe }, 1);
+  define('unobserve', { value: unobserve }, 1);
+
+  // DEPENDENCY
+  define('dependency', { value: store => dependency(store, -1) }, 1);
+  define('dependencyWeak', {
+    value: (store, deep = 0) => dependency(store, deep)
+  }, 1);
+  define('dependencySure', { value: store => dependency(store, null) }, 1);
+  define('undependency', { value: undependency }, 1);
+
+  // DEPEND
+  define('depend', { value: store => depend(store, -1) }, 1);
+  define('dependWeak', { value: (store, deep = 0) => depend(store, deep) }, 1);
+  define('dependSure', { value: store => depend(store, null) }, 1);
+  define('undepend', { value: undepend }, 1);
+
+  // BRIDGE
+  define('bridge', { value: store => bridge(store, -1) }, 1);
+  define('bridgeWeak', { value: (store, deep = 0) => bridge(store, deep) }, 1);
+  define('bridgeSure', { value: store => bridge(store, null) }, 1);
+  define('unbridge', { value: unbridge }, 1);
+
   // TYPE COERCION
   ['valueOf', 'toString', 'toJSON'].forEach(v => {
     define(v, {
@@ -392,8 +403,8 @@ module.exports = function WaresetStore(
     }, 1);
   });
 
-  Writable.observe(_observed);
-  Writable.depend(_depended);
+  observe(_observed);
+  depend(_depended);
 
   return Writable;
 };

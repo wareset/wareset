@@ -21,9 +21,12 @@ const _define = Writable => (prop, _props, writable) => {
   Object.defineProperty(Writable, prop, props);
 };
 
+const inArr = (arr, v, k = 0) => arr.indexOf(v, k) !== -1;
+
 module.exports = {
   noop,
   isVoid,
   thisIsStore,
-  _define
+  _define,
+  inArr
 };
