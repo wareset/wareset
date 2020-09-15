@@ -21,7 +21,7 @@ const _is_not_valid_params = v => {
 };
 
 module.exports = function WaresetStore(
-  VAL,
+  VALUE,
   _observed = [],
   _depended = [],
   start = noop
@@ -34,7 +34,7 @@ module.exports = function WaresetStore(
   _depended = _is_not_valid_params(_depended) ? [_depended] : [..._depended];
 
   let stop = null;
-  let previousVAL;
+  let previousVALUE, previousDifferingVALUE;
   let updating = false;
 
   const subscribers = [];
@@ -46,7 +46,7 @@ module.exports = function WaresetStore(
 
   let last_observed_values = [];
   const _get_last_observed_values = () => {
-    last_observed_values = observed.map(v => (thisIsStore(v) ? v._.VAL : v));
+    last_observed_values = observed.map(v => (thisIsStore(v) ? v._.VALUE : v));
     return last_observed_values;
   };
 
@@ -68,17 +68,17 @@ module.exports = function WaresetStore(
     }
   };
 
-  const updateVAL = (newVAL, deep = null, _choice_ = false) => {
-    const oldVAL = VAL;
-    if (!equal(VAL, newVAL, deep)) {
+  const updateVALUE = (newVALUE, deep = null, _choice_ = false) => {
+    if (!equal(VALUE, newVALUE, deep)) {
       updating = true;
-      if (!equal(VAL, newVAL, 0)) previousVAL = VAL;
-      VAL = newVAL;
+      previousVALUE = VALUE;
+      if (!equal(VALUE, newVALUE, 0)) previousDifferingVALUE = VALUE;
+      VALUE = newVALUE;
 
       if ((!_choice_ || _choice_[2]) && dependencies.length) {
         for (let i = dependencies.length; (i -= 2) >= 0; undefined) {
           if (!dependencies[i]._.updating) {
-            dependencies[i]._.updateVAL(VAL, dependencies[i + 1]);
+            dependencies[i]._.updateVALUE(VALUE, dependencies[i + 1]);
           }
         }
       }
@@ -88,7 +88,7 @@ module.exports = function WaresetStore(
       if ((!_choice_ || _choice_[0]) && stop && subscribers.length) {
         _get_last_observed_values();
         for (let i = subscribers.length; i-- > 0; undefined) {
-          subscribers[i][1] = VAL;
+          subscribers[i][1] = VALUE;
           subscribers[i][2] = last_observed_values;
           subscribers[i][5] = QUEUE.length;
           QUEUE.push(subscribers[i]);
@@ -99,9 +99,9 @@ module.exports = function WaresetStore(
         for (let i = observables.length; (i -= 2) >= 0; undefined) {
           if (
             !observables[i]._.updating &&
-            !equal(VAL, oldVAL, observables[i + 1])
+            !equal(VALUE, previousVALUE, observables[i + 1])
           ) {
-            observables[i]._.updateVAL(observables[i]._.VAL, null, [1]);
+            observables[i]._.updateVALUE(observables[i]._.VALUE, null, [1]);
           }
         }
       }
@@ -126,25 +126,25 @@ module.exports = function WaresetStore(
         return res;
       };
 
-      const subscriber = [_subscribe_, VAL, [], Writable];
+      const subscriber = [_subscribe_, VALUE, [], Writable];
       subscribers.push(subscriber);
 
       const unsubscribe = () => {
         const index = subscribers.indexOf(subscriber);
         if (index !== -1) subscribers.splice(index, 1);
         if (!subscribers.length) {
-          if (stop) stop(VAL, _get_last_observed_values(), Writable, noop);
+          if (stop) stop(VALUE, _get_last_observed_values(), Writable, noop);
           stop = null;
         }
       };
       subscriber.push(unsubscribe, 0);
 
       if (!stop && subscribers.length) {
-        stop = start(VAL, _get_last_observed_values(), Writable, unsubscribe);
+        stop = start(VALUE, _get_last_observed_values(), Writable, unsubscribe);
         if (!isFunc(stop)) stop = noop;
       }
 
-      _subscribe_(VAL, _get_last_observed_values(), Writable, unsubscribe);
+      _subscribe_(VALUE, _get_last_observed_values(), Writable, unsubscribe);
       return unsubscribe;
     }
   }, 1);
@@ -191,11 +191,14 @@ module.exports = function WaresetStore(
   );
 
   const _service_ = {
-    get VAL() {
-      return VAL;
+    get VALUE() {
+      return VALUE;
     },
-    get previousVAL() {
-      return previousVAL;
+    get previousVALUE() {
+      return previousVALUE;
+    },
+    get previousDifferingVALUE() {
+      return previousDifferingVALUE;
     },
     get updating() {
       return updating;
@@ -203,7 +206,7 @@ module.exports = function WaresetStore(
   };
   define('_', { value: _service_ }, 0);
   const define_services = definer(_service_);
-  forIn({ [IS_STORE]: thisIsStore, updateVAL }, (value, key) => {
+  forIn({ [IS_STORE]: thisIsStore, updateVALUE }, (value, key) => {
     define_services(key, { get: () => value });
   });
   forIn(
@@ -212,21 +215,23 @@ module.exports = function WaresetStore(
   );
 
   // GET
-  define('get', { value: () => VAL }, 1);
+  define('get', { value: () => VALUE }, 1);
 
   // SET
-  define('set', { value: newVAL => updateVAL(newVAL, -1) }, 1);
+  define('set', { value: newVALUE => updateVALUE(newVALUE, -1) }, 1);
   define('setWeak', {
-    value: (newVAL, deep = 0) => updateVAL(newVAL, deep)
+    value: (newVALUE, deep = 0) => updateVALUE(newVALUE, deep)
   }, 1);
-  define('setSure', { value: newVAL => updateVAL(newVAL, null) }, 1);
+  define('setSure', { value: newVALUE => updateVALUE(newVALUE, null) }, 1);
 
   // UPDATE
-  define('update', { value: update => updateVAL(update(VAL), -1) }, 1);
+  define('update', { value: update => updateVALUE(update(VALUE), -1) }, 1);
   define('updateWeak', {
-    value: (update, deep = 0) => updateVAL(update(VAL), deep)
+    value: (update, deep = 0) => updateVALUE(update(VALUE), deep)
   }, 1);
-  define('updateSure', { value: update => updateVAL(update(VAL), null) }, 1);
+  define('updateSure', {
+    value: update => updateVALUE(update(VALUE), null)
+  }, 1);
 
   forIn({ observable, observe, dependency, depend, bridge }, (value, key) => {
     define(key, { value: store => value(store, -1) }, 1);
@@ -253,19 +258,19 @@ module.exports = function WaresetStore(
   // NEXT
   define('next', { get: () => Writable.set });
 
-  // GET AND SET VALUE
+  // GET AND SET VALUEUE
   [0, '$', 'value'].forEach(v => {
     define(v, {
       enumerable: !v,
       get: () => Writable.get(),
-      set: newVAL => Writable.set(newVAL)
+      set: newVALUE => Writable.set(newVALUE)
     });
   });
 
   // TYPE COERCION
   ['valueOf', 'toString', 'toJSON'].forEach(v => {
     define(v, {
-      value: (...a) => (isVoid(VAL) || !VAL[v] ? VAL : VAL[v](...a))
+      value: (...a) => (isVoid(VALUE) || !VALUE[v] ? VALUE : VALUE[v](...a))
     }, 1);
   });
 

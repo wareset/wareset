@@ -3,7 +3,7 @@ const { thisIsStore, inArr } = require('./index');
 const watchable_factory = (
   Writable,
   watchables,
-  args = ['observed', 'unobserve', 'observe', false, [1]]
+  args = ['watched', 'unwatch', 'watch', false, [1]]
 ) => {
   const _unwatchable_ = store => {
     if (thisIsStore(store)) {
@@ -25,7 +25,11 @@ const watchable_factory = (
         if (!inArr(store._[args[0]], Writable)) {
           store._[args[2]](Writable, deep);
         }
-        store._.updateVAL((args[3] ? Writable : store)._.VAL, deep, args[4]);
+        store._.updateVALUE(
+          (args[3] ? Writable : store)._.VALUE,
+          deep,
+          args[4]
+        );
       }
     } else if (Array.isArray(store)) {
       _unwatchable_(watchables), store.forEach(v => _watchable_(v, deep));
@@ -39,7 +43,7 @@ const watchable_factory = (
 const watch_factory = (
   Writable,
   watched,
-  args = ['observables', 'unobservable', 'observable']
+  args = ['watchables', 'unwatchable', 'watchable']
 ) => {
   const _unwatch_ = store => {
     if (thisIsStore(store)) {
@@ -76,7 +80,7 @@ const cross_factory = (
   _unwatch_,
   _watch_,
   _watchable_,
-  args = ['undepend', 'depend']
+  args = ['unwatch', 'watch']
 ) => {
   const _uncross_ = store => {
     if (thisIsStore(store)) store._[args[0]](Writable), _unwatch_(store);
