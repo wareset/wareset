@@ -1,5 +1,12 @@
 const { IS_STORE } = require('./lib/consts');
-const { noop, isVoid, thisIsStore, _define, inArr } = require('./lib');
+const {
+  noop,
+  isVoid,
+  thisIsStore,
+  definer,
+  inArr,
+  forIn
+} = require('./lib/index');
 const equal = require('./lib/equal');
 
 const QUEUE = [];
@@ -32,15 +39,15 @@ module.exports = function WaresetStore(
   const depended = [],
     dependencies = [];
 
+  // CREATE WRITABLE
+  const Writable = [];
+  const define = definer(Writable);
+
   let last_observed_values = [];
   const _get_last_observed_values = () => {
     last_observed_values = observed.map(v => (thisIsStore(v) ? v.$ : v));
     return last_observed_values;
   };
-
-  // CREATE WRITABLE
-  const Writable = [];
-  const define = _define(Writable);
 
   let isBreak = false;
   const queueStart = () => {
@@ -57,51 +64,45 @@ module.exports = function WaresetStore(
   };
 
   const updateVAL = (newVAL, deep = null, _choice_ = false) => {
-    const is_equal = equal(VAL, newVAL, deep);
+    if (equal(VAL, newVAL, deep)) return Writable;
+    updating = true;
     if (!equal(VAL, newVAL, 0)) previousVAL = VAL;
     VAL = newVAL;
 
-    if (!is_equal) {
-      updating = true;
-
-      if ((!_choice_ || _choice_[2]) && dependencies.length) {
-        for (let i = dependencies.length; (i -= 2) >= 0; undefined) {
-          if (!dependencies[i]._.updating) {
-            dependencies[i]._.updateVAL(VAL, dependencies[i + 1]);
-          }
+    if ((!_choice_ || _choice_[2]) && dependencies.length) {
+      for (let i = dependencies.length; (i -= 2) >= 0; undefined) {
+        if (!dependencies[i]._.updating) {
+          dependencies[i]._.updateVAL(VAL, dependencies[i + 1]);
         }
       }
-
-      _lastStore = Writable;
-
-      if ((!_choice_ || _choice_[0]) && stop && subscribers.length) {
-        _get_last_observed_values();
-        for (let i = subscribers.length; i-- > 0; undefined) {
-          (subscribers[i][1] = VAL), (subscribers[i][2] = last_observed_values);
-          (subscribers[i][4] = QUEUE.length), QUEUE.push(subscribers[i]);
-        }
-      }
-
-      if ((!_choice_ || _choice_[1]) && observables.length) {
-        for (let i = observables.length; (i -= 1) >= 0; undefined) {
-          if (!observables[i]._.updating) {
-            observables[i]._.updateVAL(observables[i].$, null, [1]);
-          }
-        }
-      }
-
-      updating = false;
-
-      queueStart();
     }
+
+    _lastStore = Writable;
+
+    if ((!_choice_ || _choice_[0]) && stop && subscribers.length) {
+      _get_last_observed_values();
+      for (let i = subscribers.length; i-- > 0; undefined) {
+        subscribers[i][1] = VAL;
+        subscribers[i][2] = last_observed_values;
+        subscribers[i][4] = QUEUE.length;
+        QUEUE.push(subscribers[i]);
+      }
+    }
+
+    if ((!_choice_ || _choice_[1]) && observables.length) {
+      for (let i = observables.length; (i -= 1) >= 0; undefined) {
+        if (!observables[i]._.updating) {
+          observables[i]._.updateVAL(observables[i].$, null, [1]);
+        }
+      }
+    }
+
+    updating = false;
+
+    queueStart();
 
     return Writable;
   };
-
-  // const self = {
-  //   Writable,
-  //   observables
-  // };
 
   // OBSERVABLE
   const unobservable = store => {
@@ -109,7 +110,9 @@ module.exports = function WaresetStore(
       const index = observables.indexOf(store);
       if (index !== -1) {
         observables.slice(index, 1);
-        if (inArr(store._.observed, Writable)) store._.unobserve(Writable);
+        if (inArr(store._.observed, Writable)) {
+          store._.unobserve(Writable);
+        }
       }
     } else if (Array.isArray(store)) {
       store.forEach(v => unobservable(v));
@@ -120,7 +123,9 @@ module.exports = function WaresetStore(
     if (thisIsStore(store)) {
       if (store !== Writable) {
         unobservable(store), observables.push(store);
-        if (!inArr(store._.observed, Writable)) store._.observe(Writable);
+        if (!inArr(store._.observed, Writable)) {
+          store._.observe(Writable);
+        }
         store._.updateVAL(store.$, null, [1]);
       }
     } else if (Array.isArray(store)) {
@@ -149,7 +154,9 @@ module.exports = function WaresetStore(
     if (thisIsStore(store)) {
       if (store !== Writable) {
         unobserve(store), observed.push(store);
-        if (!inArr(store._.observables, Writable)) store._.observable(Writable);
+        if (!inArr(store._.observables, Writable)) {
+          store._.observable(Writable);
+        }
       }
     } else if (Array.isArray(store)) {
       unobserve(observed);
@@ -164,7 +171,9 @@ module.exports = function WaresetStore(
       const index = dependencies.indexOf(store);
       if (index !== -1) {
         dependencies.slice(index, 2);
-        if (inArr(store._.depended, Writable)) store._.undepend(Writable);
+        if (inArr(store._.depended, Writable)) {
+          store._.undepend(Writable);
+        }
       }
     } else if (Array.isArray(store)) {
       store.forEach(v => undependency(v));
@@ -175,8 +184,10 @@ module.exports = function WaresetStore(
     if (thisIsStore(store)) {
       if (store !== Writable) {
         undependency(store), dependencies.push(store, deep);
-        if (!inArr(store._.depended, Writable)) store._.depend(Writable);
-        store._.updateVAL(VAL, deep);
+        if (!inArr(store._.depended, Writable)) {
+          store._.depend(Writable);
+        }
+        store._.updateVAL(Writable.value, deep);
       }
     } else if (Array.isArray(store)) {
       undependency(dependencies);
@@ -227,8 +238,7 @@ module.exports = function WaresetStore(
   const bridge = (store, deep = -1) => {
     if (thisIsStore(store)) {
       if (store !== Writable) {
-        unbridge(store);
-        depend(store, deep);
+        unbridge(store), depend(store, deep);
         store.dependWeak(Writable, deep);
       }
     } else if (Array.isArray(store)) {
@@ -238,78 +248,7 @@ module.exports = function WaresetStore(
     return Writable;
   };
 
-  define('_', {
-    value: {
-      get [IS_STORE]() {
-        return thisIsStore;
-      },
-
-      get updating() {
-        return updating;
-      },
-
-      get previousVAL() {
-        return previousVAL;
-      },
-
-      get subscribers() {
-        return [...subscribers];
-      },
-
-      get depended() {
-        return [...depended];
-      },
-      get dependencies() {
-        return [...dependencies];
-      },
-      get observed() {
-        return [...observed];
-      },
-      get observables() {
-        return [...observables];
-      },
-
-      get updateVAL() {
-        return updateVAL;
-      },
-
-      get observable() {
-        return observable;
-      },
-      get unobservable() {
-        return unobservable;
-      },
-      get observe() {
-        return observe;
-      },
-      get unobserve() {
-        return unobserve;
-      },
-
-      get dependency() {
-        return dependency;
-      },
-      get undependency() {
-        return undependency;
-      },
-      get depend() {
-        return depend;
-      },
-      get undepend() {
-        return undepend;
-      },
-
-      get bridge() {
-        return bridge;
-      },
-      get unbridge() {
-        return unbridge;
-      }
-    }
-  }, 0);
-
   // CREATE STORE
-
   // STORE METHODS
   define('subscribe', {
     value: (subscribe = noop) => {
@@ -340,6 +279,31 @@ module.exports = function WaresetStore(
     }
   }, 1);
 
+  const _services_ = {
+    get [IS_STORE]() {
+      return thisIsStore;
+    },
+    get previousVAL() {
+      return previousVAL;
+    },
+    get updating() {
+      return updating;
+    },
+    get updateVAL() {
+      return updateVAL;
+    }
+  };
+  define('_', { value: _services_ }, 0);
+  const define_services = definer(_services_);
+  // forIn(
+  //   { [IS_STORE]: thisIsStore, updateVAL },
+  //   (value, key) => define_services(key, { get: () => value })
+  // );
+  forIn(
+    { subscribers, observables, observed, dependencies, depended },
+    (value, key) => define_services(key, { get: () => [...value] })
+  );
+
   // GET
   define('get', { writable: true, value: () => VAL }, 1);
 
@@ -357,6 +321,29 @@ module.exports = function WaresetStore(
   }, 1);
   define('updateSure', { value: update => updateVAL(update(VAL), null) }, 1);
 
+  forIn({ dependency, depend, bridge }, (value, key) => {
+    define(key, { value: store => value(store, -1) }, 1);
+    define(`${key}Weak`, { value: (store, deep = 0) => value(store, deep) }, 1);
+    define(`${key}Sure`, { value: store => value(store, null) }, 1);
+
+    define_services(key, { get: () => value });
+  });
+
+  forIn(
+    {
+      unobservable,
+      observable,
+      unobserve,
+      observe,
+      undependency,
+      undepend,
+      unbridge
+    },
+    (value, key) => {
+      define(key, { value }, 1), define_services(key, { get: () => value });
+    }
+  );
+
   // NEXT
   define('next', { get: () => Writable.set });
 
@@ -368,33 +355,6 @@ module.exports = function WaresetStore(
       set: newVAL => Writable.set(newVAL)
     });
   });
-
-  // OBSERVABLE
-  define('observable', { value: observable }, 1);
-  define('unobservable', { value: unobservable }, 1);
-  // OBSERVE
-  define('observe', { value: observe }, 1);
-  define('unobserve', { value: unobserve }, 1);
-
-  // DEPENDENCY
-  define('dependency', { value: store => dependency(store, -1) }, 1);
-  define('dependencyWeak', {
-    value: (store, deep = 0) => dependency(store, deep)
-  }, 1);
-  define('dependencySure', { value: store => dependency(store, null) }, 1);
-  define('undependency', { value: undependency }, 1);
-
-  // DEPEND
-  define('depend', { value: store => depend(store, -1) }, 1);
-  define('dependWeak', { value: (store, deep = 0) => depend(store, deep) }, 1);
-  define('dependSure', { value: store => depend(store, null) }, 1);
-  define('undepend', { value: undepend }, 1);
-
-  // BRIDGE
-  define('bridge', { value: store => bridge(store, -1) }, 1);
-  define('bridgeWeak', { value: (store, deep = 0) => bridge(store, deep) }, 1);
-  define('bridgeSure', { value: store => bridge(store, null) }, 1);
-  define('unbridge', { value: unbridge }, 1);
 
   // TYPE COERCION
   ['valueOf', 'toString', 'toJSON'].forEach(v => {

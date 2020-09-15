@@ -11,7 +11,7 @@ const thisIsStore = check_store => {
   }
 };
 
-const _define = Writable => (prop, _props, writable) => {
+const definer = Writable => (prop, _props, writable) => {
   const props = {
     enumerable: false,
     configurable: true,
@@ -23,10 +23,15 @@ const _define = Writable => (prop, _props, writable) => {
 
 const inArr = (arr, v, k = 0) => arr.indexOf(v, k) !== -1;
 
+const forIn = (obj, cb) => {
+  Object.keys(obj).forEach(v => cb(obj[v], v, obj));
+};
+
 module.exports = {
   noop,
   isVoid,
   thisIsStore,
-  _define,
-  inArr
+  definer,
+  inArr,
+  forIn
 };
