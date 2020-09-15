@@ -1,5 +1,12 @@
 const { QUEUE, IS_STORE } = require('./lib/consts');
-const { noop, isVoid, thisIsStore, definer, forIn } = require('./lib/index');
+const {
+  noop,
+  isVoid,
+  thisIsStore,
+  definer,
+  forIn,
+  isFunc
+} = require('./lib/index');
 const equal = require('./lib/equal');
 const {
   watchable_factory,
@@ -19,8 +26,9 @@ module.exports = function WaresetStore(
   _depended = [],
   start = noop
 ) {
-  if (typeof _observed === 'function') (start = _observed), (_observed = []);
-  if (typeof _depended === 'function') (start = _depended), (_depended = []);
+  if (isFunc(_observed)) (start = _observed), (_observed = []);
+  if (isFunc(_depended)) (start = _depended), (_depended = []);
+  if (!isFunc(start)) start = noop;
 
   _observed = _is_not_valid_params(_observed) ? [_observed] : [..._observed];
   _depended = _is_not_valid_params(_depended) ? [_depended] : [..._depended];
@@ -53,7 +61,7 @@ module.exports = function WaresetStore(
       while (QUEUE.length) {
         if (isBreak) break;
         sub = QUEUE.pop();
-        if (sub[4] === QUEUE.length) {
+        if (sub[5] === QUEUE.length) {
           sub[0](sub[1], sub[2], sub[3], sub[4]);
         }
       }
@@ -82,7 +90,7 @@ module.exports = function WaresetStore(
         for (let i = subscribers.length; i-- > 0; undefined) {
           subscribers[i][1] = VAL;
           subscribers[i][2] = last_observed_values;
-          subscribers[i][4] = QUEUE.length;
+          subscribers[i][5] = QUEUE.length;
           QUEUE.push(subscribers[i]);
         }
       }
@@ -118,21 +126,25 @@ module.exports = function WaresetStore(
         return res;
       };
 
-      const subscriber = [_subscribe_, Writable.get, _get_last_observed_values];
+      const subscriber = [_subscribe_, VAL, [], Writable];
       subscribers.push(subscriber);
-
-      if (!stop && subscribers.length) {
-        stop = start(Writable.set, _get_last_observed_values()) || noop;
-      }
-      _subscribe_(VAL, _get_last_observed_values(), Writable);
 
       const unsubscribe = () => {
         const index = subscribers.indexOf(subscriber);
         if (index !== -1) subscribers.splice(index, 1);
-        if (!subscribers.length) stop && stop(), (stop = null);
+        if (!subscribers.length) {
+          if (stop) stop(VAL, _get_last_observed_values(), Writable, noop);
+          stop = null;
+        }
       };
-
       subscriber.push(unsubscribe, 0);
+
+      if (!stop && subscribers.length) {
+        stop = start(VAL, _get_last_observed_values(), Writable, unsubscribe);
+        if (!isFunc(stop)) stop = noop;
+      }
+
+      _subscribe_(VAL, _get_last_observed_values(), Writable, unsubscribe);
       return unsubscribe;
     }
   }, 1);

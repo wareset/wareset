@@ -27,11 +27,14 @@ const forIn = (obj, cb) => {
   Object.keys(obj).forEach(v => cb(obj[v], v, obj));
 };
 
+const isFunc = (v) => typeof v === 'function';
+
 module.exports = {
   noop,
   isVoid,
   thisIsStore,
   definer,
   inArr,
-  forIn
+  forIn,
+  isFunc
 };
