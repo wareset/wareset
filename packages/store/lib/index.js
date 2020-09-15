@@ -4,13 +4,17 @@ const noop = () => {};
 const isVoid = v => v === null || v === undefined;
 
 const thisIsStore = check_store => {
-  return Array.isArray(check_store) && check_store[IS_STORE] === thisIsStore;
+  try {
+    return check_store._[IS_STORE] === thisIsStore;
+  } catch (err) {
+    return false;
+  }
 };
 
 const _define = Writable => (prop, _props, writable) => {
   const props = {
     enumerable: false,
-    configurable: false,
+    configurable: true,
     ..._props
   };
   if (writable !== undefined) props.writable = !!writable;
