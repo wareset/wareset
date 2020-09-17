@@ -10,9 +10,9 @@ Fast and easy observer. It is very similar to a 'store/writable' from [Svelte](h
 npm i @wareset/store ## yarn add @wareset/store
 ```
 
-#### store(value: any, observed?: [], depended?: [], startFn?: Function)
+#### store(value: any, observed?: Array, depended?: Array, startFn?: Function)
 
-```js
+```javascript
 import store from '@wareset/store';
 const VAL$ = store(42);
 ```
@@ -23,7 +23,7 @@ The observer is a real regular array. The first element is reserved for storing 
 
 Methods 'valueOf', 'toString' and 'toJSON' are forwarded from a stored variable. Therefore, the construction will work with primitives 'string' and 'number':
 
-```js
+```javascript
 accert(typeof VAL$, 'object');
 accert(VAL$ instanceof Array, true);
 // but
@@ -35,7 +35,7 @@ accert(store('Hello') + ' world!', 'Hello world!');
 
 #### get()
 
-```js
+```javascript
 accert(VAL$.get(), 42);
 accert(VAL$[0], 42); // alias for 'get()' and 'set()'
 accert(VAL$.$, 42); // alias for 'get()' and 'set()'
@@ -49,27 +49,28 @@ accert(VAL$.value, 42); // alias for 'get()' and 'set()'
 This method is similar to "set" from "svelte/store/writable" and "next" from "rxjs". But they always run subscribers if the value is an 'object'. This method doesn't do that. It always launches subscribers only if you pass a function. Including the same one.
 
 > If you need to force subscribers to start, use 'setSure'.
+> If you don't need to call the same function, use 'setWeak'.
 
-```js
+```javascript
 VAL$.set(24);
-accert(VAL$.$, 24);
+accert(VAL$.get(), 24);
 
 VAL$.next(12); // alias for 'set()'
-accert(VAL$.$, 12);
+accert(VAL$.get(), 12);
 
 VAL$.$ = 25;
-accert(VAL$.$, 25);
+accert(VAL$.get(), 25);
 
 VAL$[0] = 26;
-accert(VAL$.$, 26);
+accert(VAL$.get(), 26);
 
 VAL$.value = 27;
-accert(VAL$.$, 27);
+accert(VAL$.get(), 27);
 ```
 
 Subscriptions will be started if the value is 'different' from the previous one or if the value is a 'function'.
 
-```js
+```javascript
 const VAL$ = store(42);
 VAL$.$ = 42; // Nothing will happen
 
@@ -81,19 +82,21 @@ VAL3$.$ = func; // Will launch all subscription mechanisms
 #### setSure(newValue: any)
 
 This will cause the subscriptions to run anyway.
+The rest of the methods 'Sure' behave exactly the same.
 
-```js
+```javascript
 const VAL$ = store(42);
 VAL$.setSure(42); // Will launch all subscription mechanisms
 ```
 
-#### setWeak(newValue: any, deep?: number = 0)
+#### setWeak(newValue: any, deep?: Number = 0)
 
 This is a soft test.
+The rest of the methods 'Weak' behave exactly the same.
 
 - deep - this is the depth of comparison for objects. See [@wareset/deep-equal](https://www.npmjs.com/package/@wareset/deep-equal)
 
-```js
+```javascript
 const obj = { q: 1 };
 const VAL$ = store(obj);
 VAL$.setWeak(obj, 0); // Nothing will happen
@@ -101,73 +104,84 @@ VAL$.setWeak({ q: 1 }, 0); // Will launch all subscription mechanisms
 VAL$.setWeak({ q: 1 }, 1); // Nothing will happen
 ```
 
-#### subscribe(callbackFn: (value, observed: [], store: this, unsubscribe: function))
+#### subscribe(callbackFn: (value, observed: Array, store: this, unsubscribe: Function))
 
-```js
+```javascript
 const VAL$ = store(42);
 
-const unsubscribe = VAL$.subscribe((val, observed, store$, unsub) => {
+const unsubscribe = VAL$.subscribe((val, observed, this$, unsub) => {
   accert(val, VAL$.$);
   // observed - further in the documentation
-  accert(store$, VAL$);
+  accert(this$, VAL$);
   accert(unsub, unsubscribe);
 
   console.log('Value:', val);
 
-  return val2 => {
-    console.log('Subscription canceled: ', val2);
+  return (val, observed, this$, unsub) => {
+    // unsub - it won't work anymore
+    // but if, on further calls, it will show the true value VAL$.$
+    console.log('Subscription canceled: ', val);
   };
 });
 
-VAL$.$ = VAL$.$ + 1;
+VAL$.$ = VAL$.$ + 1; // 43
+unsubscribe();
 
+VAL$.$ = VAL$.$ + 1; // 44
 unsubscribe();
 ```
 
 console.log:
 
-- Value: 42
-- Value: 43
-- Subscription canceled: 43
+```console
+Value: 42
+Value: 43
+Subscription canceled: 43
+Subscription canceled: 44 ## it won't work, but show the true value
+```
 
 Example of start and end functions:
 
-```js
-const VAL$ = store(42, (value, observed, store$, unsub) => {
+```javascript
+const VAL$ = store(42, (val, observed, this$, unsub) => {
   console.log('The first subscriber appeared!');
 
   // unsub - this is unsubscribe for the first subscriber
   // Cancel it!
   unsub();
 
-  return () => {
+  return (val, observed, this$, unsub) => {
+    // unsub - it won't work anymore...
     console.log('All subscribers have unsubscribed!');
   };
 });
 
-VAL$.subscribe((val, observed, store$, unsub) => {
+VAL$.subscribe((val, observed, this$, unsub) => {
   console.log('I am subscribed! Value:', val);
 
-  return value => {
-    console.log('I was unsubscribed!', value);
+  return (val, observed, this$, unsub) => {
+    // unsub - it won't work anymore...
+    console.log('I was unsubscribed!');
   };
 });
 ```
 
 console.log:
 
-- The first subscriber appeared!
-- I am subscribed! Value: 42!
-- I was unsubscribed!
-- All subscribers have unsubscribed!
+```console
+The first subscriber appeared!
+I am subscribed! Value: 42!
+I was unsubscribed!
+All subscribers have unsubscribed!
+```
 
-#### update(callbackFn: (value, observed: [], store, unsubscribe: function) => newValue)
+#### update(callbackFn: (value, observed: Array, this, unsubscribe: Function) => newValue)
 
 #### updateSure(callbackFn)
 
 #### updateWeak(callbackFn, deep)
 
-```js
+```javascript
 const VAL$ = store(42);
 
 VAL$.subscribe(val => {
@@ -181,8 +195,10 @@ VAL$.update(val => {
 
 console.log:
 
-- Value: 42
-- Value: 54
+```console
+Value: 42
+Value: 54
+```
 
 ### observe and unobserve:
 
@@ -194,7 +210,7 @@ console.log:
 
 These are obother servers whose updates affect subscription calls.
 
-```js
+```javascript
 const SUBVAL_1$ = store(0);
 const SUBVAL_2$ = store(0);
 
@@ -223,17 +239,19 @@ SUBVAL_2$.set(1);
 
 console.log:
 
-- Subval_1: 0
-- Subval_2: 0
-- Value: 42 Subvalues: [0, 0]
-- Value: 42 Subvalues: [1, 0]
-- Subval_1: 1
-- Value: 42 Subvalues: [1, 1]
-- Subval_2: 1
+```console
+Subval_1: 0
+Subval_2: 0
+Value: 42 Subvalues: [0, 0]
+Value: 42 Subvalues: [1, 0]
+Subval_1: 1
+Value: 42 Subvalues: [1, 1]
+Subval_2: 1
+```
 
 'VAL' subscriptions will trigger earlier than subscriptions to 'SUBVAL_1' and 'SUBVAL_2'. Why is this needed? This mechanism has an interesting property - it filters out "extra calls" to subscriptions, if they are probably not needed yet.
 
-```js
+```javascript
 const SUBVAL_1$ = store(0);
 const SUBVAL_2$ = store(0);
 
@@ -256,18 +274,20 @@ VAL$.subscribe((val, [subval_1, subval_2]) => {
 
 console.log:
 
-- Subval_1: 0
-- Subval_2: 0
-- Value: 42 Subvalues: [0, 0]
-- Value: 42 Subvalues: [1, 1]
-- Value: 42 Subvalues: [2, 2]
-- Value: 42 Subvalues: [2, 3]
-- Subval_1: 2
-- Subval_2: 3
+```console
+Subval_1: 0
+Subval_2: 0
+Value: 42 Subvalues: [0, 0]
+Value: 42 Subvalues: [1, 1]
+Value: 42 Subvalues: [2, 2]
+Value: 42 Subvalues: [2, 3]
+Subval_1: 2
+Subval_2: 3
+```
 
 This is magic for observed stores. When you update them inside subscription processing, this function will be called again to make sure the store is not changed again. And only then will the original subscriptions of the changed observers be called.
 
-```js
+```javascript
 const SUBVAL_1$ = store(0);
 const SUBVAL_2$ = store(0);
 
@@ -292,20 +312,22 @@ VAL$.subscribe((val, [subval_1, subval_2]) => {
 
 console.log:
 
-- Subval_1: 0
-- Subval_2: 0
-- Value: 0 Subvalues: [0, 0]
-- Value: 2 Subvalues: [1, 1]
-- Value: 4 Subvalues: [2, 2]
-- Value: 5 Subvalues: [2, 3]
-- Subval_1: 2
-- Subval_2: 3
+```console
+Subval_1: 0
+Subval_2: 0
+Value: 0 Subvalues: [0, 0]
+Value: 2 Subvalues: [1, 1]
+Value: 4 Subvalues: [2, 2]
+Value: 5 Subvalues: [2, 3]
+Subval_1: 2
+Subval_2: 3
+```
 
 #### unobserve(stores: store, Array<store>)
 
 Removes the observer from the service system.
 
-```js
+```javascript
 const SUBVAL_1$ = store(0);
 const SUBVAL_2$ = store(0);
 const VAL$ = store(42, [SUBVAL_1$, SUBVAL_2$]);
@@ -327,7 +349,7 @@ VAL$.subscribe((val, [subval_1]) => {
 
 Like 'observe', just the opposite.
 
-```js
+```javascript
 const SUBVAL_1$ = store(0);
 const VAL$ = store(42);
 
@@ -338,7 +360,7 @@ accert(VAL$.observe([SUBVAL_1$]), SUBVAL_1$.observable([VAL$]));
 
 Like 'unobserve', just the opposite.
 
-```js
+```javascript
 const SUBVAL_1$ = store(0);
 const SUBVAL_2$ = store(0);
 const VAL$ = store(42, [SUBVAL_1$, SUBVAL_2$]);
@@ -360,7 +382,7 @@ VAL$.subscribe((val, [subval_1]) => {
 
 These are other observers whose updates update the current observer.
 
-```js
+```javascript
 const SUBVAL_1$ = store(0);
 const SUBVAL_2$ = store(0);
 
@@ -389,17 +411,19 @@ SUBVAL_2$.set(5);
 
 console.log:
 
-- Subval_1: 0
-- Subval_2: 0
-- Value: 0
-- Value: 1
-- Subval_1: 1
-- Value: 5
-- Subval_2: 5
+```console
+Subval_1: 0
+Subval_2: 0
+Value: 0
+Value: 1
+Subval_1: 1
+Value: 5
+Subval_2: 5
+```
 
 This is magic for depend stores:
 
-```js
+```javascript
 const SUBVAL_1$ = store(0);
 const SUBVAL_2$ = store(0);
 
@@ -425,23 +449,25 @@ VAL$.subscribe(val => {
 
 console.log:
 
-- Subval_1: 0
-- Subval_2: 0
-- Value: 0
+```console
+Subval_1: 0
+Subval_2: 0
+Value: 0
 
-- Subval_1: 1
-- Value: 1
-- Subval_1: 2
-- Value: 2
+Subval_1: 1
+Value: 1
+Subval_1: 2
+Value: 2
 
-- Subval_2: 1
-- Value: 1
-- Subval_2: 2
-- Value: 2
-- Subval_2: 3
-- Value: 3
+Subval_2: 1
+Value: 1
+Subval_2: 2
+Value: 2
+Subval_2: 3
+Value: 3
 
-- Value: 5
+Value: 5
+```
 
 Observer updates affect consistently. And the final result will only work at the end.
 
@@ -449,7 +475,7 @@ Observer updates affect consistently. And the final result will only work at the
 
 Removes the observer from the 'depend'-observers.
 
-```js
+```javascript
 const SUBVAL_1$ = store(0);
 const SUBVAL_2$ = store(0);
 const VAL$ = store(42, [], [SUBVAL_1$, SUBVAL_2$]);
@@ -467,7 +493,7 @@ VAL$.undepend(SUBVAL_2$);
 
 Like 'depend', just the opposite.
 
-```js
+```javascript
 const SUBVAL_1$ = store(0);
 const VAL$ = store(42);
 
@@ -478,7 +504,7 @@ accert(VAL$.depend([SUBVAL_1$]), SUBVAL_1$.dependency([VAL$]));
 
 Like 'undepend', just the opposite.
 
-```js
+```javascript
 const SUBVAL_1$ = store(0);
 const SUBVAL_2$ = store(0);
 const VAL$ = store(42, [], [SUBVAL_1$, SUBVAL_2$]);
@@ -496,7 +522,7 @@ SUBVAL_2$.undependency(VAL$);
 
 Establishes interdependence between observers
 
-```js
+```javascript
 const VAL_1$ = store(0);
 const VAL_2$ = store(0);
 const VAL_3$ = store(0);
@@ -523,23 +549,29 @@ VAL_3$.subscribe(val_3 => console.log('Val_3:', val_3));
 
 console.log:
 
-- Val_1: 0
-- Val_2: 0
-- Val_3: 0
-- Val_3: 1
-- Val_2: 1
-- Val_1: 1
-- Val_3: 2
-- Val_1: 2
-- Val_2: 2
-- Val_2: 3
-- Val_1: 3
-- Val_3: 3
+```console
+Val_1: 0
+Val_2: 0
+Val_3: 0
+
+Val_3: 1
+Val_2: 1
+Val_1: 1
+
+Val_3: 2
+Val_1: 2
+Val_2: 2
+
+Val_2: 3
+Val_1: 3
+Val_3: 3
+```
 
 #### unbridge(stores: store, Array<store>)
+
 Removes the 'bridge'.
 
-```js
+```javascript
 const VAL_1$ = store(0);
 const VAL_2$ = store(0);
 const VAL_3$ = store(0);
