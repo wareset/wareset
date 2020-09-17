@@ -241,12 +241,29 @@ module.exports = function WaresetStore(
   define('setSure', { value: newVALUE => updateVALUE(newVALUE, null) }, 1);
 
   // UPDATE
-  define('update', { value: update => updateVALUE(update(VALUE), -1) }, 1);
+  define('update', {
+    value: update => {
+      return updateVALUE(
+        update(VALUE, _get_last_observed_values(), Writable, noop),
+        -1
+      );
+    }
+  }, 1);
   define('updateWeak', {
-    value: (update, deep = 0) => updateVALUE(update(VALUE), deep)
+    value: (update, deep = 0) => {
+      return updateVALUE(
+        update(VALUE, _get_last_observed_values(), Writable, noop),
+        deep
+      );
+    }
   }, 1);
   define('updateSure', {
-    value: update => updateVALUE(update(VALUE), null)
+    value: update => {
+      return updateVALUE(
+        update(VALUE, _get_last_observed_values(), Writable, noop),
+        null
+      );
+    }
   }, 1);
 
   forIn({ observable, observe, dependency, depend, bridge }, (value, key) => {
