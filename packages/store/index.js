@@ -61,8 +61,8 @@ module.exports = function WaresetStore(
       while (QUEUE.length) {
         if (isBreak) break;
         sub = QUEUE.pop();
-        if (sub[5] === QUEUE.length) {
-          sub[0](sub[1], sub[2], sub[3], sub[4]);
+        if (sub[0] === QUEUE.length) {
+          sub[1](sub[2], sub[3], sub[4], sub[5]);
         }
       }
     }
@@ -88,9 +88,9 @@ module.exports = function WaresetStore(
       if ((!_choice_ || _choice_[0]) && stop && subscribers.length) {
         _get_last_observed_values();
         for (let i = subscribers.length; i-- > 0; undefined) {
-          subscribers[i][1] = VALUE;
-          subscribers[i][2] = last_observed_values;
-          subscribers[i][5] = QUEUE.length;
+          subscribers[i][0] = QUEUE.length;
+          subscribers[i][2] = VALUE;
+          subscribers[i][3] = last_observed_values;
           QUEUE.push(subscribers[i]);
         }
       }
@@ -118,9 +118,6 @@ module.exports = function WaresetStore(
   // STORE METHODS
   define('subscribe', {
     value: (subscribe = noop) => {
-      const subscriber = [];
-      subscribers.push(subscriber);
-
       const _subscribe_ = (...a) => {
         isBreak = true;
         // _lastStore = Writable;
@@ -128,27 +125,33 @@ module.exports = function WaresetStore(
         (isBreak = false), queueStart();
         return res;
       };
-      subscriber.push(_subscribe_, VALUE, [], Writable);
+      const subscriber = [-1, _subscribe_, VALUE, [], Writable];
+      subscribers.push(subscriber);
 
+      let initialized = false;
       const unsubscribe = () => {
-        const index = subscribers.indexOf(subscriber);
-        if (index !== -1) subscribers.splice(index, 1);
+        if (!initialized) initialized = true;
+        else {
+          const index = subscribers.indexOf(subscriber);
+          if (index !== -1) subscribers.splice(index, 1);
 
-        if (isFunc(subscriber[6])) {
-          subscriber[6](VALUE, _get_last_observed_values(), Writable, noop);
+          if (isFunc(subscriber[6])) {
+            subscriber[6](VALUE, _get_last_observed_values(), Writable, noop);
+          }
+
+          if (!subscribers.length) {
+            if (stop) stop(VALUE, _get_last_observed_values(), Writable, noop);
+            stop = null;
+          }
         }
 
-        if (!subscribers.length) {
-          if (stop) stop(VALUE, _get_last_observed_values(), Writable, noop);
-          stop = null;
-        }
+        return Writable;
       };
-      subscriber.push(unsubscribe, 0);
+      subscriber.push(unsubscribe);
 
-      let _first_unsub_ = false;
       if (!stop && subscribers.length) {
-        const _unsub_ = () => (_first_unsub_ = true);
-        stop = start(VALUE, _get_last_observed_values(), Writable, _unsub_);
+        // const _unsub_ = () => (_first_unsub_ = true);
+        stop = start(VALUE, _get_last_observed_values(), Writable, unsubscribe);
         if (!isFunc(stop)) stop = noop;
       }
 
@@ -156,7 +159,8 @@ module.exports = function WaresetStore(
         _subscribe_(VALUE, _get_last_observed_values(), Writable, unsubscribe)
       );
 
-      if (_first_unsub_) unsubscribe();
+      if (initialized) unsubscribe();
+      initialized = true;
       return unsubscribe;
     }
   }, 1);
