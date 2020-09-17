@@ -24,13 +24,13 @@ The observer is a real regular array. The first element is reserved for storing 
 Methods 'valueOf', 'toString' and 'toJSON' are forwarded from a stored variable. Therefore, the construction will work with primitives 'string' and 'number':
 
 ```javascript
-accert(typeof VAL$, 'object');
-accert(VAL$ instanceof Array, true);
+assert(typeof VAL$, 'object');
+assert(VAL$ instanceof Array, true);
 
 // but
-accert(VAL$ + 12, 54); // 42 + 12
-accert(store('Hello') + ' world!', 'Hello world!');
-accert([...store(42)], [42]);
+assert(VAL$ + 12, 54); // 42 + 12
+assert(store('Hello') + ' world!', 'Hello world!');
+assert([...store(42)], [42]);
 
 JSON.stringify(store(42)); // '42'
 JSON.stringify(store({ q: 1 })); // '{ "q": 1 }'
@@ -45,10 +45,10 @@ All methods are anonymous functions. Hence, they do not accept or change the con
 ### get(), [0], \$, value
 
 ```javascript
-accert(VAL$.get(), 42);
-accert(VAL$[0], 42); // alias for 'get()' and 'set()'
-accert(VAL$.$, 42); // alias for 'get()' and 'set()'
-accert(VAL$.value, 42); // alias for 'get()' and 'set()'
+assert(VAL$.get(), 42);
+assert(VAL$[0], 42); // alias for 'get()' and 'set()'
+assert(VAL$.$, 42); // alias for 'get()' and 'set()'
+assert(VAL$.value, 42); // alias for 'get()' and 'set()'
 ```
 
 ## set, subscribe and update:
@@ -62,19 +62,19 @@ This method is similar to "set" from "svelte/store/writable" and "next" from "rx
 
 ```javascript
 VAL$.set(24);
-accert(VAL$.get(), 24);
+assert(VAL$.get(), 24);
 
 VAL$.next(12); // alias for 'set()'
-accert(VAL$.get(), 12);
+assert(VAL$.get(), 12);
 
 VAL$.$ = 25;
-accert(VAL$.get(), 25);
+assert(VAL$.get(), 25);
 
 VAL$[0] = 26;
-accert(VAL$.get(), 26);
+assert(VAL$.get(), 26);
 
 VAL$.value = 27;
-accert(VAL$.get(), 27);
+assert(VAL$.get(), 27);
 ```
 
 Subscriptions will be started if the value is 'different' from the previous one or if the value is a 'function'.
@@ -119,10 +119,10 @@ VAL$.setWeak({ q: 1 }, 1); // Nothing will happen
 const VAL$ = store(42);
 
 const unsubscribe = VAL$.subscribe((val, observed, this$, unsub) => {
-  accert(val, VAL$.$);
+  assert(val, VAL$.$);
   // observed - explained further in the text
-  accert(this$, VAL$);
-  accert(unsub, unsubscribe);
+  assert(this$, VAL$);
+  assert(unsub, unsubscribe);
 
   console.log('Value:', val);
 
@@ -378,7 +378,7 @@ Like 'observe', just the opposite.
 const SUBVAL_1$ = store(0);
 const VAL$ = store(42);
 
-accert(VAL$.observe([SUBVAL_1$]), SUBVAL_1$.observable([VAL$]));
+assert(VAL$.observe([SUBVAL_1$]), SUBVAL_1$.observable([VAL$]));
 ```
 
 ### unobservable(stores: store | Array<store>)
@@ -525,7 +525,7 @@ Like 'depend', just the opposite.
 const SUBVAL_1$ = store(0);
 const VAL$ = store(42);
 
-accert(VAL$.depend([SUBVAL_1$]), SUBVAL_1$.dependency([VAL$]));
+assert(VAL$.depend([SUBVAL_1$]), SUBVAL_1$.dependency([VAL$]));
 ```
 
 ### undependency(stores: store | Array<store>)
