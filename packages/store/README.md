@@ -38,6 +38,8 @@ JSON.stringify(store({ q: 1 })); // '{ "q": 1 }'
 
 # Methods:
 
+All methods are anonymous functions. Hence, they do not accept or change the context. All methods are synchronous!
+
 ## get
 
 ### get(), [0], \$, value
@@ -194,7 +196,11 @@ All subscribers have unsubscribed!
 const VAL$ = store(42);
 
 VAL$.subscribe(val => {
-  console.log('Value:', val);
+  console.log('Subscriber 1. Value:', val);
+});
+
+VAL$.subscribe(val => {
+  console.log('Subscriber 2. Value:', val);
 });
 
 VAL$.update(val => {
@@ -205,8 +211,10 @@ VAL$.update(val => {
 console.log:
 
 ```console
-Value: 42
-Value: 54
+Subscriber 1. Value: 42
+Subscriber 2. Value: 42
+Subscriber 1. Value: 54
+Subscriber 2. Value: 54
 ```
 
 ## observe and unobserve:
@@ -217,7 +225,7 @@ Value: 54
 
 ### observeWeak(stores, deep)
 
-These are obother servers whose updates affect subscription calls.
+These are obother observers whose updates affect subscriptions calls.
 
 ```javascript
 const SUBVAL_1$ = store(0);
@@ -228,7 +236,7 @@ VAL$.observe([SUBVAL_1$, SUBVAL_2$]);
 // or const VAL = store(42, [SUBVAL_1, SUBVAL_2]);
 // or VAL$.observe(SUBVAL_1$).observe(SUBVAL_2$);
 // But, when observers are in an array - previous observers are erased:
-// VAL$.observe([SUBVAL_1$]).observe([SUBVAL_2$]); - will remove SUBVAL_1$
+// VAL$.observe([SUBVAL_1$]).observe([SUBVAL_2$]); - will unobserve SUBVAL_1$
 
 SUBVAL_1$.subscribe(subval_1 => {
   console.log('Subval_1: ', subval_1);
@@ -252,8 +260,10 @@ console.log:
 Subval_1: 0
 Subval_2: 0
 Value: 42 Subvalues: [0, 0]
+
 Value: 42 Subvalues: [1, 0]
 Subval_1: 1
+
 Value: 42 Subvalues: [1, 1]
 Subval_2: 1
 ```
@@ -276,6 +286,7 @@ SUBVAL_2$.subscribe(subval_2 => {
 
 VAL$.subscribe((val, [subval_1, subval_2]) => {
   console.log('Value: ', val, 'Subvalues: ', [subval_1, subval_2]);
+
   if (subval_1 < 2) ++SUBVAL_1$.$;
   if (subval_2 < 3) ++SUBVAL_2$.$;
 });
@@ -287,11 +298,13 @@ console.log:
 Subval_1: 0
 Subval_2: 0
 Value: 42 Subvalues: [0, 0]
+
 Value: 42 Subvalues: [1, 1]
 Value: 42 Subvalues: [2, 2]
 Value: 42 Subvalues: [2, 3]
-Subval_1: 2
+
 Subval_2: 3
+Subval_1: 2
 ```
 
 This is magic for observed stores. When you update them inside subscription processing, this function will be called again to make sure the store is not changed again. And only then will the original subscriptions of the changed observers be called.
@@ -312,6 +325,7 @@ SUBVAL_2$.subscribe(subval_2 => {
 
 VAL$.subscribe((val, [subval_1, subval_2]) => {
   console.log('Value: ', val, 'Subvalues: ', [subval_1, subval_2]);
+
   if (subval_1 < 2) ++SUBVAL_1$.$;
   if (subval_2 < 3) ++SUBVAL_2$.$;
 
@@ -325,16 +339,18 @@ console.log:
 Subval_1: 0
 Subval_2: 0
 Value: 0 Subvalues: [0, 0]
+
 Value: 2 Subvalues: [1, 1]
 Value: 4 Subvalues: [2, 2]
 Value: 5 Subvalues: [2, 3]
-Subval_1: 2
+
 Subval_2: 3
+Subval_1: 2
 ```
 
 ### unobserve(stores: store | Array<store>)
 
-Removes the observer from the service system.
+Removes the observer from the 'observed'.
 
 ```javascript
 const SUBVAL_1$ = store(0);
@@ -400,7 +416,7 @@ VAL$.depend([SUBVAL_1$, SUBVAL_2$]);
 // or const VAL = store(42, [], [SUBVAL_1, SUBVAL_2]);
 // or VAL$.depend(SUBVAL_1$).depend(SUBVAL_2$);
 // But, when observers are in an array - previous observers are erased:
-// VAL$.depend([SUBVAL_1$]).depend([SUBVAL_2$]); - will remove SUBVAL_1$
+// VAL$.depend([SUBVAL_1$]).depend([SUBVAL_2$]); - will undeped SUBVAL_1$
 
 SUBVAL_1$.subscribe(subval_1 => {
   console.log('Subval_1: ', subval_1);
@@ -424,8 +440,10 @@ console.log:
 Subval_1: 0
 Subval_2: 0
 Value: 0
+
 Value: 1
 Subval_1: 1
+
 Value: 5
 Subval_2: 5
 ```
@@ -449,8 +467,9 @@ SUBVAL_2$.subscribe(subval_2 => {
 
 VAL$.subscribe(val => {
   console.log('Value: ', val);
-  if (subval_1 < 2) ++SUBVAL_1$.$;
-  if (subval_2 < 3) ++SUBVAL_2$.$;
+
+  if (SUBVAL_1$.$ < 2) ++SUBVAL_1$.$;
+  if (SUBVAL_2$.$ < 3) ++SUBVAL_2$.$;
 
   VAL$.$ = SUBVAL_1$.$ + SUBVAL_2$.$;
 });
@@ -478,11 +497,11 @@ Value: 3
 Value: 5
 ```
 
-Observer updates affect consistently. And the final result will only work at the end.
+Observers are updated in turn. And the final result will only be at the end.
 
 ### undepend(stores: store | Array<store>)
 
-Removes the observer from the 'depend'-observers.
+Removes the observer from the 'depended'.
 
 ```javascript
 const SUBVAL_1$ = store(0);
