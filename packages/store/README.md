@@ -10,7 +10,7 @@ Fast and easy observer. It is very similar to a 'store/writable' from [Svelte](h
 npm i @wareset/store ## yarn add @wareset/store
 ```
 
-#### store(value: any, observed?: Array, depended?: Array, startFn?: Function)
+#### store(value: any, observed?: Array, depended?: Array, start?: Function)
 
 ```javascript
 import store from '@wareset/store';
@@ -26,14 +26,21 @@ Methods 'valueOf', 'toString' and 'toJSON' are forwarded from a stored variable.
 ```javascript
 accert(typeof VAL$, 'object');
 accert(VAL$ instanceof Array, true);
+
 // but
 accert(VAL$ + 12, 54); // 42 + 12
 accert(store('Hello') + ' world!', 'Hello world!');
+accert([...store(42)], [42]);
+
+JSON.stringify(store(42)); // '42'
+JSON.stringify(store({ q: 1 })); // '{ "q": 1 }'
 ```
 
-## Methods:
+# Methods:
 
-#### get()
+## get
+
+### get(), [0], \$, value
 
 ```javascript
 accert(VAL$.get(), 42);
@@ -42,11 +49,11 @@ accert(VAL$.$, 42); // alias for 'get()' and 'set()'
 accert(VAL$.value, 42); // alias for 'get()' and 'set()'
 ```
 
-### set, subscribe and update:
+## set, subscribe and update:
 
-#### set(newValue: any)
+### set(newValue: any)
 
-This method is similar to "set" from "svelte/store/writable" and "next" from "rxjs". But they always run subscribers if the value is an 'object'. This method doesn't do that. It always launches subscribers only if you pass a function. Including the same one.
+This method is similar to "set" from "svelte/store/writable" and "next" from "rxjs". But they always run subscribers if the value is an 'object'. This method doesn't do that. It always launches subscribers only if you pass a 'function'.
 
 > If you need to force subscribers to start, use 'setSure'.
 > If you don't need to call the same function, use 'setWeak'.
@@ -75,21 +82,21 @@ const VAL$ = store(42);
 VAL$.$ = 42; // Nothing will happen
 
 function func() {}
-const VAL_3$ = store(func);
-VAL3$.$ = func; // Will launch all subscription mechanisms
+const VAL_2$ = store(func);
+VAL2$.$ = func; // Will launch all subscriptions
 ```
 
-#### setSure(newValue: any)
+### setSure(newValue: any)
 
 This will cause the subscriptions to run anyway.
 The rest of the methods 'Sure' behave exactly the same.
 
 ```javascript
 const VAL$ = store(42);
-VAL$.setSure(42); // Will launch all subscription mechanisms
+VAL$.setSure(42); // Will launch all subscriptions
 ```
 
-#### setWeak(newValue: any, deep?: Number = 0)
+### setWeak(newValue: any, deep?: Number = 0)
 
 This is a soft test.
 The rest of the methods 'Weak' behave exactly the same.
@@ -100,18 +107,18 @@ The rest of the methods 'Weak' behave exactly the same.
 const obj = { q: 1 };
 const VAL$ = store(obj);
 VAL$.setWeak(obj, 0); // Nothing will happen
-VAL$.setWeak({ q: 1 }, 0); // Will launch all subscription mechanisms
+VAL$.setWeak({ q: 1 }, 0); // Will launch all subscriptions
 VAL$.setWeak({ q: 1 }, 1); // Nothing will happen
 ```
 
-#### subscribe(callbackFn: (value, observed: Array, store: this, unsubscribe: Function))
+### subscribe(callbackFn: (value, observed: Array, _this_: store, unsubscribe: Function))
 
 ```javascript
 const VAL$ = store(42);
 
 const unsubscribe = VAL$.subscribe((val, observed, this$, unsub) => {
   accert(val, VAL$.$);
-  // observed - further in the documentation
+  // observed - explained further in the text
   accert(this$, VAL$);
   accert(unsub, unsubscribe);
 
@@ -119,8 +126,8 @@ const unsubscribe = VAL$.subscribe((val, observed, this$, unsub) => {
 
   return (val, observed, this$, unsub) => {
     // unsub - it won't work anymore
-    // but if, on further calls, it will show the true value VAL$.$
-    console.log('Subscription canceled: ', val);
+    // but if, on further calls, it will show the current value VAL$.$
+    console.log('Subscription canceled! Value: ', val);
   };
 });
 
@@ -136,8 +143,8 @@ console.log:
 ```console
 Value: 42
 Value: 43
-Subscription canceled: 43
-Subscription canceled: 44 ## it won't work, but show the true value
+Subscription canceled! Value: 43
+Subscription canceled! Value: 44 ## unsubscribed, but show the current value
 ```
 
 Example of start and end functions:
@@ -147,11 +154,11 @@ const VAL$ = store(42, (val, observed, this$, unsub) => {
   console.log('The first subscriber appeared!');
 
   // unsub - this is unsubscribe for the first subscriber
-  // Cancel it!
+  // For example, let's cancel it.
   unsub();
 
   return (val, observed, this$, unsub) => {
-    // unsub - it won't work anymore...
+    // unsub - Backward compatibility stub () => {}
     console.log('All subscribers have unsubscribed!');
   };
 });
@@ -160,7 +167,7 @@ VAL$.subscribe((val, observed, this$, unsub) => {
   console.log('I am subscribed! Value:', val);
 
   return (val, observed, this$, unsub) => {
-    // unsub - it won't work anymore...
+    // unsub - Backward compatibility stub () => {}
     console.log('I was unsubscribed!');
   };
 });
@@ -175,11 +182,13 @@ I was unsubscribed!
 All subscribers have unsubscribed!
 ```
 
-#### update(callbackFn: (value, observed: Array, this, unsubscribe: Function) => newValue)
+### update(callbackFn: (value, observed: Array, _this_: store, noop: Function) => newValue)
 
-#### updateSure(callbackFn)
+- noop - Backward compatibility stub
 
-#### updateWeak(callbackFn, deep)
+### updateSure(callbackFn)
+
+### updateWeak(callbackFn, deep)
 
 ```javascript
 const VAL$ = store(42);
@@ -200,13 +209,13 @@ Value: 42
 Value: 54
 ```
 
-### observe and unobserve:
+## observe and unobserve:
 
-#### observe(stores: store, Array<store>)
+### observe(stores: store | Array<store>)
 
-#### observeSure(stores)
+### observeSure(stores)
 
-#### observeWeak(stores, deep)
+### observeWeak(stores, deep)
 
 These are obother servers whose updates affect subscription calls.
 
@@ -323,7 +332,7 @@ Subval_1: 2
 Subval_2: 3
 ```
 
-#### unobserve(stores: store, Array<store>)
+### unobserve(stores: store | Array<store>)
 
 Removes the observer from the service system.
 
@@ -339,13 +348,13 @@ VAL$.subscribe((val, [subval_1]) => {
 });
 ```
 
-### observable and unobservable:
+## observable and unobservable:
 
-#### observable(stores: store, Array<store>)
+### observable(stores: store | Array<store>)
 
-#### observableSure(stores)
+### observableSure(stores)
 
-#### observableWeak(stores, deep)
+### observableWeak(stores, deep)
 
 Like 'observe', just the opposite.
 
@@ -356,7 +365,7 @@ const VAL$ = store(42);
 accert(VAL$.observe([SUBVAL_1$]), SUBVAL_1$.observable([VAL$]));
 ```
 
-#### unobservable(stores: store, Array<store>)
+### unobservable(stores: store | Array<store>)
 
 Like 'unobserve', just the opposite.
 
@@ -372,13 +381,13 @@ VAL$.subscribe((val, [subval_1]) => {
 });
 ```
 
-### depend and undepend:
+## depend and undepend:
 
-#### depend(stores: store, Array<store>)
+### depend(stores: store | Array<store>)
 
-#### depend(stores)
+### depend(stores)
 
-#### depend(stores, deep)
+### depend(stores, deep)
 
 These are other observers whose updates update the current observer.
 
@@ -471,7 +480,7 @@ Value: 5
 
 Observer updates affect consistently. And the final result will only work at the end.
 
-#### undepend(stores: store, Array<store>)
+### undepend(stores: store | Array<store>)
 
 Removes the observer from the 'depend'-observers.
 
@@ -483,13 +492,13 @@ const VAL$ = store(42, [], [SUBVAL_1$, SUBVAL_2$]);
 VAL$.undepend(SUBVAL_2$);
 ```
 
-### dependency and undependency:
+## dependency and undependency:
 
-#### dependency(stores: store, Array<store>)
+### dependency(stores: store | Array<store>)
 
-#### dependencySure(stores)
+### dependencySure(stores)
 
-#### dependencyWeak(stores, deep)
+### dependencyWeak(stores, deep)
 
 Like 'depend', just the opposite.
 
@@ -500,7 +509,7 @@ const VAL$ = store(42);
 accert(VAL$.depend([SUBVAL_1$]), SUBVAL_1$.dependency([VAL$]));
 ```
 
-#### undependency(stores: store, Array<store>)
+### undependency(stores: store | Array<store>)
 
 Like 'undepend', just the opposite.
 
@@ -512,13 +521,13 @@ const VAL$ = store(42, [], [SUBVAL_1$, SUBVAL_2$]);
 SUBVAL_2$.undependency(VAL$);
 ```
 
-### bridge and unbridge:
+## bridge and unbridge:
 
-#### bridge(stores: store, Array<store>)
+### bridge(stores: store | Array<store>)
 
-#### bridgeSure(stores)
+### bridgeSure(stores)
 
-#### bridgeWeak(stores, deep)
+### bridgeWeak(stores, deep)
 
 Establishes interdependence between observers
 
@@ -567,7 +576,7 @@ Val_1: 3
 Val_3: 3
 ```
 
-#### unbridge(stores: store, Array<store>)
+### unbridge(stores: store | Array<store>)
 
 Removes the 'bridge'.
 
