@@ -118,6 +118,9 @@ module.exports = function WaresetStore(
   // STORE METHODS
   define('subscribe', {
     value: (subscribe = noop) => {
+      const subscriber = [];
+      subscribers.push(subscriber);
+
       const _subscribe_ = (...a) => {
         isBreak = true;
         // _lastStore = Writable;
@@ -125,13 +128,16 @@ module.exports = function WaresetStore(
         (isBreak = false), queueStart();
         return res;
       };
-
-      const subscriber = [_subscribe_, VALUE, [], Writable];
-      subscribers.push(subscriber);
+      subscriber.push(_subscribe_, VALUE, [], Writable);
 
       const unsubscribe = () => {
         const index = subscribers.indexOf(subscriber);
         if (index !== -1) subscribers.splice(index, 1);
+
+        if (isFunc(subscriber[6])) {
+          subscriber[6](VALUE, _get_last_observed_values(), Writable, noop);
+        }
+
         if (!subscribers.length) {
           if (stop) stop(VALUE, _get_last_observed_values(), Writable, noop);
           stop = null;
@@ -139,12 +145,18 @@ module.exports = function WaresetStore(
       };
       subscriber.push(unsubscribe, 0);
 
+      let _first_unsub_ = false;
       if (!stop && subscribers.length) {
-        stop = start(VALUE, _get_last_observed_values(), Writable, unsubscribe);
+        const _unsub_ = () => (_first_unsub_ = true);
+        stop = start(VALUE, _get_last_observed_values(), Writable, _unsub_);
         if (!isFunc(stop)) stop = noop;
       }
 
-      _subscribe_(VALUE, _get_last_observed_values(), Writable, unsubscribe);
+      subscriber.push(
+        _subscribe_(VALUE, _get_last_observed_values(), Writable, unsubscribe)
+      );
+
+      if (_first_unsub_) unsubscribe();
       return unsubscribe;
     }
   }, 1);
