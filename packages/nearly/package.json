@@ -1,0 +1,26 @@
+{
+  "name": "@wareset/nearly",
+  "version": "0.1.0",
+  "description": "Returns the nearest value from the array, or from a pattern",
+  "author": "cftcview <cftcview@gmail.com>",
+  "homepage": "https://github.com/wareset/wareset#readme",
+  "license": "MIT",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "keywords": [
+    "nearest"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wareset/wareset.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wareset/wareset/issues"
+  }
+}
