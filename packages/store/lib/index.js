@@ -1,11 +1,9 @@
-const { IS_STORE } = require('./consts.js');
-
 const noop = () => {};
 const isVoid = v => v === null || v === undefined;
 
-const thisIsStore = check_store => {
+const isStore = check_store => {
   try {
-    return check_store._[IS_STORE] === thisIsStore;
+    return check_store._.isStore === isStore;
   } catch (err) {
     return false;
   }
@@ -27,12 +25,12 @@ const forIn = (obj, cb) => {
   Object.keys(obj).forEach(v => cb(obj[v], v, obj));
 };
 
-const isFunc = (v) => typeof v === 'function';
+const isFunc = v => typeof v === 'function';
 
 module.exports = {
   noop,
   isVoid,
-  thisIsStore,
+  isStore,
   definer,
   inArr,
   forIn,
