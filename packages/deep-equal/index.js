@@ -17,8 +17,8 @@ module.exports = function equal(a, b, deep = true) {
   const deep2 = typeof deep !== 'number' ? deep : deep--;
 
   let keys;
-  switch (proto) {
-    case Object.prototype:
+  switch (proto.constructor) {
+    case Object:
       keys = Object.keys(a);
       if (keys.length !== Object.keys(b).length) return false;
 
@@ -30,7 +30,7 @@ module.exports = function equal(a, b, deep = true) {
       }
       return true;
 
-    case Array.prototype:
+    case Array:
       if (a.length !== b.length) return false;
 
       for (let k = a.length; k-- > 0; undefined) {
@@ -38,19 +38,19 @@ module.exports = function equal(a, b, deep = true) {
       }
       return true;
 
-    case Map.prototype:
+    case Map:
       if (a.size !== b.size) return false;
 
       for (const [k] of a) if (!b.has(k)) return false;
       for (const [k, v] of a) if (!equal(v, b.get(k), deep2)) return false;
       return true;
 
-    case Set.prototype:
+    case Set:
       if (a.size !== b.size) return false;
       for (const v of a) if (!b.has(v)) return false;
       return true;
 
-    case RegExp.prototype:
+    case RegExp:
       return a.source === b.source && a.flags === b.flags;
 
     default:
