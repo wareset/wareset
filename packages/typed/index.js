@@ -1,48 +1,47 @@
-function __get_types(t = []) {
-  return Array.isArray(t[0] && t.length) ? [...t.shift(), ...t] : t;
-}
-function __is_void(value) {
-  return value === undefined || value === null;
-}
+const __getTypes = (t = []) => {
+  return Array.isArray(t[0]) && t[0].length ? [...t.shift(), ...t] : t;
+};
+const __isVoid = (value) => value == null;
+
 function __eq(proto, type) {
   if (proto === type) return true;
-  if (__is_void(proto) || __is_void(type)) return false;
-  return proto === type.prototype || proto.constructor === type.constructor;
+  if (__isVoid(proto) || __isVoid(type)) return false;
+  return proto === type.constructor;
 }
 
-function get_proto(value) {
-  if (__is_void(value)) return value;
-  return Object.getPrototypeOf(value);
+const __proto = (v) => __isVoid(v) ? v : Object.getPrototypeOf(v);
+
+function getProto(v) {
+  v = __proto(v);
+  return v ? v.constructor : v;
 }
-function get_protos(value) {
-  if (__is_void(value)) return [value];
+function getProtos(v) {
   const protos = [];
-  while ((value = get_proto(value))) protos.push(value);
-
+  while ((v = __proto(v))) protos.push(v ? v.constructor : v);
   return protos;
 }
 
-function typed_of(value, ...types) {
-  const protos = get_protos(value);
+function typedof(value, ...types) {
+  const protos = getProtos(value);
   if (!types.length) return protos;
-  types = __get_types(types);
-  return protos.some(proto => types.some(type => __eq(proto, type)));
+  types = __getTypes(types);
+  return protos.some((proto) => types.some((type) => __eq(proto, type)));
 }
-typed_of.check = (value, ...args) => {
-  if (!args.length || typed_of(value, ...args)) return value;
+typedof.check = (value, ...args) => {
+  if (!args.length || typedof(value, ...args)) return value;
   throw new Error();
 };
 
 function typed(value, ...types) {
-  const proto = get_proto(value);
+  const proto = getProto(value);
   if (!types.length) return proto;
-  return __get_types(types).some(type => __eq(proto, type));
+  return __getTypes(types).some((type) => __eq(proto, type));
 }
 typed.check = (value, ...args) => {
   if (!args.length || typed(value, ...args)) return value;
   throw new Error();
 };
 
-typed.of = typed_of;
+typed.of = typedof;
 
 module.exports = typed;

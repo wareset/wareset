@@ -1,27 +1,22 @@
 # `@wareset/typed`
 
-Function for working with prototypes.
-He can return the prototype, return the entire chain of prototypes, check the availability of prototypes.
+He can return the constructor, return the entire chain of constructors, check the availability of constructors.
+
+### Attention:
+
+Version <=0.1.1 returns the prototypes and not the constructors!
 
 ## Installation
 
 ```bash
-npm i @wareset/typed
-```
-
-or
-
-```bash
-yarn add @wareset/typed
+npm i @wareset/typed ## yarn add @wareset/typed
 ```
 
 ## Usage
 
-### Require or Import:
+### Import:
 
 ```js
-const typed = require('@wareset/typed');
-// or
 import typed from '@wareset/typed';
 ```
 
@@ -30,30 +25,26 @@ import typed from '@wareset/typed';
 Returns prototype:
 
 ```js
-console.log(typed(undefined));
-/* RETURN: */ undefined;
-console.log(typed(null));
-/* RETURN: */ null;
+assert(typed(null), null);
+assert(typed(undefined), undefined);
 
-console.log(typed(Object)), /* or */ console.log(typed({ q: 1 }));
-/* RETURN: */ Object.prototype;
-console.log(typed(String)), /* or */ console.log(typed('string'));
-/* RETURN: */ String.prototype;
-console.log(typed(Number)), /* or */ console.log(typed(9999));
-/* RETURN: */ Number.prototype;
+assert(typed('str'), String);
+assert(typed(30401), Number);
+assert(typed(false), Boolean);
+assert(typed({ q: 1 }), Object);
 // etc...
 
-console.log(typed(() => {}));
-/* RETURN: */ Function.prototype;
-console.log(typed(async () => {}));
-/* RETURN: */ AsyncFunction.prototype;
-
-console.log(typed(SomeClass)), /* or */ console.log(typed(new SomeClass()));
-/* RETURN: */ SomeClass.prototype;
+assert(
+  typed(() => {}),
+  Function
+);
+assert(
+  typed(async () => {}),
+  AsyncFunction
+);
 
 const DIV = document.createElement('div');
-console.log(typed(DIV));
-/* RETURN: */ HTMLDivElement.prototype;
+assert(typed(DIV), HTMLDivElement);
 // etc...
 ```
 
@@ -62,32 +53,31 @@ console.log(typed(DIV));
 Returns an array of all prototypes:
 
 ```js
-console.log(typed.of(undefined));
-/* RETURN: */ [undefined];
-console.log(typed.of(null));
-/* RETURN: */ [null];
+assert(typed.of(null), [null]);
+assert(typed.of(undefined), [undefined]);
 
-console.log(typed.of(Object)) /* or */, console.log(typed.of({ q: 1 }));
-/* RETURN: */ [Object.prototype];
-console.log(typed.of(String)) /* or */, console.log(typed.of('string'));
-/* RETURN: */ [String.prototype, Object.prototype];
+assert(typed.of({ q: 1 }), [Object]);
+assert(typed.of('string'), [String, Object]);
 // etc...
 
-console.log(typed(() => {}));
-/* RETURN: */ [Function.prototype, Object.prototype];
-console.log(typed(async () => {}));
-/* RETURN: */
-[AsyncFunction.prototype, Function.prototype, Object.prototype];
+assert(
+  typed.of(() => {}),
+  [Function, Object]
+);
+assert(
+  typed.of(async () => {}),
+  [AsyncFunction, Function, Object]
+);
 
 const H1 = document.createElement('h1');
 console.log(typed.of(H1));
 /* RETURN: */ [
-  HTMLHeadingElement.prototype,
-  HTMLElement.prototype,
-  Element.prototype,
-  Node.prototype,
-  EventTarget.prototype,
-  Object.prototype,
+  HTMLHeadingElement,
+  HTMLElement,
+  Element,
+  Node,
+  EventTarget,
+  Object
 ];
 // etc...
 ```
@@ -98,7 +88,7 @@ Check the availability of prototypes:
 
 ```js
 // typed
-console.log(typed(9999, [Boolean, String, Node, {}, Object]));
+console.log(typed(9999, [Boolean, String, Element, {}, Object]));
 /* RETURN: */ false; // because they are not a Number
 
 console.log(typed(9999, Number));
