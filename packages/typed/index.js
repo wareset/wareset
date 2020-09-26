@@ -1,3 +1,5 @@
+const getPrototypeOf = Object.getPrototypeOf || ((v) => v.__proto__);
+
 const __getTypes = (t = []) => {
   return Array.isArray(t[0]) && t[0].length ? [...t.shift(), ...t] : t;
 };
@@ -9,7 +11,7 @@ function __eq(proto, type) {
   return proto === type.constructor;
 }
 
-const __proto = (v) => __isVoid(v) ? v : Object.getPrototypeOf(v);
+const __proto = (v) => __isVoid(v) ? v : getPrototypeOf(v);
 
 function getProto(v) {
   v = __proto(v);
