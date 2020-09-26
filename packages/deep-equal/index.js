@@ -1,4 +1,7 @@
-module.exports = function equal(a, b, deep = true) {
+const getPrototypeOf = Object.getPrototypeOf || ((v) => v.__proto__);
+const objProto = Object.prototype;
+
+module.exports = function deepEqual(a, b, deep = true) {
   if (a === b) return true;
   if (
     !deep ||
@@ -11,8 +14,8 @@ module.exports = function equal(a, b, deep = true) {
     return a !== a && b !== b;
   }
 
-  const proto = Object.getPrototypeOf(a);
-  if (proto !== Object.getPrototypeOf(b)) return false;
+  const proto = getPrototypeOf(a);
+  if (proto !== getPrototypeOf(b)) return false;
 
   const deep2 = typeof deep !== 'number' ? deep : deep--;
 
@@ -23,10 +26,10 @@ module.exports = function equal(a, b, deep = true) {
       if (keys.length !== Object.keys(b).length) return false;
 
       for (let k = keys.length; k-- > 0; undefined) {
-        if (!Object.prototype.hasOwnProperty.call(b, keys[k])) return false;
+        if (!objProto.hasOwnProperty.call(b, keys[k])) return false;
       }
       for (let k = keys.length; k-- > 0; undefined) {
-        if (!equal(a[keys[k]], b[keys[k]], deep2)) return false;
+        if (!deepEqual(a[keys[k]], b[keys[k]], deep2)) return false;
       }
       return true;
 
@@ -34,7 +37,7 @@ module.exports = function equal(a, b, deep = true) {
       if (a.length !== b.length) return false;
 
       for (let k = a.length; k-- > 0; undefined) {
-        if (!equal(a[k], b[k], deep2)) return false;
+        if (!deepEqual(a[k], b[k], deep2)) return false;
       }
       return true;
 
@@ -42,7 +45,7 @@ module.exports = function equal(a, b, deep = true) {
       if (a.size !== b.size) return false;
 
       for (const [k] of a) if (!b.has(k)) return false;
-      for (const [k, v] of a) if (!equal(v, b.get(k), deep2)) return false;
+      for (const [k, v] of a) if (!deepEqual(v, b.get(k), deep2)) return false;
       return true;
 
     case Set:
@@ -62,11 +65,11 @@ module.exports = function equal(a, b, deep = true) {
         return true;
       }
 
-      if (a.valueOf !== Object.prototype.valueOf) {
+      if (a.valueOf !== objProto.valueOf) {
         return a.valueOf() === b.valueOf();
       }
 
-      if (a.toString !== Object.prototype.toString) {
+      if (a.toString !== objProto.toString) {
         return a.toString() === b.toString();
       }
       return false;
