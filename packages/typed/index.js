@@ -1,48 +1,36 @@
-const getPrototypeOf = Object.getPrototypeOf || ((v) => v.__proto__);
+const getPrototypeOf = Object.getPrototypeOf || (v => v.__proto__);
 
-const __getTypes = (t = []) => {
-  return Array.isArray(t[0]) && t[0].length ? [...t.shift(), ...t] : t;
-};
-const __isVoid = (value) => value == null;
+const __proto = v => (v == null ? v : getPrototypeOf(v));
 
-function __eq(proto, type) {
-  if (proto === type) return true;
-  if (__isVoid(proto) || __isVoid(type)) return false;
-  return proto === type.constructor;
-}
-
-const __proto = (v) => __isVoid(v) ? v : getPrototypeOf(v);
-
-function getProto(v) {
-  v = __proto(v);
-  return v ? v.constructor : v;
-}
-function getProtos(v) {
+const getProto = v => ((v = __proto(v)) ? v.constructor : v);
+const getProtos = v => {
   const protos = [];
   while ((v = __proto(v))) protos.push(v ? v.constructor : v);
   return protos;
-}
-
-function typedof(value, ...types) {
-  const protos = getProtos(value);
-  if (!types.length) return protos;
-  types = __getTypes(types);
-  return protos.some((proto) => types.some((type) => __eq(proto, type)));
-}
-typedof.check = (value, ...args) => {
-  if (!args.length || typedof(value, ...args)) return value;
-  throw new Error();
 };
 
-function typed(value, ...types) {
+const cases = t => {
+  return Array.isArray(t[0]) && t[0].length ? [...t.shift(), ...t] : t;
+};
+
+const eq = (a, b) => a === b || a === getProto(b);
+
+const check = fn => (value, ...a) => {
+  if (a.length && !fn(value, ...a)) throw new TypeError(value, a);
+  return value;
+};
+
+function typedof(value, ...t) {
+  const arr = getProtos(value);
+  return !t.length ? arr : cases(t).some(t => arr.some(proto => eq(proto, t)));
+}
+typedof.check = check(typedof);
+
+function typed(value, ...t) {
   const proto = getProto(value);
-  if (!types.length) return proto;
-  return __getTypes(types).some((type) => __eq(proto, type));
+  return !t.length ? proto : cases(t).some(t => eq(proto, t));
 }
-typed.check = (value, ...args) => {
-  if (!args.length || typed(value, ...args)) return value;
-  throw new Error();
-};
+typed.check = check(typed);
 
 typed.of = typedof;
 

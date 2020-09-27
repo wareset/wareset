@@ -21,7 +21,7 @@ function getType(e) {
 }
 
 function getWhich(type) {
-  return +(type.match(/\:(\d+)/) || ['', 0])[1];
+  return +(type.match(/:(\d+)/) || ['', 0])[1];
 }
 
 module.exports = { getDevice, getType, getWhich };

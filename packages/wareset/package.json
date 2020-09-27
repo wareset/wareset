@@ -1,18 +1,25 @@
 {
   "name": "wareset",
-  "version": "0.0.3-alpha.0",
-  "description": "> TODO: description",
+  "version": "0.0.3",
+  "description": "Test repository",
   "author": "wareset <git@wareset.com>",
   "homepage": "https://github.com/wareset/wareset#readme",
   "license": "MIT",
   "main": "dist/wareset.js",
-  "module": "dist/wareset.module.js",
-  "directories": {
-    "lib": "dist"
-  },
+  "module": "dist/wareset.mjs",
   "files": [
     "dist"
   ],
+  "scripts": {
+    "build": "babel --no-babelrc src --out-dir dist --plugins=$(npm -g root)/@babel/plugin-transform-modules-commonjs --out-file-extension .mjs",
+    "dev": "npm run build -- --watch",
+    "pkg:name": "cat package.json | grep '\"name\":' | cut -d '\"' -f4",
+    "pkg:version": "cat package.json | grep '\"version\":' | cut -d '\"' -f4",
+    "git:get:tag": "echo $(npm run -s pkg:name)@$(npm run -s pkg:version)",
+    "git:set:tag": "t=$(npm run -s git:get:tag) && git tag -a $t -m $t",
+    "git:commit": "npm run build && git add . && read -p 'Commit: ' c; c=${c:-$(npm run -s git:get:tag)} && git commit -am $c",
+    "commit": "read -p 'Version [patch]: ' v; v=${v:-patch} && npm version --force --no-git-tag-version $v; echo $v && read -p 'Publish? (y/N): ' p && case $p in Y|y) $(npm run -s git:set:tag);; esac && npm run -s git:commit && case $p in Y|y) $(git push && npm publish);; esac && echo FINISH"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/wareset/wareset.git"
