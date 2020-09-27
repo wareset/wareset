@@ -1,6 +1,6 @@
 {
   "name": "@wareset/nearly",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Returns the nearest value from the array, or from a pattern",
   "author": "cftcview <cftcview@gmail.com>",
   "homepage": "https://github.com/wareset/wareset/tree/master/packages/nearly#readme",
