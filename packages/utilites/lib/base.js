@@ -9,7 +9,7 @@ const isVoid = v => v == null;
 
 exports.isVoid = isVoid;
 
-const getProto = v => Object.getPrototypeOf || (v => v.__proto__);
+const getProto = Object.getPrototypeOf || (v => v.__proto__);
 
 exports.getProto = getProto;
 

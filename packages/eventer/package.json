@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@wareset/store": "^0.2.5",
-    "@wareset/utilites": "^0.0.2",
+    "@wareset/utilites": "^0.0.4",
     "css-property-normalize": "^1.0.1"
   }
 }

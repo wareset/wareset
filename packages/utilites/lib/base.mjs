@@ -1,6 +1,6 @@
 export const isVoid = v => v == null;
 
-export const getProto = v => Object.getPrototypeOf || (v => v.__proto__);
+export const getProto = Object.getPrototypeOf || (v => v.__proto__);
 export const getCtor = v => (isVoid(v) ? v : getProto(v).constructor);
 
 export const isArr = v => getCtor(v) === Array;

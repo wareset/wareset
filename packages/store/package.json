@@ -5,7 +5,8 @@
   "author": "cftcview <cftcview@gmail.com>",
   "homepage": "https://github.com/wareset/wareset/tree/master/packages/store#readme",
   "license": "MIT",
-  "main": "index.js",
+  "main": "lib/index.js",
+  "module": "lib/index.mjs",
   "files": [
     "lib",
     "index.js",
@@ -14,6 +15,16 @@
   "keywords": [
     "store"
   ],
+  "scripts": {
+    "build": "babel --no-babelrc lib --out-dir lib --plugins=$(npm -g root)/@babel/plugin-transform-modules-commonjs --out-file-extension .js --ignore \"**/*.js\"",
+    "dev": "npm run build -- --watch",
+    "pkg:name": "cat package.json | grep '\"name\":' | cut -d '\"' -f4",
+    "pkg:version": "cat package.json | grep '\"version\":' | cut -d '\"' -f4",
+    "git:get:tag": "echo $(npm run -s pkg:name)@$(npm run -s pkg:version)",
+    "git:set:tag": "t=$(npm run -s git:get:tag) && git tag -a $t -m $t",
+    "git:commit": "npm run build && git add . && read -p 'Commit: ' c; c=${c:-v$(npm run -s pkg:version)} && n=$(npm run -s pkg:name) && git commit -am \"$n: $c\"",
+    "commit": "read -p 'Version [patch]: ' V; V=${V:-patch} && npm version --force --no-git-tag-version $V; echo $V && read -p 'Push? (y/N): ' G && read -p 'Publish? (y/N): ' P && case $P in Y|y) $(npm run -s git:set:tag);; esac && npm run -s git:commit && case $G in Y|y) $(git push);; esac && case $P in Y|y) $(git push --tags && sleep 2 && npm publish);; esac"
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -25,7 +36,7 @@
     "url": "https://github.com/wareset/wareset/issues"
   },
   "dependencies": {
-    "@wareset/deep-equal": "^0.0.8",
-    "@wareset/utilites": "^0.0.2"
+    "@wareset/deep-equal": "^0.0.9",
+    "@wareset/utilites": "^0.0.4"
   }
 }
