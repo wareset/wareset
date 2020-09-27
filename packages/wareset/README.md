@@ -1,11 +1,3 @@
 # `wareset`
 
-> TODO: description
-
-## Usage
-
-```
-import wareset from 'wareset';
-
-// TODO: DEMONSTRATE API
-```
+Monorepo for components testing and accounting
