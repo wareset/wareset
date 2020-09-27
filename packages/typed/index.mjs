@@ -4,7 +4,8 @@ const getPrototypeOf = v => (v == null ? v : getProto(v));
 const getCtor = v => ((v = getPrototypeOf(v)) ? v.constructor : v);
 const getCtors = v => {
   const protos = [];
-  while ((v = getPrototypeOf(v))) protos.push(v ? v.constructor : v);
+  do (v = getPrototypeOf(v)), protos.push(v ? v.constructor : v);
+  while (v);
   return protos;
 };
 

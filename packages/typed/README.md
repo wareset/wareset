@@ -4,7 +4,14 @@ He can return the constructor, return the entire chain of constructors, check th
 
 ### Attention:
 
+##### <=0.1.1
+
 Version <=0.1.1 returns the prototypes and not the constructors!
+
+##### >=0.2.3
+
+Starting with the >=0.2.3 version, the method `typed.of` returns a `NULL`.
+Technically, this is more correct, because `NULL` is also an object, but without a constructor.
 
 ## Installation
 
@@ -56,17 +63,17 @@ Returns an array of all prototypes:
 assert(typed.of(null), [null]);
 assert(typed.of(undefined), [undefined]);
 
-assert(typed.of({ q: 1 }), [Object]);
-assert(typed.of('string'), [String, Object]);
+assert(typed.of({ q: 1 }), [Object, null]);
+assert(typed.of('string'), [String, Object, null]);
 // etc...
 
 assert(
   typed.of(() => {}),
-  [Function, Object]
+  [Function, Object, null]
 );
 assert(
   typed.of(async () => {}),
-  [AsyncFunction, Function, Object]
+  [AsyncFunction, Function, Object, null]
 );
 
 const H1 = document.createElement('h1');
@@ -77,7 +84,8 @@ console.log(typed.of(H1));
   Element,
   Node,
   EventTarget,
-  Object
+  Object,
+  null
 ];
 // etc...
 ```
