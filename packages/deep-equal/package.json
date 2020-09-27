@@ -1,6 +1,6 @@
 {
   "name": "@wareset/deep-equal",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Fast deep equal",
   "author": "cftcview <cftcview@gmail.com>",
   "homepage": "https://github.com/wareset/wareset/tree/master/packages/deep-equal#readme",

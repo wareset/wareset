@@ -34,6 +34,7 @@
     "@wareset/typed": "^0.2.1",
     "@wareset/store": "^0.2.5",
     "@wareset/nearly": "^0.1.0",
-    "@wareset/eventer": "^0.0.9"
+    "@wareset/eventer": "^0.0.9",
+    "@wareset/utilites": "^0.0.3"
   }
 }
