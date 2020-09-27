@@ -1,6 +1,6 @@
 {
   "name": "@wareset/unique",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Array filter",
   "author": "cftcview <cftcview@gmail.com>",
   "homepage": "https://github.com/wareset/wareset/tree/master/packages/unique#readme",
@@ -36,8 +36,5 @@
   },
   "bugs": {
     "url": "https://github.com/wareset/wareset/issues"
-  },
-  "dependencies": {
-    "globalthis": "^1.0.1"
   }
 }
