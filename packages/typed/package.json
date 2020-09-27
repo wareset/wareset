@@ -20,7 +20,7 @@
     "prototype"
   ],
   "scripts": {
-    "build": "babel --no-babelrc index.js --out-file index.mjs --plugins=$(npm -g root)/@babel/plugin-transform-modules-commonjs --out-file-extension .mjs",
+    "build": "babel --no-babelrc index.mjs --out-file index.js --plugins=$(npm -g root)/@babel/plugin-transform-modules-commonjs --out-file-extension .js",
     "dev": "npm run build -- --watch",
     "pkg:name": "cat package.json | grep '\"name\":' | cut -d '\"' -f4",
     "pkg:version": "cat package.json | grep '\"version\":' | cut -d '\"' -f4",
