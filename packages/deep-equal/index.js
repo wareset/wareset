@@ -1,7 +1,7 @@
-const getPrototypeOf = Object.getPrototypeOf || ((v) => v.__proto__);
+const getPrototypeOf = Object.getPrototypeOf || (v => v.__proto__);
 const objProto = Object.prototype;
 
-module.exports = function deepEqual(a, b, deep = true) {
+export default function deepEqual(a, b, deep = true) {
   if (a === b) return true;
   if (
     !deep ||
@@ -74,4 +74,4 @@ module.exports = function deepEqual(a, b, deep = true) {
       }
       return false;
   }
-};
+}

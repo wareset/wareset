@@ -1,12 +1,12 @@
 const { abs, floor, round, ceil } = Math;
-const METHODS_FOR_NUM = { '-1': floor, '0': round, '1': ceil };
+const METHODS_FOR_NUM = { '-1': floor, 0: round, 1: ceil };
 
 const METHODS_FOR_ARR = {
   '-1': (a, b, c = 0) => abs(a - c) <= abs(b - c),
-  '0': (a, b, c = 0) => abs(a - c) < abs(b - c)
+  0: (a, b, c = 0) => abs(a - c) < abs(b - c)
 };
 
-module.exports = function nearly(value = 1, pattern = 0, method = 0) {
+export default function nearly(value = 1, pattern = 0, method = 0) {
   if (Array.isArray(pattern)) {
     if (!pattern.length) return value;
 
@@ -27,4 +27,4 @@ module.exports = function nearly(value = 1, pattern = 0, method = 0) {
   }
 
   return (METHODS_FOR_NUM[method] || METHODS_FOR_NUM[0])(value);
-};
+}

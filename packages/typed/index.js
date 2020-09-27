@@ -26,12 +26,10 @@ function typedof(value, ...t) {
 }
 typedof.check = check(typedof);
 
-function typed(value, ...t) {
+export default function typed(value, ...t) {
   const proto = getProto(value);
   return !t.length ? proto : cases(t).some(t => eq(proto, t));
 }
 typed.check = check(typed);
 
 typed.of = typedof;
-
-module.exports = typed;
