@@ -12,12 +12,12 @@ const {
 } = Math;
 const METHODS_FOR_NUM = {
   '-1': floor,
-  0: round,
-  1: ceil
+  '0': round,
+  '1': ceil
 };
 const METHODS_FOR_ARR = {
   '-1': (a, b, c = 0) => abs(a - c) <= abs(b - c),
-  0: (a, b, c = 0) => abs(a - c) < abs(b - c)
+  '0': (a, b, c = 0) => abs(a - c) < abs(b - c)
 };
 
 function nearly(value = 1, pattern = 0, method = 0) {

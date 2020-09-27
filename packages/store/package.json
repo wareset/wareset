@@ -3,7 +3,7 @@
   "version": "0.2.5",
   "description": "Fast and easy observer",
   "author": "cftcview <cftcview@gmail.com>",
-  "homepage": "https://github.com/wareset/wareset#readme",
+  "homepage": "https://github.com/wareset/wareset/tree/master/packages/store#readme",
   "license": "MIT",
   "main": "index.js",
   "files": [
@@ -26,6 +26,6 @@
   },
   "dependencies": {
     "@wareset/deep-equal": "^0.0.8",
-    "@wareset/utilites": "^0.0.1"
+    "@wareset/utilites": "^0.0.2"
   }
 }

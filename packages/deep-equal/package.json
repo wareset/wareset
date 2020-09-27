@@ -3,7 +3,7 @@
   "version": "0.0.8",
   "description": "Fast deep equal",
   "author": "cftcview <cftcview@gmail.com>",
-  "homepage": "https://github.com/wareset/wareset#readme",
+  "homepage": "https://github.com/wareset/wareset/tree/master/packages/deep-equal#readme",
   "license": "MIT",
   "main": "index.js",
   "module": "index.mjs",
@@ -18,7 +18,7 @@
     "equal"
   ],
   "scripts": {
-    "build": "babel --no-babelrc index.mjs --out-file index.js --plugins=$(npm -g root)/@babel/plugin-transform-modules-commonjs --out-file-extension .js",
+    "build": "babel --no-babelrc index.mjs --out-file index.js --plugins=$(npm -g root)/@babel/plugin-transform-modules-commonjs --out-file-extension .js --ignore \"**/*.js\"",
     "dev": "npm run build -- --watch",
     "pkg:name": "cat package.json | grep '\"name\":' | cut -d '\"' -f4",
     "pkg:version": "cat package.json | grep '\"version\":' | cut -d '\"' -f4",

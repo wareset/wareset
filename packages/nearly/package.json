@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Returns the nearest value from the array, or from a pattern",
   "author": "cftcview <cftcview@gmail.com>",
-  "homepage": "https://github.com/wareset/wareset#readme",
+  "homepage": "https://github.com/wareset/wareset/tree/master/packages/nearly#readme",
   "license": "MIT",
   "main": "index.js",
   "module": "index.mjs",
@@ -16,7 +16,7 @@
     "nearest"
   ],
   "scripts": {
-    "build": "babel --no-babelrc index.mjs --out-file index.js --plugins=$(npm -g root)/@babel/plugin-transform-modules-commonjs --out-file-extension .js",
+    "build": "babel --no-babelrc index.mjs --out-file index.js --plugins=$(npm -g root)/@babel/plugin-transform-modules-commonjs --out-file-extension .js --ignore \"**/*.js\"",
     "dev": "npm run build -- --watch",
     "pkg:name": "cat package.json | grep '\"name\":' | cut -d '\"' -f4",
     "pkg:version": "cat package.json | grep '\"version\":' | cut -d '\"' -f4",
