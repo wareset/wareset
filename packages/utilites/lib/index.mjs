@@ -1,4 +1,5 @@
-export * from './base';
+export { isVoid, getProto, getCtor, has } from './base';
+export { isArr, isObj, isNum, isStr, isBool, isFunc, isSymb } from './base';
 export { default as each } from './each';
 export { default as define } from './define';
 

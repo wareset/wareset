@@ -3,13 +3,72 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-var _exportNames = {
-  noop: true,
-  inArr: true,
-  forIn: true,
-  each: true,
-  define: true
-};
+Object.defineProperty(exports, "isVoid", {
+  enumerable: true,
+  get: function () {
+    return _base.isVoid;
+  }
+});
+Object.defineProperty(exports, "getProto", {
+  enumerable: true,
+  get: function () {
+    return _base.getProto;
+  }
+});
+Object.defineProperty(exports, "getCtor", {
+  enumerable: true,
+  get: function () {
+    return _base.getCtor;
+  }
+});
+Object.defineProperty(exports, "has", {
+  enumerable: true,
+  get: function () {
+    return _base.has;
+  }
+});
+Object.defineProperty(exports, "isArr", {
+  enumerable: true,
+  get: function () {
+    return _base.isArr;
+  }
+});
+Object.defineProperty(exports, "isObj", {
+  enumerable: true,
+  get: function () {
+    return _base.isObj;
+  }
+});
+Object.defineProperty(exports, "isNum", {
+  enumerable: true,
+  get: function () {
+    return _base.isNum;
+  }
+});
+Object.defineProperty(exports, "isStr", {
+  enumerable: true,
+  get: function () {
+    return _base.isStr;
+  }
+});
+Object.defineProperty(exports, "isBool", {
+  enumerable: true,
+  get: function () {
+    return _base.isBool;
+  }
+});
+Object.defineProperty(exports, "isFunc", {
+  enumerable: true,
+  get: function () {
+    return _base.isFunc;
+  }
+});
+Object.defineProperty(exports, "isSymb", {
+  enumerable: true,
+  get: function () {
+    return _base.isSymb;
+  }
+});
 Object.defineProperty(exports, "each", {
   enumerable: true,
   get: function () {
@@ -25,17 +84,6 @@ Object.defineProperty(exports, "define", {
 exports.forIn = exports.inArr = exports.noop = void 0;
 
 var _base = require("./base");
-
-Object.keys(_base).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
-  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function () {
-      return _base[key];
-    }
-  });
-});
 
 var _each = _interopRequireDefault(require("./each"));
 

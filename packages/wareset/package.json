@@ -1,6 +1,6 @@
 {
   "name": "wareset",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Test repository",
   "author": "wareset <git@wareset.com>",
   "homepage": "https://github.com/wareset/wareset#readme",
@@ -19,7 +19,7 @@
     "git:get:tag": "echo $(npm run -s pkg:name)@$(npm run -s pkg:version)",
     "git:set:tag": "t=$(npm run -s git:get:tag) && git tag -a $t -m $t",
     "git:commit": "npm run build && git add . && read -p 'Commit: ' c; c=${c:-v$(npm run -s pkg:version)} && n=$(npm run -s pkg:name) && git commit -am \"$n: $c\"",
-    "commit": "read -p 'Version [patch]: ' V; V=${V:-patch} && npm version --force --no-git-tag-version $V; echo $V && read -p 'Push? (y/N): ' G && read -p 'Publish? (y/N): ' P && case $P in Y|y) $(npm run -s git:set:tag);; esac && npm run -s git:commit && case $G in Y|y) $(git push);; esac && case $P in Y|y) $(git push --tags && sleep 2 && npm publish);; esac"
+    "commit": "read -p 'Version [patch]: ' V; V=${V:-patch} && npm version --force --no-git-tag-version $V; echo $V && read -p 'Push? (y/N): ' G && read -p 'Publish? (y/N): ' P && npm run -s git:commit && case $G in Y|y) $(git push);; esac && case $P in Y|y) $(npm run -s git:set:tag && git push --tags && npm publish);; esac"
   },
   "repository": {
     "type": "git",
@@ -35,6 +35,6 @@
     "@wareset/store": "^0.2.5",
     "@wareset/typed": "^0.2.3",
     "@wareset/unique": "^1.0.3",
-    "@wareset/utilites": "^0.0.4"
+    "@wareset/utilites": "^0.0.5"
   }
 }

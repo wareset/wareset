@@ -37,6 +37,6 @@
   },
   "dependencies": {
     "@wareset/deep-equal": "^0.0.9",
-    "@wareset/utilites": "^0.0.4"
+    "@wareset/utilites": "^0.0.5"
   }
 }
