@@ -341,8 +341,8 @@ Subval_2: 0
 Value: 0 Subvalues: [0, 0]
 
 Value: 2 Subvalues: [1, 1]
-Value: 4 Subvalues: [2, 2]
-Value: 5 Subvalues: [2, 3]
+Value: 2 Subvalues: [2, 2]
+Value: 4 Subvalues: [2, 3]
 
 Subval_2: 3
 Subval_1: 2
@@ -482,19 +482,16 @@ Subval_1: 0
 Subval_2: 0
 Value: 0
 
-Subval_1: 1
-Value: 1
-Subval_1: 2
-Value: 2
+Subval_1:  1
+Subval_2:  1
+Value:  2
 
-Subval_2: 1
-Value: 1
-Subval_2: 2
-Value: 2
-Subval_2: 3
-Value: 3
+Subval_1:  2
+Subval_2:  2
+Value:  4
 
-Value: 5
+Subval_2:  3
+Value:  5
 ```
 
 Observers are updated in turn. And the final result will only be at the end.
@@ -583,8 +580,8 @@ Val_2: 0
 Val_3: 0
 
 Val_3: 1
-Val_2: 1
 Val_1: 1
+Val_2: 1
 
 Val_3: 2
 Val_1: 2

@@ -1,6 +1,6 @@
 {
   "name": "@wareset/store",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "description": "Fast and easy observer",
   "author": "cftcview <cftcview@gmail.com>",
   "homepage": "https://github.com/wareset/wareset/tree/master/packages/store#readme",
@@ -38,6 +38,6 @@
   },
   "dependencies": {
     "@wareset/deep-equal": "0.0.10",
-    "@wareset/utilites": "^0.0.5"
+    "@wareset/utilites": "0.0.6"
   }
 }

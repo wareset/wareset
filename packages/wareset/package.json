@@ -43,6 +43,6 @@
     "@wareset/store": "^0.2.5",
     "@wareset/typed": "0.2.4",
     "@wareset/unique": "1.0.4",
-    "@wareset/utilites": "^0.0.5"
+    "@wareset/utilites": "0.0.6"
   }
 }
