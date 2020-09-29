@@ -1,1 +1,1 @@
-module.exports = function test() {};
+export const qw = 23;

@@ -1,15 +1,7 @@
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = deepEqual;
-
 const getPrototypeOf = Object.getPrototypeOf || (v => v.__proto__);
 
 const objProto = Object.prototype;
-
-function deepEqual(a, b, deep = true) {
+export default function deepEqual(a, b, deep = true) {
   if (a === b) return true;
 
   if (!deep || deep < 0 || !a || !b || typeof a !== 'object' || typeof b !== 'object') {

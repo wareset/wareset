@@ -5,24 +5,26 @@
   "author": "cftcview <cftcview@gmail.com>",
   "homepage": "https://github.com/wareset/wareset/tree/master/packages/utilites#readme",
   "license": "MIT",
-  "main": "lib/index.js",
-  "module": "lib/index.mjs",
+  "main": "dist/index",
+  "module": "dist/index.mjs",
   "files": [
-    "lib",
+    "dist",
     "README.md"
   ],
   "keywords": [
     "utilites"
   ],
   "scripts": {
-    "build": "babel --no-babelrc lib --out-dir lib --plugins=$(npm -g root)/@babel/plugin-transform-modules-commonjs --out-file-extension .js --ignore \"**/*.js\"",
-    "dev": "npm run build -- --watch",
+    "babel:copy": "babel src --out-dir dist --copy-files --keep-file-extension --no-babelrc",
+    "babel:build": "babel dist --out-dir dist --config-file=\"../../babel.config.json\"",
+    "build": "rm -r ./dist && npm run -s babel:copy && npm run -s babel:build",
+    "dev": "npm run -s babel:copy -- --watch | npm run -s babel:build -- --watch",
     "pkg:name": "cat package.json | grep '\"name\":' | cut -d '\"' -f4",
     "pkg:version": "cat package.json | grep '\"version\":' | cut -d '\"' -f4",
     "git:get:tag": "echo $(npm run -s pkg:name)@$(npm run -s pkg:version)",
     "git:set:tag": "t=$(npm run -s git:get:tag) && git tag -a $t -m $t",
     "git:commit": "npm run build && git add . && read -p 'Commit: ' c; c=${c:-v$(npm run -s pkg:version)} && n=$(npm run -s pkg:name) && git commit -am \"$n: $c\"",
-    "commit": "read -p 'Version [patch]: ' V; V=${V:-patch} && npm version --force --no-git-tag-version $V; echo $V && read -p 'Push? (y/N): ' G && read -p 'Publish? (y/N): ' P && case $P in Y|y) $(npm run -s git:set:tag);; esac && npm run -s git:commit && case $G in Y|y) $(git push);; esac && case $P in Y|y) $(git push --tags && sleep 2 && npm publish);; esac"
+    "commit": "read -p 'Version [patch]: ' V; V=${V:-patch} && npm version --force --no-git-tag-version $V; echo $V && read -p 'Push? (y/N): ' G && read -p 'Publish? (y/N): ' P && npm run -s git:commit && case $G in Y|y) $(git push);; esac && case $P in Y|y) $(npm run -s git:set:tag && git push --tags && npm -s publish);; esac"
   },
   "publishConfig": {
     "access": "public"

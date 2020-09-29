@@ -1,4 +1,6 @@
+import test from 'qwe.mjs';
+
 export default function wareset() {
-    // TODO
-    console.log('test');
+  // TODO
+  console.log('test');
 }
