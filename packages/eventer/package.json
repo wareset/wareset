@@ -21,7 +21,7 @@
     "url": "https://github.com/wareset/wareset/issues"
   },
   "dependencies": {
-    "@wareset/store": "^0.2.5",
+    "@wareset/store": "0.3.0",
     "@wareset/utilites": "0.0.6",
     "css-property-normalize": "^1.0.1"
   }
