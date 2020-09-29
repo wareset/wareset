@@ -5,8 +5,8 @@
   "author": "wareset <git@wareset.com>",
   "homepage": "https://github.com/wareset/wareset#readme",
   "license": "MIT",
-  "main": "dist/wareset",
-  "module": "dist/wareset.mjs",
+  "main": "dist/index",
+  "module": "dist/index.mjs",
   "files": [
     "dist",
     "README.md"
@@ -42,7 +42,7 @@
     "@wareset/nearly": "0.1.2",
     "@wareset/store": "^0.2.5",
     "@wareset/typed": "0.2.4",
-    "@wareset/unique": "^1.0.3",
+    "@wareset/unique": "1.0.4",
     "@wareset/utilites": "^0.0.5"
   }
 }
