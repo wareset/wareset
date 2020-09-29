@@ -5,11 +5,11 @@
   "author": "wareset <git@wareset.com>",
   "homepage": "https://github.com/wareset/wareset#readme",
   "license": "MIT",
-  "main": "src/wareset",
+  "main": "dist/wareset",
   "module": "dist/wareset.mjs",
   "files": [
     "dist",
-    "src"
+    "README.md"
   ],
   "scripts": {
     "babel:copy": "babel src --out-dir dist --copy-files --keep-file-extension --no-babelrc",
@@ -39,7 +39,7 @@
   "dependencies": {
     "@wareset/deep-equal": "0.0.10",
     "@wareset/eventer": "^0.0.9",
-    "@wareset/nearly": "^0.1.1",
+    "@wareset/nearly": "0.1.2",
     "@wareset/store": "^0.2.5",
     "@wareset/typed": "0.2.4",
     "@wareset/unique": "^1.0.3",

@@ -1,15 +1,14 @@
 {
   "name": "@wareset/unique",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Array filter",
   "author": "cftcview <cftcview@gmail.com>",
   "homepage": "https://github.com/wareset/wareset/tree/master/packages/unique#readme",
   "license": "MIT",
-  "main": "index",
-  "module": "index.mjs",
+  "main": "dist/index",
+  "module": "dist/index.mjs",
   "files": [
-    "index.js",
-    "index.mjs",
+    "dist",
     "README.md"
   ],
   "keywords": [
@@ -18,8 +17,10 @@
     "filter"
   ],
   "scripts": {
-    "build": "babel index.mjs --out-file index.js --plugins=\"$(npm -g root)/@babel/plugin-transform-modules-commonjs\" --out-file-extension=\".js\" --ignore=\"**/*.js\" --no-babelrc",
-    "dev": "npm run build -- --watch",
+    "babel:copy": "babel src --out-dir dist --copy-files --keep-file-extension --no-babelrc",
+    "babel:build": "babel dist --out-dir dist --config-file=\"../../babel.config.json\"",
+    "build": "rm -r ./dist && npm run -s babel:copy && npm run -s babel:build",
+    "dev": "npm run -s babel:copy -- --watch | npm run -s babel:build -- --watch",
     "pkg:name": "cat package.json | grep '\"name\":' | cut -d '\"' -f4",
     "pkg:version": "cat package.json | grep '\"version\":' | cut -d '\"' -f4",
     "git:get:tag": "echo $(npm run -s pkg:name)@$(npm run -s pkg:version)",
