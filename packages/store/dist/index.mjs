@@ -301,8 +301,7 @@ class Store extends Array {
       setOwnPropSELF(v, (...a) => isVoid(VALUE) || !VALUE[v] ? VALUE : VALUE[v](...a));
     });
     observe(_observed);
-    depend(_depended);
-    Object.seal(SELF);
+    depend(_depended); // Object.seal(SELF);
   }
 
 }
