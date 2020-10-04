@@ -67,12 +67,12 @@ export default function deepEqual(a, b, deep = true) {
         return true;
       }
 
-      if (a.valueOf !== objProto.valueOf) {
-        return a.valueOf() === b.valueOf();
+      if (a.valueOf && a.valueOf !== objProto.valueOf) {
+        return b.valueOf && deepEqual(a.valueOf(), b.valueOf(), deep2);
       }
 
-      if (a.toString !== objProto.toString) {
-        return a.toString() === b.toString();
+      if (a.toString && a.toString !== objProto.toString) {
+        return b.toString && deepEqual(a.toString(), b.toString(), deep2);
       }
 
       return false;

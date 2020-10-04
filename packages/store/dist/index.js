@@ -73,7 +73,7 @@ class Store extends Array {
           sub = QUEUE.pop();
 
           if (sub.enabled && !sub.executing && sub[0] === QUEUE.length) {
-            sub.stop = sub[1](sub[2], sub[3], sub[4], sub.unsubscribe);
+            sub[1](sub[2], sub[3], sub[4], sub.unsubscribe);
           }
         }
       }
@@ -142,18 +142,22 @@ class Store extends Array {
         get: () => enabled
       });
 
-      const runSUB = (...a) => {
-        isBreak = true;
-        executing = true;
+      const runSubscribe = (...a) => {
+        isBreak = true, executing = true;
         _lastStore = SELF;
-        const res = subscribe(...a);
-        executing = false;
-        isBreak = false, queueStart();
-        return res;
+        subscriber.stop = subscribe(...a);
+        executing = false, isBreak = false, queueStart();
+        return subscriber.stop;
       };
 
-      subscriber.push(runSUB, VALUE, [], SELF);
+      subscriber.push(runSubscribe, VALUE, [], SELF);
       subscribers.push(subscriber);
+
+      const runCallback = (cb, unsub) => {
+        if (!(0, _utilites().isFunc)(unsub)) unsub = _utilites().noop;
+        if ((0, _utilites().isFunc)(cb)) return cb(VALUE, getObservedVALUES(), SELF, unsub);else if ((0, _utilites().isPromise)(cb)) return cb.then(cb => runCallback(cb, unsub));
+      };
+
       let initialized = false;
 
       const unsubscribe = () => {
@@ -161,27 +165,15 @@ class Store extends Array {
         if (!initialized) initialized = true;else {
           const index = subscribers.indexOf(subscriber);
           if (index !== -1) subscribers.splice(index, 1);
-
-          if ((0, _utilites().isFunc)(subscriber.stop)) {
-            subscriber.stop(VALUE, getObservedVALUES(), SELF, _utilites().noop);
-          }
-
-          if (!subscribers.length) {
-            if (stop) stop(VALUE, getObservedVALUES(), SELF, _utilites().noop);
-            stop = null;
-          }
+          runCallback(subscriber.stop);
+          if (!subscribers.length) runCallback(stop), stop = null;
         }
         return SELF;
       };
 
       subscriber.unsubscribe = unsubscribe;
-
-      if (!stop && subscribers.length) {
-        stop = start(VALUE, getObservedVALUES(), SELF, unsubscribe);
-        if (!(0, _utilites().isFunc)(stop)) stop = _utilites().noop;
-      }
-
-      subscriber.stop = runSUB(VALUE, getObservedVALUES(), SELF, unsubscribe);
+      if (!stop && subscribers.length) stop = runCallback(start, unsubscribe);
+      subscriber.stop = runCallback(runSubscribe, unsubscribe);
       if (initialized) unsubscribe();
       initialized = true;
       return unsubscribe;
@@ -283,18 +275,35 @@ class Store extends Array {
         get: () => value
       });
     });
-    setOwnPropSELF('clear', () => {
-      observable([]), observe([]), dependency([]), depend([]);
-      return SELF;
-    });
-    setOwnPropSELF('reset', () => {
-      SELF.clear();
-
+    setOwnPropSELF('clearSubscribers', () => {
       while (subscribers.length) subscribers[0].unsubscribe();
 
-      if (subscribers.length) SELF.reset();
+      if (subscribers.length) SELF.clearSubscribers();
       return SELF;
-    }); // NEXT
+    });
+    setOwnPropSELF('clearObserved', () => {
+      observe([]);
+      return SELF;
+    });
+    setOwnPropSELF('clearObservables', () => {
+      observable([]);
+      return SELF;
+    });
+    setOwnPropSELF('clearDepended', () => {
+      depend([]);
+      return SELF;
+    });
+    setOwnPropSELF('clearDependencies', () => {
+      dependency([]);
+      return SELF;
+    });
+    setOwnPropSELF('clearAll', () => {
+      SELF.clearSubscribers();
+      SELF.clearDepended(), SELF.clearDependencies();
+      SELF.clearObserved(), SELF.clearObservables();
+      return SELF;
+    });
+    setOwnPropSELF('reset', SELF.clearAll); // NEXT
 
     setOwnPropSELF('next', {
       get: () => SELF.set
@@ -313,6 +322,7 @@ class Store extends Array {
     });
     observe(_observed);
     depend(_depended);
+    Object.seal(SELF);
   }
 
 }

@@ -3,7 +3,19 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.setOwnProps = exports.setOwnProp = exports.eachAsync = exports.each = exports.inObj = exports.inArr = exports.getOwnProps = exports.getOwnPropNames = exports.getOwnProp = exports.hasOwnProp = exports.getPrototype = exports.isObjStrict = exports.isArrStrict = exports.isFunc = exports.isBool = exports.isSymb = exports.isStr = exports.isNum = exports.isObj = exports.isArr = exports.isVoid = exports.noop = void 0;
+Object.defineProperty(exports, "typed", {
+  enumerable: true,
+  get: function () {
+    return _typed().default;
+  }
+});
+Object.defineProperty(exports, "stacktrace", {
+  enumerable: true,
+  get: function () {
+    return _stacktrace.stacktrace;
+  }
+});
+exports.timeout = exports.setOwnProps = exports.setOwnProp = exports.eachAsync = exports.each = exports.inObj = exports.inArr = exports.getOwnProps = exports.getOwnPropNames = exports.getOwnProp = exports.hasOwnProp = exports.getPrototype = exports.isObjStrict = exports.isArrStrict = exports.isPromise = exports.isFunc = exports.isBool = exports.isSymb = exports.isStr = exports.isNum = exports.isObj = exports.isArr = exports.isVoid = exports.entries = exports.values = exports.keys = exports.noop = void 0;
 
 function _typed() {
   const data = _interopRequireDefault(require("@wareset/typed"));
@@ -15,11 +27,23 @@ function _typed() {
   return data;
 }
 
+var _stacktrace = require("./stacktrace.js");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const noop = () => {};
 
 exports.noop = noop;
+const keys = Object.keys;
+exports.keys = keys;
+
+const values = v => keys(v).map(k => v[k]);
+
+exports.values = values;
+
+const entries = v => keys(v).map(k => [k, v[k]]);
+
+exports.entries = entries;
 
 const isVoid = v => v == null;
 
@@ -51,6 +75,10 @@ const isFunc = v => typeof v === 'function';
 
 exports.isFunc = isFunc;
 
+const isPromise = v => v instanceof Promise;
+
+exports.isPromise = isPromise;
+
 const isArrStrict = v => (0, _typed().default)(v) === Array;
 
 exports.isArrStrict = isArrStrict;
@@ -71,7 +99,8 @@ exports.getOwnProp = getOwnProp;
 const getOwnPropNames = Object.getOwnPropertyNames;
 exports.getOwnPropNames = getOwnPropNames;
 
-const getOwnProps = o => {
+const getOwnProps = // Object.getOwnPropertyDescriptors ||
+o => {
   const res = {};
   getOwnPropNames(o).forEach(k => res[k] = getOwnProp(o, k));
   return res;
@@ -87,13 +116,13 @@ const inObj = (obj, v, k) => {
   if (!isObj(obj)) throw new TypeError(obj);
   if (_typed().default.of(obj, Array)) return inArr(obj, v, k);
   if (_typed().default.of(obj, Set, WeakSet, Map, WeakMap)) return obj.has(v);
-  return Object.keys(obj).indexOf(v, k || 0) + 1;
+  return keys(obj).indexOf(v, k || 0) + 1;
 };
 
 exports.inObj = inObj;
 
 const each = (obj, cb) => {
-  if (!isObj(obj)) throw new TypeError(obj);
+  if (!obj || !isObj(obj)) throw new TypeError(obj);
   let k = 0;
 
   if (_typed().default.of(obj, Array, Set, WeakSet)) {
@@ -108,13 +137,13 @@ const each = (obj, cb) => {
     return;
   }
 
-  for (const k of Object.keys(obj)) cb(obj[k], k, obj);
+  for (const k of keys(obj)) cb(obj[k], k, obj);
 };
 
 exports.each = each;
 
 const eachAsync = async (obj, cb) => {
-  if (!isObj(obj)) throw new TypeError(obj);
+  if (!obj || !isObj(obj)) throw new TypeError(obj);
   let k = 0;
 
   if (_typed().default.of(obj, Array, Set, WeakSet)) {
@@ -129,14 +158,15 @@ const eachAsync = async (obj, cb) => {
     return;
   }
 
-  for await (const k of Object.keys(obj)) await cb(obj[k], k, obj);
+  for await (const k of keys(obj)) await cb(obj[k], k, obj);
 };
 
 exports.eachAsync = eachAsync;
 
-const setOwnProp = (object, key, props, writable, enumerable) => {
-  const define = (key, props, writable) => {
-    if (key !== undefined) {
+const setOwnProp = (object, ...args) => {
+  const define = (...args) => {
+    if (args.length) {
+      let [key, props, writable, enumerable] = args;
       if (!isObjStrict(props)) props = {
         value: props
       };
@@ -153,7 +183,7 @@ const setOwnProp = (object, key, props, writable, enumerable) => {
     return define;
   };
 
-  return define(key, props, writable);
+  return define(...args);
 };
 
 exports.setOwnProp = setOwnProp;
@@ -170,3 +200,10 @@ const setOwnProps = (object, props) => {
 };
 
 exports.setOwnProps = setOwnProps;
+
+const timeout = (time, cb) => {
+  time = time || 0, cb = cb || noop;
+  return new Promise(resolve => setTimeout(() => resolve(cb()), time));
+};
+
+exports.timeout = timeout;

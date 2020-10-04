@@ -1,5 +1,10 @@
 import typed from '@wareset/typed';
+export { typed };
+export { stacktrace } from './stacktrace.mjs';
 export const noop = () => {};
+export const keys = Object.keys;
+export const values = v => keys(v).map(k => v[k]);
+export const entries = v => keys(v).map(k => [k, v[k]]);
 export const isVoid = v => v == null;
 export const isArr = Array.isArray;
 export const isObj = v => typeof v === 'object';
@@ -8,13 +13,15 @@ export const isStr = v => typeof v === 'string';
 export const isSymb = v => typeof v === 'symbol';
 export const isBool = v => typeof v === 'boolean';
 export const isFunc = v => typeof v === 'function';
+export const isPromise = v => v instanceof Promise;
 export const isArrStrict = v => typed(v) === Array;
 export const isObjStrict = v => typed(v) === Object;
 export const getPrototype = Object.getPrototypeOf || (v => v.__proto__);
 export const hasOwnProp = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 export const getOwnProp = Object.getOwnPropertyDescriptor;
 export const getOwnPropNames = Object.getOwnPropertyNames;
-export const getOwnProps = o => {
+export const getOwnProps = // Object.getOwnPropertyDescriptors ||
+o => {
   const res = {};
   getOwnPropNames(o).forEach(k => res[k] = getOwnProp(o, k));
   return res;
@@ -24,10 +31,10 @@ export const inObj = (obj, v, k) => {
   if (!isObj(obj)) throw new TypeError(obj);
   if (typed.of(obj, Array)) return inArr(obj, v, k);
   if (typed.of(obj, Set, WeakSet, Map, WeakMap)) return obj.has(v);
-  return Object.keys(obj).indexOf(v, k || 0) + 1;
+  return keys(obj).indexOf(v, k || 0) + 1;
 };
 export const each = (obj, cb) => {
-  if (!isObj(obj)) throw new TypeError(obj);
+  if (!obj || !isObj(obj)) throw new TypeError(obj);
   let k = 0;
 
   if (typed.of(obj, Array, Set, WeakSet)) {
@@ -42,10 +49,10 @@ export const each = (obj, cb) => {
     return;
   }
 
-  for (const k of Object.keys(obj)) cb(obj[k], k, obj);
+  for (const k of keys(obj)) cb(obj[k], k, obj);
 };
 export const eachAsync = async (obj, cb) => {
-  if (!isObj(obj)) throw new TypeError(obj);
+  if (!obj || !isObj(obj)) throw new TypeError(obj);
   let k = 0;
 
   if (typed.of(obj, Array, Set, WeakSet)) {
@@ -60,11 +67,12 @@ export const eachAsync = async (obj, cb) => {
     return;
   }
 
-  for await (const k of Object.keys(obj)) await cb(obj[k], k, obj);
+  for await (const k of keys(obj)) await cb(obj[k], k, obj);
 };
-export const setOwnProp = (object, key, props, writable, enumerable) => {
-  const define = (key, props, writable) => {
-    if (key !== undefined) {
+export const setOwnProp = (object, ...args) => {
+  const define = (...args) => {
+    if (args.length) {
+      let [key, props, writable, enumerable] = args;
       if (!isObjStrict(props)) props = {
         value: props
       };
@@ -81,7 +89,7 @@ export const setOwnProp = (object, key, props, writable, enumerable) => {
     return define;
   };
 
-  return define(key, props, writable);
+  return define(...args);
 };
 export const setOwnProps = (object, props) => {
   const define = setOwnProp(object);
@@ -92,4 +100,8 @@ export const setOwnProps = (object, props) => {
   };
 
   return defines(props);
+};
+export const timeout = (time, cb) => {
+  time = time || 0, cb = cb || noop;
+  return new Promise(resolve => setTimeout(() => resolve(cb()), time));
 };
