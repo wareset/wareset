@@ -339,7 +339,7 @@ class Store extends Array {
     observe(_observed);
     depend(_depended);
 
-    // Object.seal(SELF);
+    Object.seal(SELF);
   }
 }
 
