@@ -143,9 +143,11 @@ class Store extends Array {
       subscribers.push(subscriber);
 
       const runCallback = (cb, unsub) => {
+        let res;
         if (!isFunc(unsub)) unsub = noop;
-        if (isFunc(cb)) return cb(VALUE, getObservedVALUES(), SELF, unsub);
-        else if (isPromise(cb)) return cb.then(cb => runCallback(cb, unsub));
+        if (isFunc(cb)) res = cb(VALUE, getObservedVALUES(), SELF, unsub);
+        else if (isPromise(cb)) res = cb.then(cb => runCallback(cb, unsub));
+        return res || noop;
       };
 
       let initialized = false;
