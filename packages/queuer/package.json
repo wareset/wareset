@@ -1,6 +1,6 @@
 {
   "name": "@wareset/queuer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Runs synchronous and asynchronous functions in turn",
   "author": "cftcview <cftcview@gmail.com>",
   "homepage": "https://github.com/wareset/wareset/tree/master/packages/queuer#readme",

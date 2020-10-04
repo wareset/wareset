@@ -14,7 +14,7 @@ export function Queuer(...args) {
   let currentFn = () => {};
   function queuer(...args) {
     let data, callbacks;
-    if (arguments.length === 1) (data = undefined), (callbacks = args[0]);
+    if (args.length === 1) (data = undefined), (callbacks = args[0]);
     else [data, callbacks] = args;
 
     if (Array.isArray(callbacks) && callbacks.length) {

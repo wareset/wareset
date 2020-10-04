@@ -26,7 +26,7 @@ function Queuer(...args) {
 
   function queuer(...args) {
     let data, callbacks;
-    if (arguments.length === 1) data = undefined, callbacks = args[0];else [data, callbacks] = args;
+    if (args.length === 1) data = undefined, callbacks = args[0];else [data, callbacks] = args;
 
     if (Array.isArray(callbacks) && callbacks.length) {
       const run = !QUEUE.length;
