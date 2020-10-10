@@ -1,6 +1,6 @@
 {
   "name": "@wareset/smartsplit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Converts a string to an array, including quotation marks.",
   "author": "cftcview <cftcview@gmail.com>",
   "homepage": "https://github.com/wareset/wareset/tree/master/packages/smartsplit#readme",
@@ -12,9 +12,7 @@
     "README.md"
   ],
   "keywords": [
-    "fast",
-    "deep",
-    "equal"
+    "split"
   ],
   "scripts": {
     "babel:copy": "babel src --out-dir dist --copy-files --keep-file-extension --no-babelrc",
