@@ -2,11 +2,12 @@ import { inArr } from '@wareset/utilites';
 
 export const watchableFactory = (
   SELF,
+  isStore,
   watchables,
   args // = ['watched', 'unwatch', 'watch', false, [1]]
 ) => {
   const _unwatchable_ = store => {
-    if (SELF._.isStore(store)) {
+    if (isStore(store)) {
       const index = watchables.indexOf(store);
       if (index !== -1) {
         watchables.splice(index, 2);
@@ -19,20 +20,16 @@ export const watchableFactory = (
   };
 
   const _watchable_ = (store, deep /* = -1 */) => {
-    if (SELF._.isStore(store)) {
+    if (isStore(store)) {
       if (store !== SELF) {
         _unwatchable_(store), watchables.push(store, deep);
         if (!inArr(store._[args[0]], SELF)) {
           store._[args[2]](SELF, deep);
         }
-        store._.updateVALUE(
-          (args[3] ? SELF : store)._.VALUE,
-          deep,
-          args[4]
-        );
+        store._.updateVALUE((args[3] ? SELF : store)._.VALUE, deep, args[4]);
       }
     } else if (Array.isArray(store)) {
-      while (watchables.length) _unwatchable_(watchables);
+      _unwatchable_(watchables);
       if (watchables.length) return _watchable_(store, deep);
       store.forEach(v => _watchable_(v, deep));
     }
@@ -44,11 +41,12 @@ export const watchableFactory = (
 
 export const watchFactory = (
   SELF,
+  isStore,
   watched,
   args // = ['watchables', 'unwatchable', 'watchable']
 ) => {
   const _unwatch_ = store => {
-    if (SELF._.isStore(store)) {
+    if (isStore(store)) {
       const index = watched.indexOf(store);
       if (index !== -1) {
         watched.splice(index, 1);
@@ -61,7 +59,7 @@ export const watchFactory = (
   };
 
   const _watch_ = (store, deep /* = -1 */) => {
-    if (SELF._.isStore(store)) {
+    if (isStore(store)) {
       if (store !== SELF) {
         _unwatch_(store), watched.push(store);
         if (!inArr(store._[args[0]], SELF)) {
@@ -69,7 +67,7 @@ export const watchFactory = (
         }
       }
     } else if (Array.isArray(store)) {
-      while (watched.length) _unwatch_(watched);
+      _unwatch_(watched);
       if (watched.length) return _watch_(store, deep);
       store.forEach(v => _watch_(v, deep));
     }
@@ -81,26 +79,26 @@ export const watchFactory = (
 
 export const crossFactory = (
   SELF,
-  _unwatch_,
-  _watch_,
+  isStore,
   _watchable_,
   args // = ['unwatch', 'watch']
 ) => {
   const _uncross_ = store => {
-    if (SELF._.isStore(store)) store._[args[0]](SELF), _unwatch_(store);
+    if (isStore(store)) store._[args[0]](SELF), SELF._[args[0]](store);
     else if (Array.isArray(store)) store.forEach(v => _uncross_(v));
     return SELF;
   };
 
   const _cross_ = (store, deep /* = -1 */) => {
-    if (SELF._.isStore(store)) {
+    if (isStore(store)) {
       if (store !== SELF) {
         _uncross_(store);
-        _watch_(store, deep), store._[args[1]](SELF, deep);
+        SELF._[args[1]](store, deep), store._[args[1]](SELF, deep);
       }
     } else if (Array.isArray(store)) {
       // store = [...store].reverse();
-      _watchable_([]), _watch_([]), store.forEach(v => _cross_(v, deep));
+      _watchable_([]);
+      SELF._[args[1]]([]), store.forEach(v => _cross_(v, deep));
     }
     return SELF;
   };

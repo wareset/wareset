@@ -6,14 +6,15 @@ import {
   isVoid,
   isFunc,
   isPromise,
-  each
+  each,
+  inArr
 } from '@wareset/utilites';
 
 import equal from './equal.mjs';
 import { watchableFactory, watchFactory, crossFactory } from './methods.mjs';
 
 const QUEUE = [];
-let _lastStore;
+let GLOBAL_EXECUTING;
 
 const validateInputs = v => {
   return Store.isStore(v) || !isArr(v) ? [v] : [...v];
@@ -57,17 +58,14 @@ class Store extends Array {
     const setOwnPropsSELF = setOwnProps(SELF);
     setOwnPropSELF('isStore', isStore);
 
-    let isBreak = false;
     const queueStart = () => {
-      if (_lastStore === SELF) {
-        let sub;
-        // console.log('QUEUE.length', QUEUE.length);
-        while (QUEUE.length) {
-          if (isBreak) break;
-          sub = QUEUE.pop();
-          if (sub.enabled && !sub.executing && sub[0] === QUEUE.length) {
-            sub[1](sub[2], sub[3], sub[4], sub.unsubscribe);
-          }
+      let sub;
+      // console.log('QUEUE.length', QUEUE.length);
+      while (QUEUE.length) {
+        if (GLOBAL_EXECUTING) break;
+        sub = QUEUE.pop();
+        if (!sub.unsubscribed && !sub.executing && sub[0] === QUEUE.length) {
+          sub[1](sub[2], sub[3], sub[4], sub.unsubscribe);
         }
       }
     };
@@ -79,14 +77,33 @@ class Store extends Array {
         if (!equal(VALUE, newVALUE, 0)) previousDifferingVALUE = VALUE;
         VALUE = newVALUE;
 
-        const isLast = _lastStore !== SELF;
-        const isOnly = !observables.length && !dependencies.length;
-        // _lastStore = SELF;
+        if ((!_choice_ || _choice_[2]) && dependencies.length) {
+          for (let i = dependencies.length; (i -= 2) >= 0; undefined) {
+            if (!dependencies[i]._.updating) {
+              // prettier-ignore
+              dependencies[i]._
+                .updateVALUE(VALUE, dependencies[i + 1], [1, 1, 1]);
+            }
+          }
+        }
+
+        if ((!_choice_ || _choice_[1]) && observables.length) {
+          for (let i = observables.length; (i -= 2) >= 0; undefined) {
+            if (
+              !observables[i]._.updating &&
+              !equal(VALUE, previousVALUE, observables[i + 1])
+            ) {
+              // prettier-ignore
+              observables[i]._
+                .updateVALUE(observables[i]._.VALUE, null, [1]);
+            }
+          }
+        }
 
         if ((!_choice_ || _choice_[0]) && stop && subscribers.length) {
           const observedVALUES = getObservedVALUES();
           for (let i = subscribers.length; i-- > 0; undefined) {
-            if (isLast || (!subscribers[i].executing && isOnly)) {
+            if (!subscribers[i].executing) {
               subscribers[i][0] = QUEUE.length;
               subscribers[i][2] = VALUE;
               subscribers[i][3] = observedVALUES;
@@ -95,27 +112,7 @@ class Store extends Array {
           }
         }
 
-        _lastStore = SELF;
-        if ((!_choice_ || _choice_[2]) && dependencies.length) {
-          for (let i = dependencies.length; (i -= 2) >= 0; undefined) {
-            if (!dependencies[i]._.updating) {
-              dependencies[i]._.updateVALUE(VALUE, dependencies[i + 1]);
-            }
-          }
-        }
-        _lastStore = SELF;
-        if ((!_choice_ || _choice_[1]) && observables.length) {
-          for (let i = observables.length; (i -= 2) >= 0; undefined) {
-            if (
-              !observables[i]._.updating &&
-              !equal(VALUE, previousVALUE, observables[i + 1])
-            ) {
-              observables[i]._.updateVALUE(observables[i]._.VALUE, null, [1]);
-            }
-          }
-        }
-
-        queueStart();
+        if (!_choice_) queueStart();
         updating = false;
       }
       return SELF;
@@ -123,51 +120,52 @@ class Store extends Array {
 
     // CREATE STORE
     // STORE METHODS
-    setOwnPropSELF('subscribe', (subscribe = noop) => {
+    setOwnPropSELF('subscribe', (subscribe = noop, autorun = true) => {
       const subscriber = [-1];
-      const setOwnPropSubscriber = setOwnProp(subscriber);
-      let executing = false;
-      setOwnPropSubscriber('executing', { get: () => executing });
-      let enabled = true;
-      setOwnPropSubscriber('enabled', { get: () => enabled });
 
-      const runSubscribe = (...a) => {
-        (isBreak = true), (executing = true);
-        _lastStore = SELF;
+      const SUBSCRIBE = (...a) => {
+        subscriber.executing = true;
+
+        GLOBAL_EXECUTING = true;
         subscriber.stop = subscribe(...a);
-        (executing = false), (isBreak = false), queueStart();
+        GLOBAL_EXECUTING = false;
+
+        if (!isPromise(subscriber.stop)) subscriber.executing = false;
+        else subscriber.stop.finally(() => (subscriber.executing = false));
+
+        queueStart();
         return subscriber.stop;
       };
 
-      subscriber.push(runSubscribe, VALUE, [], SELF);
+      subscriber.push(SUBSCRIBE, VALUE, [], SELF);
       subscribers.push(subscriber);
 
-      const runCallback = (cb, unsub) => {
+      const RUN = (cb, unsub) => {
         let res;
         if (!isFunc(unsub)) unsub = noop;
         if (isFunc(cb)) res = cb(VALUE, getObservedVALUES(), SELF, unsub);
-        else if (isPromise(cb)) res = cb.then(cb => runCallback(cb, unsub));
+        else if (isPromise(cb)) res = cb.then(cb => RUN(cb, unsub));
         return res || noop;
       };
 
       let initialized = false;
       const unsubscribe = () => {
-        enabled = false;
+        subscriber.unsubscribed = true;
         if (!initialized) initialized = true;
         else {
           const index = subscribers.indexOf(subscriber);
           if (index !== -1) subscribers.splice(index, 1);
 
-          runCallback(subscriber.stop);
-          if (!subscribers.length) runCallback(stop), (stop = null);
+          RUN(subscriber.stop);
+          if (!subscribers.length) RUN(stop), (stop = null);
         }
 
         return SELF;
       };
       subscriber.unsubscribe = unsubscribe;
 
-      if (!stop && subscribers.length) stop = runCallback(start, unsubscribe);
-      subscriber.stop = runCallback(runSubscribe, unsubscribe);
+      if (!stop && subscribers.length) stop = RUN(start, unsubscribe);
+      if (autorun) subscriber.stop = RUN(SUBSCRIBE, unsubscribe);
 
       if (initialized) unsubscribe();
       initialized = true;
@@ -175,45 +173,34 @@ class Store extends Array {
     });
 
     // OBSERVABLE
-    const [unobservable, observable] = watchableFactory(SELF, observables, [
-      'observed',
-      'unobserve',
-      'observe',
-      false,
-      [1]
-    ]);
+    // prettier-ignore
+    const [unobservable, observable] =
+      watchableFactory(SELF, isStore, observables,
+        ['observed', 'unobserve', 'observe', false, [1]]);
 
     // OBSERVE
-    const [unobserve, observe] = watchFactory(SELF, observed, [
-      'observables',
-      'unobservable',
-      'observable'
-    ]);
+    // prettier-ignore
+    const [unobserve, observe] =
+      watchFactory(SELF, isStore, observed,
+        ['observables', 'unobservable', 'observable']);
 
     // DEPENDENCY
-    const [undependency, dependency] = watchableFactory(SELF, dependencies, [
-      'depended',
-      'undepend',
-      'depend',
-      true,
-      false
-    ]);
+    // prettier-ignore
+    const [undependency, dependency] =
+      watchableFactory(SELF, isStore, dependencies,
+        ['depended', 'undepend', 'depend', true, false]);
 
     // DEPEND
-    const [undepend, depend] = watchFactory(SELF, depended, [
-      'dependencies',
-      'undependency',
-      'dependency'
-    ]);
+    // prettier-ignore
+    const [undepend, depend] =
+      watchFactory(SELF, isStore, depended,
+        ['dependencies', 'undependency', 'dependency']);
 
     // BRIDGE
-    const [unbridge, bridge] = crossFactory(
-      SELF,
-      undepend,
-      depend,
-      dependency,
-      ['undepend', 'depend']
-    );
+    // prettier-ignore
+    const [unbridge, bridge] =
+      crossFactory(SELF, isStore, dependency,
+        ['undepend', 'depend']);
 
     const __service__ = {
       get VALUE() {
@@ -252,8 +239,12 @@ class Store extends Array {
     });
 
     // UPDATE
-    const __update__ = (update, deep) =>
-      updateVALUE(update(VALUE, getObservedVALUES(), SELF, noop), deep);
+    const __update__ = (update, deep) => {
+      const newVALUE = update(VALUE, getObservedVALUES(), SELF, noop);
+      if (!isPromise(newVALUE)) updateVALUE(newVALUE, deep);
+      else newVALUE.then(value => updateVALUE(value, deep));
+      return SELF;
+    };
     setOwnPropsSELF({
       update: update => __update__(update, -1),
       updateWeak: (update, deep) => __update__(update, deep || 0),
@@ -284,9 +275,13 @@ class Store extends Array {
       }
     );
 
-    setOwnPropSELF('clearSubscribers', () => {
+    const clearSubscribers = () => {
       while (subscribers.length) subscribers[0].unsubscribe();
       if (subscribers.length) SELF.clearSubscribers();
+    };
+
+    setOwnPropSELF('clearSubscribers', () => {
+      clearSubscribers();
       return SELF;
     });
 
@@ -310,14 +305,21 @@ class Store extends Array {
       return SELF;
     });
 
-    setOwnPropSELF('clearAll', () => {
-      SELF.clearSubscribers();
-      SELF.clearDepended(), SELF.clearDependencies();
-      SELF.clearObserved(), SELF.clearObservables();
+    setOwnPropSELF('clearBridges', () => {
+      [...depended].forEach(
+        v => inArr(dependencies, v) && [undepend(v), undependency(v)]
+      );
       return SELF;
     });
 
-    setOwnPropSELF('reset', SELF.clearAll);
+    setOwnPropSELF('clearAll', () => {
+      observe([]), observable([]);
+      depend([]), dependency([]);
+      clearSubscribers();
+      return SELF;
+    });
+
+    setOwnPropSELF('reset', { get: () => SELF.clearAll });
 
     // NEXT
     setOwnPropSELF('next', { get: () => SELF.set });

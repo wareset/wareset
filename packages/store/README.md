@@ -113,7 +113,9 @@ VAL$.setWeak({ q: 1 }, 0); // Will launch all subscriptions
 VAL$.setWeak({ q: 1 }, 1); // Nothing will happen
 ```
 
-### subscribe(callbackFn: (value, observed: Array, _this_: store, unsubscribe: Function))
+### subscribe(callbackFn: (value, observed: Array, _this_: store, unsubscribe: Function), autostart: Boolean = true)
+
+- autostart - Run it after creation
 
 ```javascript
 const VAL$ = store(42);
@@ -268,53 +270,16 @@ Value: 42 Subvalues: [1, 1]
 Subval_2: 1
 ```
 
-'VAL' subscriptions will trigger earlier than subscriptions to 'SUBVAL_1' and 'SUBVAL_2'. Why is this needed? This mechanism has an interesting property - it filters out "extra calls" to subscriptions, if they are probably not needed yet.
-
-```javascript
-const SUBVAL_1$ = store(0);
-const SUBVAL_2$ = store(0);
-
-const VAL$ = store(42, [SUBVAL_1$, SUBVAL_2$]);
-
-SUBVAL_1$.subscribe(subval_1 => {
-  console.log('Subval_1: ', subval_1);
-});
-
-SUBVAL_2$.subscribe(subval_2 => {
-  console.log('Subval_2: ', subval_2);
-});
-
-VAL$.subscribe((val, [subval_1, subval_2]) => {
-  console.log('Value: ', val, 'Subvalues: ', [subval_1, subval_2]);
-
-  if (subval_1 < 2) ++SUBVAL_1$.$;
-  if (subval_2 < 3) ++SUBVAL_2$.$;
-});
-```
-
-console.log:
-
-```console
-Subval_1: 0
-Subval_2: 0
-Value: 42 Subvalues: [0, 0]
-
-Value: 42 Subvalues: [1, 1]
-Value: 42 Subvalues: [2, 2]
-Value: 42 Subvalues: [2, 3]
-
-Subval_2: 3
-Subval_1: 2
-```
-
-This is magic for observed stores. When you update them inside subscription processing, this function will be called again to make sure the store is not changed again. And only then will the original subscriptions of the changed observers be called.
-
 ```javascript
 const SUBVAL_1$ = store(0);
 const SUBVAL_2$ = store(0);
 
 const VAL$ = store(0, [SUBVAL_1$, SUBVAL_2$]);
 
+VAL$.subscribe(val => {
+  console.log('Value: ', val);
+});
+
 SUBVAL_1$.subscribe(subval_1 => {
   console.log('Subval_1: ', subval_1);
 });
@@ -324,10 +289,11 @@ SUBVAL_2$.subscribe(subval_2 => {
 });
 
 VAL$.subscribe((val, [subval_1, subval_2]) => {
-  console.log('Value: ', val, 'Subvalues: ', [subval_1, subval_2]);
+  console.log('This subscriber will not be updated,');
+  console.log('because it is the source of the update itself');
 
-  if (subval_1 < 2) ++SUBVAL_1$.$;
-  if (subval_2 < 3) ++SUBVAL_2$.$;
+  if (subval_1 < 2) SUBVAL_1$.$ = 20;
+  if (subval_2 < 3) SUBVAL_2$.$ = 30;
 
   VAL$.$ = SUBVAL_1$.$ + SUBVAL_2$.$;
 });
@@ -336,16 +302,16 @@ VAL$.subscribe((val, [subval_1, subval_2]) => {
 console.log:
 
 ```console
-Subval_1: 0
-Subval_2: 0
-Value: 0 Subvalues: [0, 0]
+Value:  0
+Subval_1:  0
+Subval_2:  0
 
-Value: 2 Subvalues: [1, 1]
-Value: 2 Subvalues: [2, 2]
-Value: 4 Subvalues: [2, 3]
+This subscriber will not be updated,
+because it is the source of the update itself
 
-Subval_2: 3
-Subval_1: 2
+Value:  50
+Subval_2:  30
+Subval_1:  20
 ```
 
 ### unobserve(stores: store | Array<store>)
@@ -441,14 +407,14 @@ Subval_1: 0
 Subval_2: 0
 Value: 0
 
-Value: 1
 Subval_1: 1
+Value: 1
 
-Value: 5
 Subval_2: 5
+Value: 5
 ```
 
-This is magic for depend stores:
+This is selectivity for depend stores:
 
 ```javascript
 const SUBVAL_1$ = store(0);
@@ -467,6 +433,22 @@ SUBVAL_2$.subscribe(subval_2 => {
 
 VAL$.subscribe(val => {
   console.log('Value: ', val);
+});
+
+VAL$.subscribe(val => {
+  console.log('Value2: ', val);
+
+  VAL$.$ = SUBVAL_1$.$ + SUBVAL_2$.$;
+
+  if (SUBVAL_1$.$ < 2) ++SUBVAL_1$.$;
+  if (SUBVAL_2$.$ < 3) ++SUBVAL_2$.$;
+
+  VAL$.$ = SUBVAL_1$.$ + SUBVAL_2$.$;
+
+  if (SUBVAL_1$.$ < 2) ++SUBVAL_1$.$;
+  if (SUBVAL_2$.$ < 3) ++SUBVAL_2$.$;
+
+  VAL$.$ = SUBVAL_1$.$ + SUBVAL_2$.$;
 
   if (SUBVAL_1$.$ < 2) ++SUBVAL_1$.$;
   if (SUBVAL_2$.$ < 3) ++SUBVAL_2$.$;
@@ -478,20 +460,14 @@ VAL$.subscribe(val => {
 console.log:
 
 ```console
-Subval_1: 0
-Subval_2: 0
-Value: 0
+Subval_1:  0
+Subval_2:  0
+Value:  0
+Value2:  0
 
-Subval_1:  1
-Subval_2:  1
-Value:  2
-
-Subval_1:  2
-Subval_2:  2
-Value:  4
-
-Subval_2:  3
 Value:  5
+Subval_2:  3
+Subval_1:  2
 ```
 
 Observers are updated in turn. And the final result will only be at the end.
@@ -579,17 +555,17 @@ Val_1: 0
 Val_2: 0
 Val_3: 0
 
-Val_3: 1
 Val_1: 1
-Val_2: 1
+Val_1: 1
+Val_3: 1
 
-Val_3: 2
-Val_1: 2
 Val_2: 2
+Val_1: 2
+Val_3: 2
 
-Val_2: 3
-Val_1: 3
 Val_3: 3
+Val_1: 3
+Val_2: 3
 ```
 
 ### unbridge(stores: store | Array<store>)
