@@ -1,6 +1,6 @@
 {
   "name": "wareset",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Test repository",
   "author": "wareset <git@wareset.com>",
   "homepage": "https://github.com/wareset/wareset#readme",
@@ -37,13 +37,6 @@
     "babel-plugin-module-extension": "^0.1.3"
   },
   "dependencies": {
-    "@wareset/deep-equal": "0.0.10",
-    "@wareset/eventer": "0.0.9",
-    "@wareset/nearly": "0.1.2",
-    "@wareset/queuer": "0.1.1",
-    "@wareset/store": "0.3.0",
-    "@wareset/typed": "0.2.4",
-    "@wareset/unique": "1.0.4",
-    "@wareset/utilites": "0.0.6"
+    "@wareset/store": "0.3.6"
   }
 }
