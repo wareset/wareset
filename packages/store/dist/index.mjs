@@ -1,4 +1,4 @@
-import { noop, setOwnProp, setOwnProps, isArr, isVoid, isFunc, isPromise, each, inArr } from '@wareset/utilites';
+import { noop, setOwnProp, setOwnProps, isArr, isVoid, isFunc, isPromise, each, inArr } from 'wareset-utilites';
 import equal from './equal.mjs';
 import { watchableFactory, watchFactory, crossFactory } from './methods.mjs';
 const QUEUE = [];

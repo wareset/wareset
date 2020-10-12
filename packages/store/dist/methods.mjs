@@ -1,4 +1,4 @@
-import { inArr } from '@wareset/utilites';
+import { inArr } from 'wareset-utilites';
 export const watchableFactory = (SELF, isStore, watchables, args // = ['watched', 'unwatch', 'watch', false, [1]]
 ) => {
   const _unwatchable_ = store => {

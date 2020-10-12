@@ -5,10 +5,10 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.crossFactory = exports.watchFactory = exports.watchableFactory = void 0;
 
-function _utilites() {
-  const data = require("@wareset/utilites");
+function _waresetUtilites() {
+  const data = require("wareset-utilites");
 
-  _utilites = function () {
+  _waresetUtilites = function () {
     return data;
   };
 
@@ -23,7 +23,7 @@ const watchableFactory = (SELF, isStore, watchables, args // = ['watched', 'unwa
 
       if (index !== -1) {
         watchables.splice(index, 2);
-        if ((0, _utilites().inArr)(store._[args[0]], SELF)) store._[args[1]](SELF);
+        if ((0, _waresetUtilites().inArr)(store._[args[0]], SELF)) store._[args[1]](SELF);
       }
     } else if (Array.isArray(store)) {
       store.forEach(v => _unwatchable_(v));
@@ -39,7 +39,7 @@ const watchableFactory = (SELF, isStore, watchables, args // = ['watched', 'unwa
       if (store !== SELF) {
         _unwatchable_(store), watchables.push(store, deep);
 
-        if (!(0, _utilites().inArr)(store._[args[0]], SELF)) {
+        if (!(0, _waresetUtilites().inArr)(store._[args[0]], SELF)) {
           store._[args[2]](SELF, deep);
         }
 
@@ -68,7 +68,7 @@ const watchFactory = (SELF, isStore, watched, args // = ['watchables', 'unwatcha
 
       if (index !== -1) {
         watched.splice(index, 1);
-        if ((0, _utilites().inArr)(store._[args[0]], SELF)) store._[args[1]](SELF);
+        if ((0, _waresetUtilites().inArr)(store._[args[0]], SELF)) store._[args[1]](SELF);
       }
     } else if (Array.isArray(store)) {
       store.forEach(v => _unwatch_(v));
@@ -84,7 +84,7 @@ const watchFactory = (SELF, isStore, watched, args // = ['watchables', 'unwatcha
       if (store !== SELF) {
         _unwatch_(store), watched.push(store);
 
-        if (!(0, _utilites().inArr)(store._[args[0]], SELF)) {
+        if (!(0, _waresetUtilites().inArr)(store._[args[0]], SELF)) {
           store._[args[2]](SELF, deep);
         }
       }

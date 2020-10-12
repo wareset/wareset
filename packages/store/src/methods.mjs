@@ -1,4 +1,4 @@
-import { inArr } from '@wareset/utilites';
+import { inArr } from 'wareset-utilites';
 
 export const watchableFactory = (
   SELF,

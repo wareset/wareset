@@ -5,10 +5,10 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-function _utilites() {
-  const data = require("@wareset/utilites");
+function _waresetUtilites() {
+  const data = require("wareset-utilites");
 
-  _utilites = function () {
+  _waresetUtilites = function () {
     return data;
   };
 
@@ -25,7 +25,7 @@ const QUEUE = [];
 let GLOBAL_EXECUTING;
 
 const validateInputs = v => {
-  return Store.isStore(v) || !(0, _utilites().isArr)(v) ? [v] : [...v];
+  return Store.isStore(v) || !(0, _waresetUtilites().isArr)(v) ? [v] : [...v];
 };
 
 class Store extends Array {
@@ -35,9 +35,9 @@ class Store extends Array {
 
   constructor(VALUE, _observed, _depended, start) {
     super();
-    if ((0, _utilites().isFunc)(_observed)) start = _observed, _observed = [];
-    if ((0, _utilites().isFunc)(_depended)) start = _depended, _depended = [];
-    if (!(0, _utilites().isFunc)(start)) start = _utilites().noop;
+    if ((0, _waresetUtilites().isFunc)(_observed)) start = _observed, _observed = [];
+    if ((0, _waresetUtilites().isFunc)(_depended)) start = _depended, _depended = [];
+    if (!(0, _waresetUtilites().isFunc)(start)) start = _waresetUtilites().noop;
     _observed = validateInputs(_observed);
     _depended = validateInputs(_depended);
     const isStore = Store.isStore;
@@ -58,8 +58,8 @@ class Store extends Array {
 
     const SELF = this; // new Store();
 
-    const setOwnPropSELF = (0, _utilites().setOwnProp)(SELF);
-    const setOwnPropsSELF = (0, _utilites().setOwnProps)(SELF);
+    const setOwnPropSELF = (0, _waresetUtilites().setOwnProp)(SELF);
+    const setOwnPropsSELF = (0, _waresetUtilites().setOwnProps)(SELF);
     setOwnPropSELF('isStore', isStore);
 
     const queueStart = () => {
@@ -122,7 +122,7 @@ class Store extends Array {
     // STORE METHODS
 
 
-    setOwnPropSELF('subscribe', (subscribe = _utilites().noop, autorun = true) => {
+    setOwnPropSELF('subscribe', (subscribe = _waresetUtilites().noop, autorun = true) => {
       const subscriber = [-1];
 
       const SUBSCRIBE = (...a) => {
@@ -130,7 +130,7 @@ class Store extends Array {
         GLOBAL_EXECUTING = true;
         subscriber.stop = subscribe(...a);
         GLOBAL_EXECUTING = false;
-        if (!(0, _utilites().isPromise)(subscriber.stop)) subscriber.executing = false;else subscriber.stop.finally(() => subscriber.executing = false);
+        if (!(0, _waresetUtilites().isPromise)(subscriber.stop)) subscriber.executing = false;else subscriber.stop.finally(() => subscriber.executing = false);
         queueStart();
         return subscriber.stop;
       };
@@ -140,9 +140,9 @@ class Store extends Array {
 
       const RUN = (cb, unsub) => {
         let res;
-        if (!(0, _utilites().isFunc)(unsub)) unsub = _utilites().noop;
-        if ((0, _utilites().isFunc)(cb)) res = cb(VALUE, getObservedVALUES(), SELF, unsub);else if ((0, _utilites().isPromise)(cb)) res = cb.then(cb => RUN(cb, unsub));
-        return res || _utilites().noop;
+        if (!(0, _waresetUtilites().isFunc)(unsub)) unsub = _waresetUtilites().noop;
+        if ((0, _waresetUtilites().isFunc)(cb)) res = cb(VALUE, getObservedVALUES(), SELF, unsub);else if ((0, _waresetUtilites().isPromise)(cb)) res = cb.then(cb => RUN(cb, unsub));
+        return res || _waresetUtilites().noop;
       };
 
       let initialized = false;
@@ -201,8 +201,8 @@ class Store extends Array {
     setOwnPropSELF('_', {
       value: __service__
     }, false);
-    const setOwnPropServices = (0, _utilites().setOwnProp)(__service__);
-    (0, _utilites().each)({
+    const setOwnPropServices = (0, _waresetUtilites().setOwnProp)(__service__);
+    (0, _waresetUtilites().each)({
       isStore,
       updateVALUE
     }, (value, key) => {
@@ -210,7 +210,7 @@ class Store extends Array {
         get: () => value
       });
     });
-    (0, _utilites().each)({
+    (0, _waresetUtilites().each)({
       subscribers,
       observables,
       observed,
@@ -233,8 +233,8 @@ class Store extends Array {
     }); // UPDATE
 
     const __update__ = (update, deep) => {
-      const newVALUE = update(VALUE, getObservedVALUES(), SELF, _utilites().noop);
-      if (!(0, _utilites().isPromise)(newVALUE)) updateVALUE(newVALUE, deep);else newVALUE.then(value => updateVALUE(value, deep));
+      const newVALUE = update(VALUE, getObservedVALUES(), SELF, _waresetUtilites().noop);
+      if (!(0, _waresetUtilites().isPromise)(newVALUE)) updateVALUE(newVALUE, deep);else newVALUE.then(value => updateVALUE(value, deep));
       return SELF;
     };
 
@@ -243,7 +243,7 @@ class Store extends Array {
       updateWeak: (update, deep) => __update__(update, deep || 0),
       updateSure: update => __update__(update, null)
     });
-    (0, _utilites().each)({
+    (0, _waresetUtilites().each)({
       observable,
       observe,
       dependency,
@@ -259,7 +259,7 @@ class Store extends Array {
         get: () => value
       });
     });
-    (0, _utilites().each)({
+    (0, _waresetUtilites().each)({
       unobservable,
       unobserve,
       undependency,
@@ -299,7 +299,7 @@ class Store extends Array {
       return SELF;
     });
     setOwnPropSELF('clearBridges', () => {
-      [...depended].forEach(v => (0, _utilites().inArr)(dependencies, v) && [undepend(v), undependency(v)]);
+      [...depended].forEach(v => (0, _waresetUtilites().inArr)(dependencies, v) && [undepend(v), undependency(v)]);
       return SELF;
     });
     setOwnPropSELF('clearAll', () => {
@@ -325,7 +325,7 @@ class Store extends Array {
     }); // TYPE COERCION
 
     ['valueOf', 'toString', 'toJSON'].forEach(v => {
-      setOwnPropSELF(v, (...a) => (0, _utilites().isVoid)(VALUE) || !VALUE[v] ? VALUE : VALUE[v](...a));
+      setOwnPropSELF(v, (...a) => (0, _waresetUtilites().isVoid)(VALUE) || !VALUE[v] ? VALUE : VALUE[v](...a));
     });
     observe(_observed);
     depend(_depended); // Object.seal(SELF);

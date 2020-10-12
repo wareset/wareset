@@ -8,7 +8,7 @@ import {
   isPromise,
   each,
   inArr
-} from '@wareset/utilites';
+} from 'wareset-utilites';
 
 import equal from './equal.mjs';
 import { watchableFactory, watchFactory, crossFactory } from './methods.mjs';

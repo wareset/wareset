@@ -15,10 +15,10 @@ function _deepEqual() {
   return data;
 }
 
-function _utilites() {
-  const data = require("@wareset/utilites");
+function _waresetUtilites() {
+  const data = require("wareset-utilites");
 
-  _utilites = function () {
+  _waresetUtilites = function () {
     return data;
   };
 
@@ -28,7 +28,7 @@ function _utilites() {
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var _default = (a, b, deep) => {
-  if ((0, _utilites().isVoid)(deep)) return false;
+  if ((0, _waresetUtilites().isVoid)(deep)) return false;
   if (typeof deep === 'boolean' || deep >= 0) return (0, _deepEqual().default)(a, b, deep); // return !(isFunc(a) || !deepEqual(a, b, 0));
 
   return (0, _deepEqual().default)(a, b, 0);
