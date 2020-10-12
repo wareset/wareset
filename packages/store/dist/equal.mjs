@@ -1,4 +1,4 @@
-import deepEqual from '@wareset/deep-equal';
+import deepEqual from '@wareset-utilites/deep-equal';
 import { isVoid, isFunc } from 'wareset-utilites';
 export default ((a, b, deep) => {
   if (isVoid(deep)) return false;

@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 
 function _deepEqual() {
-  const data = _interopRequireDefault(require("@wareset/deep-equal"));
+  const data = _interopRequireDefault(require("@wareset-utilites/deep-equal"));
 
   _deepEqual = function () {
     return data;

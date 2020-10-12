@@ -103,7 +103,7 @@ VAL$.setSure(42); // Will launch all subscriptions
 This is a soft test.
 The rest of the methods 'Weak' behave exactly the same.
 
-- deep - this is the depth of comparison for objects. See [@wareset/deep-equal](https://www.npmjs.com/package/@wareset/deep-equal)
+- deep - this is the depth of comparison for objects. See [@wareset-utilites/deep-equal](https://www.npmjs.com/package/@wareset-utilites/deep-equal)
 
 ```javascript
 const obj = { q: 1 };
