@@ -1,7 +1,7 @@
 {
   "name": "@wareset/smartsplit",
-  "version": "0.1.1",
-  "description": "Converts a string to an array, including quotation marks.",
+  "version": "0.2.0",
+  "description": "Converts a string to an array, taking quotes or brackets",
   "author": "cftcview <cftcview@gmail.com>",
   "homepage": "https://github.com/wareset/wareset/tree/master/packages/smartsplit#readme",
   "license": "MIT",
