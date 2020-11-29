@@ -42,17 +42,26 @@ type NotifierStart = Function | void;
 type NotifierStop = Function | null;
 
 type SubscribeWrapper = Function;
-type Subscriber = [
-  number,
-  boolean,
-  boolean,
-  SubscribeWrapper,
-  Value,
-  Value[],
-  Store,
-  Unsubscriber,
-  SubscribeStop?
-];
+// type Subscriber = [
+//   number,
+//   boolean,
+//   boolean,
+//   SubscribeWrapper,
+//   Value,
+//   // Value[],
+//   // Store,
+//   Unsubscriber,
+//   SubscribeStop?
+// ];
+
+type Subscriber = {
+  queue: number;
+  executing: boolean;
+  unsubscribed: boolean;
+  execute: SubscribeWrapper;
+  value: Value;
+  unsubscribe: Unsubscriber;
+};
 
 const QUEUE: any = [];
 let __GLOBAL_EXECUTING__: boolean;
@@ -80,6 +89,17 @@ const INITIATOR_TYPE = 'initiatorType';
 const isStore = (v: any): boolean => v instanceof Store;
 const checkInputs = (v: any): Store[] =>
   isStore(v) || !isArr(v) ? [v] : [...v];
+
+const __RUN__ = (self: Store) => (cb: any, unsub?: Function): Function => {
+  let res;
+  if (!isFunc(unsub)) unsub = noop;
+  if (isFunc(cb)) {
+    res = cb.bind(self)(self[VALUE], self, unsub);
+  } else if (isPromise(cb)) {
+    res = cb.then((cb: Function) => __RUN__(self)(cb, unsub));
+  }
+  return res || noop;
+};
 
 class __Service__ {
   isStore = isStore;
@@ -130,8 +150,8 @@ class __Service__ {
     while (QUEUE.length) {
       if (__GLOBAL_EXECUTING__) break;
       sub = QUEUE.pop();
-      if (!(sub[1] || sub[2] || sub[0] !== QUEUE.length)) {
-        sub[3](sub[4], sub[5], sub[6], sub[7]);
+      if (sub.queue === QUEUE.length && !sub.executing && !sub.unsubscribed) {
+        sub.execute();
       }
     }
   }
@@ -179,13 +199,10 @@ class __Service__ {
 
       const subscribers = this.subscribers;
       if ((!_choice_ || _choice_[0]) && this[STOP] && subscribers.length) {
-        const observedValues = this[OBSERVED_VALUES];
-        // for (let i = subscribers.length; i-- > 0; undefined) {
         for (let i = 0; i < subscribers.length; i++) {
-          if (!subscribers[i][1]) {
-            subscribers[i][0] = QUEUE.length;
-            subscribers[i][4] = this[VALUE];
-            subscribers[i][5] = observedValues;
+          if (!subscribers[i].executing && !subscribers[i].unsubscribed) {
+            subscribers[i].queue = QUEUE.length;
+            subscribers[i].value = this[VALUE];
             QUEUE.push(subscribers[i]);
           }
         }
@@ -202,72 +219,76 @@ class __Service__ {
     subscribe: SubscribeStart = noop,
     autorun: boolean = true
   ): Unsubscriber {
-    // eslint-disable-next-line prefer-const
-    let subscriber: Subscriber;
+    const service = this;
+    const parent = service[__PARENT__];
+    const RUN = __RUN__(parent);
 
-    const sub: SubscribeWrapper = (...a: any[]): SubscribeStop => {
-      subscriber[1] = true;
+    let stop = noop;
+    let executing = false;
+    let unsubscribed = false;
+
+    let initialized = false;
+
+    const subscriber = {
+      queue: -1,
+      value: this[VALUE],
+      get executing(): boolean {
+        return executing;
+      },
+      get unsubscribed(): boolean {
+        return unsubscribed;
+      },
+
+      execute,
+      unsubscribe
+    };
+
+    function execute(): SubscribeStop {
+      executing = true;
 
       __GLOBAL_EXECUTING__ = true;
-      subscriber[8] = subscribe.bind(this[__PARENT__])(...a);
+      stop = subscribe.bind(parent)(subscriber.value, parent, unsubscribe);
       __GLOBAL_EXECUTING__ = false;
 
       const afterExecuting = (): void => {
-        subscriber[1] = false;
-        if (this.subscribers[0] === subscriber) {
-          (this[INITIATOR] = null), (this[INITIATOR_TYPE] = null);
+        executing = false;
+        if (service.subscribers[0] === subscriber) {
+          (service[INITIATOR] = null), (service[INITIATOR_TYPE] = null);
         }
       };
 
-      if (!isPromise(subscriber[8])) afterExecuting();
-      else subscriber[8].finally(() => afterExecuting());
+      if (!isPromise(stop)) afterExecuting();
+      else (stop as any).finally(() => afterExecuting());
 
-      this[__QUEUER_START__]();
-      return subscriber[8];
-    };
+      service[__QUEUER_START__]();
+      return stop;
+    }
 
-    const RUN = (cb: any, unsub?: Function): Function => {
-      let res;
-      if (!isFunc(unsub)) unsub = noop;
-      if (isFunc(cb)) {
-        res = cb.bind(this[__PARENT__])(
-          this[VALUE],
-          this[OBSERVED_VALUES],
-          this[__PARENT__],
-          unsub
-        );
-      } else if (isPromise(cb)) {
-        res = cb.then((cb: Function) => RUN(cb, unsub));
-      }
-      return res || noop;
-    };
-
-    let initialized = false;
-    const unsub: Unsubscriber = (): Store => {
-      subscriber[2] = true;
+    function unsubscribe(): Store {
+      unsubscribed = true;
       if (!initialized) initialized = true;
       else {
-        const index = this.subscribers.indexOf(subscriber);
-        if (index !== -1) this.subscribers.splice(index, 1);
+        const index = service.subscribers.indexOf(subscriber);
+        if (index !== -1) service.subscribers.splice(index, 1);
 
-        RUN(subscriber[8]);
-        if (!this.subscribers.length) RUN(this[STOP]), (this[STOP] = null);
+        RUN(stop);
+        if (!service.subscribers.length) {
+          RUN(service[STOP]), (service[STOP] = null);
+        }
       }
 
-      return this[__PARENT__];
-    };
-
-    subscriber = [-1, !1, !1, sub, this[VALUE], [], this[__PARENT__], unsub];
-    this.subscribers.unshift(subscriber);
-
-    if (!this[STOP] && this.subscribers.length) {
-      this[STOP] = RUN(this[START], unsub);
+      return parent;
     }
-    if (autorun) subscriber[8] = RUN(sub, unsub);
 
-    if (initialized) unsub();
+    this.subscribers.unshift(subscriber);
+    if (!this[STOP] && this.subscribers.length) {
+      this[STOP] = RUN(this[START], unsubscribe);
+    }
+    if (autorun) execute();
+
+    if (initialized) unsubscribe();
     initialized = true;
-    return unsub;
+    return unsubscribe;
   }
 }
 
@@ -319,19 +340,22 @@ class Store extends Array {
     });
 
     this.depend(depended), this.observe(observed);
+    Object.seal(this);
   }
 
   subscribe(subscribe = noop, autorun = true): Unsubscriber {
     return this._.subscribe(subscribe, autorun);
   }
   clearSubscribers(): this {
-    while (this._.subscribers.length) this._.subscribers[0][7]();
+    while (this._.subscribers.length) {
+      this._.subscribers[this._.subscribers.length - 1].unsubscribe();
+    }
     return this;
   }
-  on(subscribe = noop, autorun = true): this {
-    this.subscribe(subscribe, autorun);
-    return this;
-  }
+  // on(subscribe = noop, autorun = true): this {
+  //   this.subscribe(subscribe, autorun);
+  //   return this;
+  // }
 
   // getPreviousDiffering(): Value {
   //   return this._[PREVIOUS_DIFFERING_VALUE];
@@ -355,7 +379,7 @@ class Store extends Array {
   }
 
   updateWeak(update: Function, deep: Deep = 0): this {
-    const newValue = update(this._[VALUE], this._[OBSERVED_VALUES], this, noop);
+    const newValue = update(this._[VALUE], this, noop);
     if (!isPromise(newValue)) this.setWeak(newValue, deep);
     else newValue.then((value: Value) => this.setWeak(value, deep));
     return this;
