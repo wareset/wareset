@@ -5,28 +5,10 @@ import {
   isVoid,
   isFunc,
   isPromise,
-  each,
+  // each,
   inArr
 } from 'wareset-utilites';
 import equal from './equal';
-import { watchableFactory, watchFactory, crossFactory } from './methods';
-
-import {
-  OBSERVED,
-  DEPENDED,
-  OBSERVABLES,
-  DEPENDENCIES,
-  OBSERVE,
-  UNOBSERVE,
-  OBSERVABLE,
-  UNOBSERVABLE,
-  DEPEND,
-  UNDEPEND,
-  DEPENDENCY,
-  UNDEPENDENCY,
-  BRIDGE,
-  UNBRIDGE
-} from './consts';
 
 // export const Store = ((): any => {
 type Value = any;
@@ -42,186 +24,371 @@ type NotifierStart = Function | void;
 type NotifierStop = Function | null;
 
 type SubscribeWrapper = Function;
-// type Subscriber = [
-//   number,
-//   boolean,
-//   boolean,
-//   SubscribeWrapper,
-//   Value,
-//   // Value[],
-//   // Store,
-//   Unsubscriber,
-//   SubscribeStop?
-// ];
 
 type Subscriber = {
   queue: number;
   executing: boolean;
   unsubscribed: boolean;
-  execute: SubscribeWrapper;
   value: Value;
+  execute: SubscribeWrapper;
   unsubscribe: Unsubscriber;
 };
 
 const QUEUE: any = [];
 let __GLOBAL_EXECUTING__: boolean;
 
-const VALUE = 'value';
-const PREVIOUS_VALUE = 'previousValue';
-const PREVIOUS_DIFFERING_VALUE = 'previousDifferingValue';
-
-const STOP = '__stop__';
-const START = '__start__';
-
-const OBSERVED_VALUES = 'observedValues';
-const DEPENDED_VALUES = 'dependedValues';
-
-const __QUEUER_START__ = '__queuer_start__';
-const __UPDATE_VALUE__ = '__update_value__';
-
-const __PARENT__ = '__self__';
-const __ENABLED__ = '__enabled__';
-const __UPDATING__ = '__updating__';
-
-const INITIATOR = 'initiator';
-const INITIATOR_TYPE = 'initiatorType';
+const __QUEUER_START__ = (): void => {
+  let sub;
+  while (QUEUE.length) {
+    if (__GLOBAL_EXECUTING__) break;
+    sub = QUEUE.pop();
+    if (sub.queue === QUEUE.length && !sub.executing && !sub.unsubscribed) {
+      sub.execute();
+    }
+  }
+};
 
 const isStore = (v: any): boolean => v instanceof Store;
 const checkInputs = (v: any): Store[] =>
   isStore(v) || !isArr(v) ? [v] : [...v];
 
-const __RUN__ = (self: Store) => (cb: any, unsub?: Function): Function => {
-  let res;
-  if (!isFunc(unsub)) unsub = noop;
-  if (isFunc(cb)) {
-    res = cb.bind(self)(self[VALUE], self, unsub);
-  } else if (isPromise(cb)) {
-    res = cb.then((cb: Function) => __RUN__(self)(cb, unsub));
-  }
-  return res || noop;
+const freeze = (v: any): any => Object.freeze([...v]);
+
+type Service = {
+  value: Value;
+
+  previousValue: Value;
+  previousDifferingValue: Value;
+
+  start: NotifierStart;
+  stop: NotifierStop;
+  subscribers: Subscriber[];
+
+  watchList: Store[];
+  watchableList: Store[] | _Choice_[];
+
+  referList: Store[];
+  referenceList: Store[] | Deep[];
+
+  initiator: Store | null;
+  initiatorType: string | null;
+
+  updating: boolean;
 };
 
-class __Service__ {
-  isStore = isStore;
-  [VALUE]: Value;
-  [PREVIOUS_VALUE]: any = undefined;
-  [PREVIOUS_DIFFERING_VALUE]: any = undefined;
-  [__PARENT__]: Store;
+const __unwatchable__ = (
+  self: Store,
+  store: Store | Store[] | any,
+  args: [Store[], Store[], string, string, boolean?, any?]
+): Store => {
+  if (isStore(store)) {
+    const index = args[0].indexOf(store);
+    if (index !== -1) {
+      args[0].splice(index, 2);
+      if (inArr(store[args[3] + 'List'], self)) store[args[2]](self);
+    }
+  } else if (Array.isArray(store)) {
+    store.forEach((v) => __unwatchable__(self, v, args));
+  }
+  return self;
+};
+const __watchable__ = (
+  self: Store,
+  store: Store | Store[] | any,
+  deep: any /* = -1 */,
+  args: [Store[], Store[], string, string, boolean, any]
+): Store => {
+  if (isStore(store)) {
+    if (store !== this) {
+      __unwatchable__(self, store, args), args[0].push(store, deep);
+      if (!inArr(args[1], self)) store[args[3]](self, deep);
+      store.__update__((args[4] ? self : store).get(), deep, args[5]);
+      // store.setWeak((args[4] ? this : store).get(), deep);
+    }
+  } else if (Array.isArray(store)) {
+    __unwatchable__(self, args[0], args);
+    // if (args[0].length) return this.#__watchable__(store, deep, args);
+    store.forEach((v) => __watchable__(self, v, deep, args));
+  }
+  return self;
+};
 
-  [START]: NotifierStart;
-  [STOP]: NotifierStop = null;
-  subscribers: Subscriber[] = [];
-  [__UPDATING__] = false;
+const __unwatch__ = (
+  self: Store,
+  store: Store | Store[] | any,
+  args: [Store[], Store[], string]
+): Store => {
+  if (isStore(store)) {
+    const index = args[0].indexOf(store as Store);
+    if (index !== -1) {
+      args[0].splice(index, 1);
+      if (inArr(args[1], self)) store['un' + args[2]](self);
+    }
+  } else if (Array.isArray(store)) {
+    store.forEach((v) => __unwatch__(self, v, args));
+  }
+  return self;
+};
+const __watch__ = (
+  self: Store,
+  store: Store | Store[] | any,
+  deep: any /* = -1 */,
+  args: [Store[], Store[], string]
+): Store => {
+  if (isStore(store)) {
+    if (store !== self) {
+      __unwatch__(self, store, args), args[0].push(store);
+      if (!inArr(store[args[2] + 'List'], self)) {
+        store[args[2]](self, deep);
+      }
+    }
+  } else if (Array.isArray(store)) {
+    __unwatch__(self, args[0], args);
+    // if (args[0].length) return this.#__watch__(store, deep, args);
+    store.forEach((v) => __watch__(self, v, deep, args));
+  }
+  return self;
+};
 
-  [OBSERVED]: Store[] = [];
-  [DEPENDED]: Store[] = [];
-  [OBSERVABLES]: Store[] | _Choice_[] = [];
-  [DEPENDENCIES]: Store[] | Deep[] = [];
+const __uncross__ = (
+  self: Store,
+  store: Store | Store[] | any,
+  args: [string, string?, string?]
+): Store => {
+  if (isStore(store)) store[args[0]](self), self[args[0] as any](store);
+  else if (Array.isArray(store)) {
+    store.forEach((v) => __uncross__(self, v, args));
+  }
+  return self;
+};
+const __cross__ = (
+  self: Store,
+  store: Store | Store[] | any,
+  deep: any /* = -1 */,
+  args: [string, string, string]
+): Store => {
+  if (isStore(store)) {
+    if (store !== self) {
+      __uncross__(self, store, args);
+      self[args[2] as any](store, deep), store[args[2]](self, deep);
+    }
+  } else if (Array.isArray(store)) {
+    self[args[1] as any]([]), self[args[0] as any]([]);
+    store.forEach((v) => __cross__(self, v, deep, args));
+  }
+  return self;
+};
 
-  [INITIATOR]: Store | null = null;
-  [INITIATOR_TYPE]: string | null = null;
+const __CACHE__: WeakMap<Store, Service> = new WeakMap();
+const _ = (v: Store): Service => __CACHE__.get(v) as Service;
+class Store extends Array {
+  // _!: __Service__;
+  static isStore = isStore;
+  public isStore(v: any): boolean {
+    return isStore(v);
+  }
 
-  constructor(parent: Store, value: Value, start: NotifierStart) {
-    (this[__PARENT__] = parent), (this[VALUE] = value), (this[START] = start);
+  public 0!: Value;
+  public $!: Value;
+  public value!: Value;
+
+  // [PREVIOUS_VALUE]!: Value;
+  public get previousValue(): Value {
+    return _(this).previousValue;
+  }
+
+  // [PREVIOUS_DIFFERING_VALUE]!: Value;
+  public get previousDifferingValue(): Value {
+    return _(this).previousDifferingValue;
+  }
+
+  public get start(): NotifierStart {
+    return _(this).start;
+  }
+  public get stop(): NotifierStop {
+    return _(this).stop;
+  }
+  public get subscribers(): Subscriber[] {
+    return freeze(_(this).subscribers);
+  }
+
+  public get enabled(): boolean {
+    const service = _(this);
+    return !!(service.stop && service.subscribers.length);
+  }
+
+  // [WATCH_LIST]!: Store[];
+  public get watchList(): Store[] {
+    return freeze(_(this).watchList);
+  }
+  public get watchListValues(): Value[] {
+    return _(this).watchList.map((v) => (isStore(v) ? (v as Store).get() : v));
+  }
+  public get watchableList(): Store[] {
+    return freeze(_(this).watchableList);
+  }
+
+  // [REFER_LIST]!: Store[];
+  public get referList(): Store[] {
+    return freeze(_(this).referList);
+  }
+  public get referListValues(): Value[] {
+    return _(this).referList.map((v) => (isStore(v) ? (v as Store).get() : v));
+  }
+  public get referenceList(): Store[] {
+    return freeze(_(this).referenceList as Store[]);
+  }
+
+  public get initiator(): Store | null {
+    return _(this).initiator;
+  }
+  public get initiatorType(): string | null {
+    return _(this).initiatorType;
+  }
+  public get initiatorTypeIsWatch(): boolean {
+    return _(this).initiatorType === 'watch';
+  }
+  public get initiatorTypeIsRefer(): boolean {
+    return _(this).initiatorType === 'refer';
+  }
+
+  constructor(value?: Value);
+  constructor(value: Value, watchListOrStart: Store | Store[] | NotifierStart);
+  constructor(
+    value: Value,
+    watchList: Store | Store[],
+    referListOrStart: Store | Store[] | NotifierStart
+  );
+  constructor(
+    value: Value,
+    watchList: Store | Store[],
+    referList: Store | Store[],
+    start: NotifierStart
+  );
+  constructor(
+    value: Value,
+    watchList: Store | Store[] = [],
+    referList: Store | Store[] = [],
+    start: NotifierStart | any = noop
+  ) {
+    super();
+    if (isFunc(watchList)) (start = watchList), (watchList = []);
+    if (isFunc(referList)) (start = referList), (referList = []);
+    if (!isFunc(start)) start = noop;
+
+    setOwnProps(this, {
+      // _: { writable: 0, value: new __Service__(this, value, start) },
+      0: { enumerable: 1, get: this.get, set: this.set }
+    });
+
+    __CACHE__.set(this, {
+      value,
+      previousValue: undefined,
+      previousDifferingValue: undefined,
+      start,
+      stop: null,
+      subscribers: [],
+      watchList: [],
+      watchableList: [],
+      referList: [],
+      referenceList: [],
+      initiator: null,
+      initiatorType: null,
+      updating: false
+    });
+
+    (watchList = checkInputs(watchList)), (referList = checkInputs(referList));
+    this.refer(referList), this.watch(watchList);
     Object.seal(this);
   }
 
-  get [__ENABLED__](): boolean {
-    return !!(this[STOP] && this.subscribers.length);
+  public get updating(): boolean {
+    return _(this).updating;
   }
+  __update__(
+    newValue: Value,
+    deep: Deep,
+    _choice_?: _Choice_,
+    initiator: Store | null = null,
+    initiatorType: string | null = null
+  ): this {
+    const service = _(this);
+    if (initiatorType === 'watch' && newValue === 0) newValue = service.value;
 
-  get initiatorTypeIsObserved(): boolean {
-    return this[INITIATOR_TYPE] === OBSERVED;
-  }
-  get initiatorTypeIsDepended(): boolean {
-    return this[INITIATOR_TYPE] === DEPENDED;
-  }
-
-  get [OBSERVED_VALUES](): Value[] {
-    return this[OBSERVED].map((v) => (isStore(v) ? (v as Store).get() : v));
-  }
-
-  get [DEPENDED_VALUES](): Value[] {
-    return this[DEPENDED].map((v) => (isStore(v) ? (v as Store).get() : v));
-  }
-
-  [__QUEUER_START__](): void {
-    let sub;
-    while (QUEUE.length) {
-      if (__GLOBAL_EXECUTING__) break;
-      sub = QUEUE.pop();
-      if (sub.queue === QUEUE.length && !sub.executing && !sub.unsubscribed) {
-        sub.execute();
+    if (!equal(service.value, newValue, deep)) {
+      service.updating = true;
+      service.previousValue = service.value;
+      if (!equal(service.value, newValue, 0)) {
+        service.previousDifferingValue = service.value;
       }
-    }
-  }
+      service.value = newValue;
 
-  [__UPDATE_VALUE__](newValue: Value, deep: Deep, _choice_?: _Choice_): Store {
-    if (!equal(this[VALUE], newValue, deep)) {
-      this[__UPDATING__] = true;
-      this[PREVIOUS_VALUE] = this[VALUE];
-      if (!equal(this[VALUE], newValue, 0)) {
-        this[PREVIOUS_DIFFERING_VALUE] = this[VALUE];
-      }
-      this[VALUE] = newValue;
+      service.initiator = initiator;
+      service.initiatorType = initiatorType;
 
-      const dependencies = this[DEPENDENCIES];
-      if ((!_choice_ || _choice_[2]) && dependencies.length) {
-        for (let i = dependencies.length; (i -= 2) >= 0; undefined) {
-          if (!(dependencies[i] as Store)._[__UPDATING__]) {
-            (dependencies[i] as Store)._[INITIATOR] = this[__PARENT__];
-            (dependencies[i] as Store)._[INITIATOR_TYPE] = DEPENDED;
+      const referenceList = service.referenceList;
+      if ((!_choice_ || _choice_[2]) && referenceList.length) {
+        for (let i = referenceList.length; (i -= 2) >= 0; undefined) {
+          if (!(referenceList[i] as Store).updating) {
             // prettier-ignore
-            (dependencies[i] as Store)._[__UPDATE_VALUE__](
-              this[VALUE], dependencies[i + 1] as Deep, [1, 1, 1]);
+            (referenceList[i] as Store).__update__(service.value,
+              referenceList[i + 1] as Deep, [1, 1, 1], this, 'refer');
           }
         }
       }
 
-      const observables = this[OBSERVABLES];
-      if ((!_choice_ || _choice_[1]) && observables.length) {
-        for (let i = observables.length; (i -= 2) >= 0; undefined) {
+      const watchableList = service.watchableList;
+      if ((!_choice_ || _choice_[1]) && watchableList.length) {
+        for (let i = watchableList.length; (i -= 2) >= 0; undefined) {
           if (
-            !observables[i]._[__UPDATING__] &&
+            !watchableList[i].updating &&
             // prettier-ignore
             !equal(
-              this[VALUE], this[PREVIOUS_VALUE],
-                observables[i + 1] as _Choice_)
+              service.value, service.previousValue,
+              watchableList[i + 1] as _Choice_)
           ) {
-            (observables[i] as Store)._[INITIATOR] = this[__PARENT__];
-            (observables[i] as Store)._[INITIATOR_TYPE] = OBSERVED;
             // prettier-ignore
-            (observables[i] as Store)._[__UPDATE_VALUE__](
-              (observables[i] as Store)._[VALUE], null, [1]);
+            (watchableList[i] as Store).__update__(0, null, [1], this, 'watch');
           }
         }
       }
 
-      const subscribers = this.subscribers;
-      if ((!_choice_ || _choice_[0]) && this[STOP] && subscribers.length) {
+      const subscribers = service.subscribers;
+      if ((!_choice_ || _choice_[0]) && service.stop && subscribers.length) {
         for (let i = 0; i < subscribers.length; i++) {
           if (!subscribers[i].executing && !subscribers[i].unsubscribed) {
             subscribers[i].queue = QUEUE.length;
-            subscribers[i].value = this[VALUE];
+            subscribers[i].value = service.value;
             QUEUE.push(subscribers[i]);
           }
         }
       }
 
-      if (!_choice_) this[__QUEUER_START__]();
-      this[__UPDATING__] = false;
+      if (!_choice_) __QUEUER_START__();
+      service.updating = false;
     }
 
-    return this[__PARENT__];
+    return this;
   }
 
-  subscribe(
+  public subscribe(
     subscribe: SubscribeStart = noop,
     autorun: boolean = true
   ): Unsubscriber {
-    const service = this;
-    const parent = service[__PARENT__];
-    const RUN = __RUN__(parent);
+    const service = _(this);
+    const RUN = (cb: any, unsub?: Function): Function => {
+      let res;
+      if (!isFunc(unsub)) unsub = noop;
+      if (isFunc(cb)) {
+        res = cb.bind(this)(service.value, this, unsub);
+      } else if (isPromise(cb)) {
+        res = cb.then((cb: Function) => RUN(this)(cb, unsub));
+      }
+      return res || noop;
+    };
+
+    let execute = noop,
+      unsubscribe = noop;
 
     let stop = noop;
     let executing = false;
@@ -231,7 +398,7 @@ class __Service__ {
 
     const subscriber = {
       queue: -1,
-      value: this[VALUE],
+      value: service.value,
       get executing(): boolean {
         return executing;
       },
@@ -239,32 +406,42 @@ class __Service__ {
         return unsubscribed;
       },
 
-      execute,
-      unsubscribe
-    };
+      get execute(): Function {
+        return execute;
+      },
 
-    function execute(): SubscribeStop {
+      get unsubscribe(): Function {
+        return unsubscribe;
+      }
+    };
+    Object.seal(subscriber);
+
+    execute = (): SubscribeStop => {
       executing = true;
 
       __GLOBAL_EXECUTING__ = true;
-      stop = subscribe.bind(parent)(subscriber.value, parent, unsubscribe);
+      stop = subscribe.bind(this)(
+        subscriber.value,
+        this,
+        subscriber.unsubscribe
+      );
       __GLOBAL_EXECUTING__ = false;
 
       const afterExecuting = (): void => {
         executing = false;
         if (service.subscribers[0] === subscriber) {
-          (service[INITIATOR] = null), (service[INITIATOR_TYPE] = null);
+          (service.initiator = null), (service.initiatorType = null);
         }
       };
 
       if (!isPromise(stop)) afterExecuting();
       else (stop as any).finally(() => afterExecuting());
 
-      service[__QUEUER_START__]();
+      __QUEUER_START__();
       return stop;
-    }
+    };
 
-    function unsubscribe(): Store {
+    unsubscribe = (): Store => {
       unsubscribed = true;
       if (!initialized) initialized = true;
       else {
@@ -273,16 +450,16 @@ class __Service__ {
 
         RUN(stop);
         if (!service.subscribers.length) {
-          RUN(service[STOP]), (service[STOP] = null);
+          RUN(service.stop), (service.stop = null);
         }
       }
 
-      return parent;
-    }
+      return this;
+    };
 
-    this.subscribers.unshift(subscriber);
-    if (!this[STOP] && this.subscribers.length) {
-      this[STOP] = RUN(this[START], unsubscribe);
+    service.subscribers.unshift(subscriber);
+    if (!service.stop && service.subscribers.length) {
+      service.stop = RUN(service.start, unsubscribe);
     }
     if (autorun) execute();
 
@@ -290,226 +467,199 @@ class __Service__ {
     initialized = true;
     return unsubscribe;
   }
-}
 
-class Store extends Array {
-  _!: __Service__;
-  static isStore = isStore;
-  isStore(v: any): boolean {
-    return isStore(v);
+  public get(): Value {
+    return _(this).value;
   }
 
-  0!: Value;
-  $!: Value;
-  value!: Value;
-  [PREVIOUS_VALUE]!: Value;
-  [PREVIOUS_DIFFERING_VALUE]!: Value;
-  [OBSERVED]!: Store[];
-  [DEPENDED]!: Store[];
-  [OBSERVED_VALUES]!: Value[];
-  [DEPENDED_VALUES]!: Value[];
-
-  constructor(value?: Value);
-  constructor(value: Value, observedOrStart: Store | Store[] | NotifierStart);
-  constructor(
-    value: Value,
-    observed: Store | Store[],
-    dependedOrStart: Store | Store[] | NotifierStart
-  );
-  constructor(
-    value: Value,
-    observed: Store | Store[],
-    depended: Store | Store[],
-    start: NotifierStart
-  );
-  constructor(
-    value: Value,
-    observed: Store | Store[] = [],
-    depended: Store | Store[] = [],
-    start: NotifierStart | any = noop
-  ) {
-    super();
-    if (isFunc(observed)) (start = observed), (observed = []);
-    if (isFunc(depended)) (start = depended), (depended = []);
-    if (!isFunc(start)) start = noop;
-
-    (observed = checkInputs(observed)), (depended = checkInputs(depended));
-    setOwnProps(this, {
-      _: { writable: 0, value: new __Service__(this, value, start) },
-      0: { enumerable: 1, get: this.get, set: this.set }
-    });
-
-    this.depend(depended), this.observe(observed);
-    Object.seal(this);
+  public setWeak(newValue: Value, deep: Deep = 0): this {
+    return this.__update__(newValue, deep);
   }
-
-  subscribe(subscribe = noop, autorun = true): Unsubscriber {
-    return this._.subscribe(subscribe, autorun);
-  }
-  clearSubscribers(): this {
-    while (this._.subscribers.length) {
-      this._.subscribers[this._.subscribers.length - 1].unsubscribe();
-    }
-    return this;
-  }
-  // on(subscribe = noop, autorun = true): this {
-  //   this.subscribe(subscribe, autorun);
-  //   return this;
-  // }
-
-  // getPreviousDiffering(): Value {
-  //   return this._[PREVIOUS_DIFFERING_VALUE];
-  // }
-  // getPrevious(): Value {
-  //   return this._[PREVIOUS_VALUE];
-  // }
-  get(): Value {
-    return this._[VALUE];
-  }
-
-  setWeak(newValue: Value, deep: Deep = 0): this {
-    this._[__UPDATE_VALUE__](newValue, deep);
-    return this;
-  }
-  setSure(newValue: Value): this {
+  public setSure(newValue: Value): this {
     return this.setWeak(newValue, null);
   }
-  set(newValue: Value): this {
+  public set(newValue: Value): this {
     return this.setWeak(newValue, -1);
   }
 
-  updateWeak(update: Function, deep: Deep = 0): this {
-    const newValue = update(this._[VALUE], this, noop);
+  public updateWeak(update: Function, deep: Deep = 0): this {
+    const newValue = update(_(this).value, this, noop);
     if (!isPromise(newValue)) this.setWeak(newValue, deep);
     else newValue.then((value: Value) => this.setWeak(value, deep));
     return this;
   }
-  updateSure(update: Function): this {
+  public updateSure(update: Function): this {
     return this.updateWeak(update, null);
   }
-  update(update: Function): this {
+  public update(update: Function): this {
     return this.updateWeak(update, -1);
   }
 
-  next(newValue: Value, deep = -1): this {
+  public next(newValue: Value, deep = -1): this {
     return this.setWeak(newValue, deep);
   }
-  forceUpdate(): this {
-    this._[__UPDATE_VALUE__](this._[VALUE], null);
+  public forceUpdate(): this {
+    return this.__update__(_(this).value, null);
+  }
+
+  public clearSubscribers(): this {
+    const service = _(this);
+    while (service.subscribers.length) {
+      service.subscribers[service.subscribers.length - 1].unsubscribe();
+    }
     return this;
   }
 
-  clearObserved(): this {
-    return this.observe([]);
+  public clearWatchList(): this {
+    return this.watch([]);
   }
-  clearObservables(): this {
-    return this.observable([]);
+  public clearWatchableList(): this {
+    return this.watchable([]);
   }
-  clearDepended(): this {
-    return this.depend([]);
+  public clearReferList(): this {
+    return this.refer([]);
   }
-  clearDependencies(): this {
-    return this.dependency([]);
+  public clearReferenceList(): this {
+    return this.reference([]);
   }
-  clearBridges(): this {
-    [...this._[DEPENDED]].forEach((v) => {
-      if (inArr(this._[DEPENDENCIES], v)) {
-        this.undepend(v), this.undependency(v);
-      }
+  public clearBridges(): this {
+    const service = _(this);
+    service.referList.forEach((v) => {
+      if (inArr(service.referenceList, v)) this.unrefer(v), this.unreference(v);
     });
     return this;
   }
 
-  reset(): this {
-    this.clearDepended(), this.clearDependencies();
-    this.clearObserved(), this.clearObservables();
+  public clearAll(): this {
+    this.clearReferList(), this.clearReferenceList();
+    this.clearWatchList(), this.clearWatchableList();
     this.clearSubscribers();
     return this;
   }
-  clearAll(): this {
-    return this.reset();
+
+  public referenceWeak(store: Store | Store[], deep: Deep = 0): this {
+    const service = _(this);
+    return __watchable__(this, store, deep, [
+      service.referenceList as Store[],
+      service.referList,
+      'reference',
+      'refer',
+      true,
+      false
+    ]) as this;
+  }
+  public referenceSure(store: Store | Store[]): this {
+    return this.referenceWeak(store, null);
+  }
+  public reference(store: Store | Store[]): this {
+    return this.referenceWeak(store, -1);
+  }
+  public unreference(store: Store | Store[]): this {
+    const service = _(this);
+    return __unwatchable__(this, store, [
+      service.referenceList as Store[],
+      service.referList,
+      'reference',
+      'refer'
+    ]) as this;
   }
 
-  observeWeak!: (store: Store | Store[], deep?: Deep) => this;
-  observableWeak!: (store: Store | Store[], deep?: Deep) => this;
-  dependWeak!: (store: Store | Store[], deep?: Deep) => this;
-  dependencyWeak!: (store: Store | Store[], deep?: Deep) => this;
-  bridgeWeak!: (store: Store | Store[], deep?: Deep) => this;
+  public watchableWeak(store: Store | Store[], deep: Deep = 0): this {
+    const service = _(this);
+    return __watchable__(this, store, deep, [
+      service.watchableList,
+      service.watchList,
+      'watchable',
+      'watch',
+      false,
+      [1]
+    ]) as this;
+  }
+  public watchableSure(store: Store | Store[]): this {
+    return this.watchableWeak(store, null);
+  }
+  public watchable(store: Store | Store[]): this {
+    return this.watchableWeak(store, -1);
+  }
+  public unwatchable(store: Store | Store[]): this {
+    const service = _(this);
+    return __unwatchable__(this, store, [
+      service.watchableList,
+      service.watchList,
+      'watchable',
+      'watch'
+    ]) as this;
+  }
 
-  observeSure!: (store: Store | Store[]) => this;
-  observableSure!: (store: Store | Store[]) => this;
-  dependSure!: (store: Store | Store[]) => this;
-  dependencySure!: (store: Store | Store[]) => this;
-  bridgeSure!: (store: Store | Store[]) => this;
+  public referWeak(store: Store | Store[], deep: Deep = 0): this {
+    const service = _(this);
+    return __watch__(this, store, deep, [
+      service.referList,
+      service.referenceList as Store[],
+      'reference'
+    ]) as this;
+  }
+  public referSure(store: Store | Store[]): this {
+    return this.referWeak(store, null);
+  }
+  public refer(store: Store | Store[]): this {
+    return this.referWeak(store, -1);
+  }
+  public unrefer(store: Store | Store[]): this {
+    const service = _(this);
+    return __unwatch__(this, store, [
+      service.referList,
+      service.referenceList as Store[],
+      'reference'
+    ]) as this;
+  }
 
-  observe!: (store: Store | Store[]) => this;
-  observable!: (store: Store | Store[]) => this;
-  depend!: (store: Store | Store[]) => this;
-  dependency!: (store: Store | Store[]) => this;
-  bridge!: (store: Store | Store[]) => this;
+  public watchWeak(store: Store | Store[], deep: Deep = 0): this {
+    const service = _(this);
+    return __watch__(this, store, deep, [
+      service.watchList,
+      service.watchableList,
+      'watchable'
+    ]) as this;
+  }
+  public watchSure(store: Store | Store[]): this {
+    return this.watchWeak(store, null);
+  }
+  public watch(store: Store | Store[]): this {
+    return this.watchWeak(store, -1);
+  }
+  public unwatch(store: Store | Store[]): this {
+    const service = _(this);
+    return __unwatch__(this, store, [
+      service.watchList,
+      service.watchableList,
+      'watchable'
+    ]) as this;
+  }
 
-  unobserve!: (store: Store | Store[]) => this;
-  unobservable!: (store: Store | Store[]) => this;
-  undepend!: (store: Store | Store[]) => this;
-  undependency!: (store: Store | Store[]) => this;
-  unbridge!: (store: Store | Store[]) => this;
+  public bridgeWeak(store: Store | Store[], deep: Deep = 0): this {
+    return __cross__(this, store, deep, [
+      'refer',
+      'reference',
+      'referWeak'
+    ]) as this;
+  }
+  public bridgeSure(store: Store | Store[]): this {
+    return this.bridgeWeak(store, null);
+  }
+  public bridge(store: Store | Store[]): this {
+    return this.bridgeWeak(store, -1);
+  }
+  public unbridge(store: Store | Store[]): this {
+    return __uncross__(this, store, ['refer']) as this;
+  }
 
-  valueOf!: () => Value;
-  toString!: () => string;
-  toJSON!: () => string;
+  public valueOf!: () => Value;
+  public toString!: () => string;
+  public toJSON!: () => string;
 }
 
 const ownerizesStore = setOwnProps(Store.prototype);
-
-const WATCHES: any = {};
-const UNWATCH: any = {};
-
-// OBSERVE
-// prettier-ignore
-[UNWATCH[UNOBSERVE], WATCHES[OBSERVE]] = watchFactory(
-  [OBSERVED, OBSERVABLES, UNOBSERVABLE, OBSERVABLE]);
-
-// OBSERVABLE
-// prettier-ignore
-[UNWATCH[UNOBSERVABLE], WATCHES[OBSERVABLE]] = watchableFactory(
-  [OBSERVABLES, OBSERVED, UNOBSERVE, OBSERVE, false, [1]], __UPDATE_VALUE__);
-
-// DEPEND
-// prettier-ignore
-[UNWATCH[UNDEPEND], WATCHES[DEPEND]] = watchFactory(
-  [DEPENDED, DEPENDENCIES, UNDEPENDENCY, DEPENDENCY]);
-
-// DEPENDENCY
-// prettier-ignore
-[UNWATCH[UNDEPENDENCY], WATCHES[DEPENDENCY]] = watchableFactory(
-  [DEPENDENCIES, DEPENDED, UNDEPEND, DEPEND, true, false], __UPDATE_VALUE__);
-
-// BRIDGE
-// prettier-ignore
-[UNWATCH[UNBRIDGE], WATCHES[BRIDGE]] = crossFactory(
-  [DEPENDENCY, UNDEPEND, DEPEND]);
-
-each(WATCHES, (v: Function, k: string) => {
-  ownerizesStore({
-    [k + 'Weak']: function (store: Store | Store[], deep: Deep = 0): Store {
-      return v(this, store, deep);
-    },
-    [k + 'Sure']: function (store: Store | Store[]): Store {
-      return v(this, store, null);
-    },
-    [k]: function (store: Store | Store[]): Store {
-      return v(this, store, -1);
-    }
-  });
-});
-
-each(UNWATCH, (v: Function, k: string) => {
-  ownerizesStore({
-    [k]: function (store: Store | Store[]): Store {
-      return v(this, store);
-    }
-  });
-});
 
 // GET AND SET VALUE
 ['$', 'value'].forEach((v) => {
@@ -523,44 +673,6 @@ each(UNWATCH, (v: Function, k: string) => {
       }
     }
   });
-});
-
-ownerizesStore({
-  [PREVIOUS_VALUE]: {
-    get: function (): Value {
-      return (this as Store)._[PREVIOUS_VALUE];
-    }
-  },
-  [PREVIOUS_DIFFERING_VALUE]: {
-    get: function (): Value {
-      return (this as Store)._[PREVIOUS_DIFFERING_VALUE];
-    }
-  },
-  // on: {
-  //   get: function (): Function {
-  //     return (this as Store).subscribe;
-  //   }
-  // },
-  [OBSERVED]: {
-    get: function (): Value {
-      return [...(this as Store)._[OBSERVED]];
-    }
-  },
-  [DEPENDED]: {
-    get: function (): Value {
-      return [...(this as Store)._[DEPENDED]];
-    }
-  },
-  [OBSERVED_VALUES]: {
-    get: function (): Value {
-      return (this as Store)._[OBSERVED_VALUES];
-    }
-  },
-  [DEPENDED_VALUES]: {
-    get: function (): Value {
-      return (this as Store)._[DEPENDED_VALUES];
-    }
-  }
 });
 
 // TYPE COERCION
@@ -578,19 +690,19 @@ function store(value: Value): Store;
 // eslint-disable-next-line no-redeclare
 function store(
   value: Value,
-  observedOrStart: Store | Store[] | NotifierStart
+  watchListOrStart: Store | Store[] | NotifierStart
 ): Store;
 // eslint-disable-next-line no-redeclare
 function store(
   value: Value,
-  observed: Store | Store[],
-  dependedOrStart: Store | Store[] | NotifierStart
+  watchList: Store | Store[],
+  referListOrStart: Store | Store[] | NotifierStart
 ): Store;
 // eslint-disable-next-line no-redeclare
 function store(
   value: Value,
-  observed: Store | Store[],
-  depended: Store | Store[],
+  watchList: Store | Store[],
+  referList: Store | Store[],
   start: NotifierStart
 ): Store;
 // eslint-disable-next-line no-redeclare

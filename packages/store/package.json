@@ -15,9 +15,9 @@
     "store"
   ],
   "scripts": {
-    "dester": "dester ./src ./dist",
+    "dester": "dester ./src ./dist --no-babel",
     "build": "rm -rf ./dist && npm run -s dester",
-    "dev": "npm run -s dester -- -ws",
+    "dev": "npm run -s dester -- -w",
     "pkg:name": "cat package.json | grep '\"name\":' | cut -d '\"' -f4",
     "pkg:version": "cat package.json | grep '\"version\":' | cut -d '\"' -f4",
     "git:get:tag": "echo $(npm run -s pkg:name)@$(npm run -s pkg:version)",
@@ -38,5 +38,9 @@
   "dependencies": {
     "@wareset-utilites/deep-equal": "0.0.13",
     "wareset-utilites": "0.0.10"
+  },
+  "devDependencies": {
+    "dester": "0.x",
+    "typescript": "4.x"
   }
 }
