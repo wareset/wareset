@@ -4,7 +4,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "Fast and easy observer",
+  "description": "WIP: Fast and easy observer",
   "keywords": [
     "store"
   ],
