@@ -4,27 +4,14 @@ dester builds:
 __src__/index.ts
 index.ts
 */
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-
-var _decodeURIComponent = require('@wareset-utilites/lang/decodeURIComponent');
-
-var jsonStringify = require('@wareset-utilites/lang/jsonStringify');
-
-var _Boolean = require('@wareset-utilites/lang/Boolean');
-
-var _Object = require('@wareset-utilites/lang/Object');
-
-var _RegExp = require('@wareset-utilites/lang/RegExp');
-
-var _isNaN = require('@wareset-utilites/is/isNaN');
-
-var _escape = require('@wareset-utilites/escape');
-
-var n = _Object.Object.create,
+import { decodeURIComponent } from '@wareset-utilites/lang/decodeURIComponent';
+import { jsonStringify } from '@wareset-utilites/lang/jsonStringify';
+import { Boolean } from '@wareset-utilites/lang/Boolean';
+import { Object as Object$1 } from '@wareset-utilites/lang/Object';
+import { RegExp } from '@wareset-utilites/lang/RegExp';
+import { isNaN } from '@wareset-utilites/is/isNaN';
+import { esc } from '@wareset-utilites/escape';
+var n = Object$1.create,
     h = "get|head|post|put|delete|connect|options|trace|patch",
     a = h.split("|"),
     u = h.toUpperCase().split("|");
@@ -45,7 +32,7 @@ class Router {
     var p = n(null);
 
     for (var _n in o) {
-      _isNaN.isNaN(+_n) || (p[_n] = _(o[_n]));
+      isNaN(+_n) || (p[_n] = _(o[_n]));
     }
 
     o = p;
@@ -127,7 +114,7 @@ var p = (t, e) => {
 
   for (var o = 0, _h2 = (t = t.replace(c, "")).split(/\[(.*?(?:\(.+?\))?)\]/); o < _h2.length; ++o) {
     var _e4 = _h2[o];
-    if (_e4) if (o % 2 == 0) r.push(-_e4.split("/").filter(_Boolean.Boolean).length), n += _escape.esc(_e4);else {
+    if (_e4) if (o % 2 == 0) r.push(-_e4.split("/").filter(Boolean).length), n += esc(_e4);else {
       if (_e4.indexOf("/") > -1) throw "ROUTER_ERROR: Unavailable character \"/\" in route " + t + " in " + _e4;
       var [, s, _o] = /([^(]+)(\(.+\))?$/.exec(_e4);
 
@@ -147,18 +134,18 @@ var p = (t, e) => {
     spread: i,
     __dirty: n.replace(/\?<.+?>/g, ""),
     handlers: e,
-    regex: new _RegExp.RegExp(n)
+    regex: new RegExp(n)
   };
 },
     _ = (...t) => [].concat(...t).filter(t => "function" == typeof t),
     d = t => (s, r, o, i) => {
-  r.statusCode = t, r.end(i ? jsonStringify.jsonStringify(i, void 0, 2) : "" + t);
+  r.statusCode = t, r.end(i ? jsonStringify(i, void 0, 2) : "" + t);
 },
     f = e => {
   var s = {},
       r = e.indexOf("%") > -1;
   return e.split("&").forEach(e => {
-    s[(e = r ? e.split("=").map(_decodeURIComponent.decodeURIComponent) : e.split("="))[0]] = e[1] || "";
+    s[(e = r ? e.split("=").map(decodeURIComponent) : e.split("="))[0]] = e[1] || "";
   }), s;
 },
     g = t => {
@@ -189,7 +176,7 @@ class ParsedUrl {
       host: void 0,
       hostname: void 0,
       port: void 0
-    }, this._raw = e.url, this.path = this._raw, this.pathname = this._raw, (s = this._raw.indexOf("?")) > -1 ? (this.pathname = this._raw.slice(0, s), this.query = this._raw.slice(s + 1), this.search = "?" + this.query) : this.search = this.query = null, this._route = this.pathname.replace(c, ""), this._route.indexOf("%") > -1 && (this._route = _decodeURIComponent.decodeURIComponent(this._route)), this._routes = this._route.split("/");
+    }, this._raw = e.url, this.path = this._raw, this.pathname = this._raw, (s = this._raw.indexOf("?")) > -1 ? (this.pathname = this._raw.slice(0, s), this.query = this._raw.slice(s + 1), this.search = "?" + this.query) : this.search = this.query = null, this._route = this.pathname.replace(c, ""), this._route.indexOf("%") > -1 && (this._route = decodeURIComponent(this._route)), this._routes = this._route.split("/");
   }
 
   get protocol() {
@@ -214,5 +201,4 @@ class ParsedUrl {
 
 var createRouter = (...r) => new Router(...r);
 
-exports.createRouter = createRouter;
-exports["default"] = Router;
+export { createRouter, Router as default };
