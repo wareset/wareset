@@ -21,19 +21,17 @@ const {
   TOKEN_SPACE,
   TOKEN_PUCNTUATOR
 } = require('rastree/core/template/lib/source2Tokens')
-const source2Tokens = require('rastree/core/template/lib/source2Tokens').default
-const trimTokens = require('rastree/core/template/lib/trimTokens').default
+const { source2Tokens } = require('rastree/core/template/lib/source2Tokens')
+const { trimTokens } = require('rastree/core/template/lib/trimTokens')
 // prettier-ignore
-const stringifyTokens = require('rastree/core/template/lib/stringifyTokens').default
-const enumChars = require('enum-chars').default
+const { stringifyTokens } = require('rastree/core/template/lib/stringifyTokens')
+const { enumChars } = require('enum-chars')
 
 const DIR_SRC_CORE = pathResolve(__dirname, '../src/__src__')
 const FILE_ENUMS_DEV = pathResolve(DIR_SRC_CORE, 'enums.ts')
 const FILE_ENUMS = pathResolve(DIR_SRC_CORE, 'enums__AUTOGEN.ts')
 
 let word = ''
-let chars = 'abcdefghijklmnopqrstuvwxyz'
-chars += chars.toUpperCase()
 
 // if (!isDev) {
 //   fsWriteFileSync(FILE_ENUMS, fsReadFileSync(FILE_ENUMS_DEV).toString())
@@ -49,9 +47,9 @@ const initChange = () => {
   let i = -1
   let token
   let lastDeep = 0
-  while ((token = tokens[++i])) {
+  while (token = tokens[++i]) {
     cur.push(token)
-    if (!token.deep && lastDeep !== token.deep) arr.push((cur = []))
+    if (!token.deep && lastDeep !== token.deep) arr.push(cur = [])
     lastDeep = token.deep
   }
   arr = arr.map((v) => trimTokens(v)).filter((v) => v[0])
@@ -71,7 +69,7 @@ const initChange = () => {
           if (isDev) {
             token.value += ' = ' + jsonStringify(ename + '_' + token.value)
           } else {
-            word = enumChars(word, chars)
+            word = enumChars.letters(word)
             token.value += ' = ' + jsonStringify(word)
           }
         }

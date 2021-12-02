@@ -1,4 +1,4 @@
-import { TypeStore } from './__src__'
+import { TypeStore, TypeContext, TypeUnsubscriber } from './__src__'
 import {
   storeFactory,
   contextFactory,
@@ -7,7 +7,8 @@ import {
   storeSubscribe,
   storeOnSubscribe,
   storeOnDestroy,
-  storeOnChange
+  storeOnChange,
+  storeDestroy
 } from './__src__'
 
 export {
@@ -18,7 +19,8 @@ export {
   storeSubscribe,
   storeOnSubscribe,
   storeOnDestroy,
-  storeOnChange
+  storeOnChange,
+  storeDestroy
 }
 
 // declare type TypeStoreCtor<T> = new (
@@ -30,14 +32,17 @@ declare type TypeStoreSubscribeFunction = typeof storeSubscribe
 declare type TypeStoreOnSubscribeFunction = typeof storeOnSubscribe
 declare type TypeStoreOnDestroyFunction = typeof storeOnDestroy
 declare type TypeStoreOnChangeFunction = typeof storeOnChange
+declare type TypeStoreDestroyFunction = typeof storeDestroy
 
 export {
   TypeStore,
+  TypeContext,
+  TypeUnsubscriber,
   TypeStoreFactoryFunction,
   TypeContextFactoryFunction,
-  // TypeStoreCtor,
   TypeStoreSubscribeFunction,
   TypeStoreOnSubscribeFunction,
   TypeStoreOnDestroyFunction,
-  TypeStoreOnChangeFunction
+  TypeStoreOnChangeFunction,
+  TypeStoreDestroyFunction
 }

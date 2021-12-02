@@ -1,110 +1,109 @@
 import { isFunction } from '@wareset-utilites/is/isFunction'
 import { isArray } from '@wareset-utilites/is/isArray'
 
-import { EH_SRV, EH_SUB } from '.'
-import { TypeStore, TypeSubscriber, TypeUnsubscriber } from '.'
+import { EH_SRV, EH_SUB, EN_LISTYPE } from '.'
+import {
+  TypeStore,
+  TypeWatch,
+  TypeService,
+  TypeSubscriber,
+  TypeUnsubscriber
+} from '.'
 
 import { isStore } from '.'
-import { awaiter, remove } from '.'
+import { awaiter, watchStoreSetVals, noop } from '.'
 import { createOrder, removeOrder } from '.'
-import { storeIsUpdating } from '.'
+import { runListenUpdate } from '.'
 // import { launchQueue, addSubscriberInQueue } from '.'
 
 type MS<V> = V extends TypeStore<infer S> ? S : V
 
-// prettier-ignore
-const __subGetValueMaybe__ = (v: any): any => (isStore(v) ? v._[EH_SRV.value] : v)
-const __subGetValueStore__ = (v: any): any => v._[EH_SRV.value]
-// const __subGetValueThink__ = (v: any): any => v
-
-// prettier-ignore
 export const storeSubscribe = ((
-  _list: any,
+  list: any,
   _cb: (
     a: any[],
     unsubscriber: TypeUnsubscriber
   ) => void | (() => void) | Promise<() => void>,
   _props?: { lazy?: boolean }
 ): TypeUnsubscriber => {
-  const list = !isArray(_list) ? [_list] : [..._list]
+  if (!isArray(list)) list = [list]
 
-  const stores: TypeStore<any>[] = []
-  const listCache: any = {}
-  for (const watcher of list) {
-    if (
-      isStore(watcher) &&
-      !watcher._[EH_SRV.destroyed] &&
-      !(watcher._[EH_SRV.id][0] in listCache)
-    ) {
-      stores.push(watcher), (listCache[watcher._[EH_SRV.id][0]] = 1)
+  const watch: TypeWatch[] = []
+  for (let service: TypeService, listCache: { [key: string]: TypeWatch } = {},
+    i = 0; i < list.length; ++i) {
+    if (isStore(list[i])) {
+      if (!(service = list[i]._)[EH_SRV.destroyed]) {
+        if (service[EH_SRV.id].v in listCache) {
+          listCache[service[EH_SRV.id].v].push(i)
+        } else {
+          watch.push(listCache[service[EH_SRV.id].v] = [list[i], {}, i])
+        }
+      }
+      list[i] = service[EH_SRV.value]
     }
   }
 
-  // prettier-ignore
-  const getValue = list.length === stores.length
-    ? __subGetValueStore__
-    : __subGetValueMaybe__
-
   let stop: any
   let ready = true
-  let unsubscribed: boolean
 
   let started = false
-  let needUnsubscribe = !stores.length
-  // prettier-ignore
+  let needUnsubscribe = !watch.length
   const unsubscriber = (): void => {
     needUnsubscribe = true
-    if (ready && !unsubscribed && started) {
-      unsubscribed = !(ready = false)
-      removeOrder(subscriber._[EH_SRV.id])
+    if (ready && started) {
+      ready = false
+      removeOrder(sub._[EH_SRV.id])
+      // @ts-ignore
+      sub[EH_SUB.update] = sub[EH_SUB.destroy] = noop
 
-      for (const store of stores) {
-        remove(store._[EH_SRV.subscribers], subscriber)
-        for (const sub of store._[EH_SRV.onSubscribe]) sub[EH_SUB.update]()
+      for (let j: number, service: TypeService, i = watch.length; i-- > 0;) {
+        if ((j = (service = watch[i][0]._)[EH_SRV.subscribers]!.indexOf(sub)) > -1) {
+          service[EH_SRV.subscribers]!.splice(j, 1)
+          runListenUpdate(service, EN_LISTYPE.onSubscribe)
+        }
       }
-
-      stores.length = 0
-      awaiter(stop, (newStop) => { isFunction(newStop) && newStop() })
-      // @ts-ignore
-      subscriber._[EH_SRV.id] = subscriber._[EH_SRV.watch] = null
-      // @ts-ignore
-      subscriber._ = subscriber[EH_SUB.update] = subscriber[EH_SUB.destroy] = null
+      watch.length = 0
+      awaiter(stop, (newStop) => {
+        isFunction(newStop) && newStop()
+      })
     }
   }
 
   const __callbackAwaiter__ = (newStop: any): void => {
-    ;(stop = newStop), (ready = true), needUnsubscribe && unsubscriber()
+    stop = newStop, ready = true, needUnsubscribe && unsubscriber()
   }
 
-  // prettier-ignore
   const callback = (): void => {
-    if (ready && !unsubscribed) {
+    if (ready) {
       started = !(ready = false)
-      awaiter((stop = _cb(list.map(getValue), unsubscriber)),
+      watchStoreSetVals(watch, list)
+      awaiter(stop = _cb(list, unsubscriber),
         __callbackAwaiter__)
     }
   }
 
   const { lazy } = _props || {}
 
-  const subscriber: TypeSubscriber = {
+  const sub: TypeSubscriber = {
     _: {
-      lazy: !!lazy,
-      [EH_SRV.id]: createOrder(),
-      [EH_SRV.watch]: stores
+      lazy          : !!lazy,
+      [EH_SRV.id]   : createOrder(),
+      [EH_SRV.watch]: watch
     },
-    [EH_SUB.update]: callback,
+    [EH_SUB.update] : callback,
     [EH_SUB.destroy]: unsubscriber,
-    [EH_SUB.needRun]: false
+    [EH_SUB.needRun]: false,
+    [EH_SUB.force]  : false
   }
 
-  for (const store of stores) {
-    store._[EH_SRV.subscribers].push(subscriber)
-    for (const sub of store._[EH_SRV.onSubscribe]) sub[EH_SUB.update]()
+  for (let service: TypeService, i = watch.length; i-- > 0;) {
+    ((service = watch[i][0]._)[EH_SRV.subscribers] ||
+      (service[EH_SRV.subscribers] = [])).push(sub)
+    runListenUpdate(service, EN_LISTYPE.onSubscribe)
   }
   if (!started) {
     // addSubscriberInQueue(callback), launchQueue()
-    if (!(lazy && stores.some(storeIsUpdating))) callback()
+    callback()
   }
   return unsubscriber
 }) as {

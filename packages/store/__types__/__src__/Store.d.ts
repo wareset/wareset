@@ -1,4 +1,4 @@
-import { TypeStore, TypeService, TypeContext } from '.';
+import { TypeValueOf, TypeStore, TypeService, TypeContext } from '.';
 declare class Store<T> implements TypeStore<T> {
     readonly '@wareset/store': true;
     readonly _: TypeService<T>;
@@ -6,8 +6,9 @@ declare class Store<T> implements TypeStore<T> {
     $: T;
     get updating(): boolean;
     get destroyed(): boolean;
+    set force(v: boolean);
     toString: (...a: any[]) => string;
-    valueOf: (...a: any[]) => T;
+    valueOf: (...a: any[]) => TypeValueOf<T>;
     toJSON: (...a: any[]) => any;
     constructor(context: TypeContext, value?: Promise<TypeStore<T> | T> | TypeStore<T> | T, watch?: TypeStore<T | any>[] | null, proxy?: ((newValue: T | any) => Promise<TypeStore<T> | T> | TypeStore<T> | T) | null, props?: {
         lazy?: boolean;
@@ -19,5 +20,6 @@ declare class Store<T> implements TypeStore<T> {
     update(cb: (value: T, store: this) => Promise<T> | T): void;
     destroy(): void;
 }
+export declare const storeDestroy: (store: TypeStore) => void;
 declare const isStore: (thing: any) => thing is Store<any>;
 export { Store, isStore };

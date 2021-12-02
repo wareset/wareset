@@ -44,31 +44,32 @@
     "commit": "read -p 'Version [patch]: ' V; V=${V:-patch} && npm version --force --no-git-tag-version $V; echo $V && read -p 'Push? (y/N): ' G && read -p 'Publish? (y/N): ' P && npm run -s git:commit && case $G in Y|y) $(git push);; esac && case $P in Y|y) $(npm run -s git:set:tag && git push --tags && npm -s publish);; esac"
   },
   "devDependencies": {
-    "@babel/core": "^7.14.6",
-    "@babel/plugin-proposal-class-properties": "^7.14.5",
-    "@babel/plugin-transform-block-scoping": "^7.14.5",
+    "@babel/core": "^7.16.0",
+    "@babel/plugin-proposal-class-properties": "^7.16.0",
+    "@babel/plugin-transform-block-scoping": "^7.16.0",
+    "@babel/plugin-transform-template-literals": "^7.16.0",
     "@rollup/plugin-babel": "^5.3.0",
     "@rollup/plugin-node-resolve": "^11.2.1",
-    "@types/jest": "^26.0.24",
-    "@types/node": "^12.20.16",
+    "@types/jest": "^27.0.0",
+    "@types/node": "^12.20.0",
+    "@wareset-utilites/array": "0.1.6",
+    "@wareset-utilites/lang": "0.1.10",
     "dester": "0.x",
-    "jest": "^27.0.6",
-    "ts-jest": "^27.0.3",
-    "ts-node": "^10.1.0",
-    "tslib": "^2.3.0",
-    "typescript": "4.x",
+    "enum-chars": "1.2.3",
+    "jest": "^27.4.0",
+    "rastree": "0.0.1",
     "rollup": "^2.46.0",
     "terser": "^5.7.1",
-    "rastree": "0.0.1",
-    "enum-chars": "1.2.1",
-    "@wareset-utilites/array": "0.1.5",
-    "@wareset-utilites/lang": "0.1.9"
+    "ts-jest": "^27.0.0",
+    "ts-node": "^10.4.0",
+    "tslib": "^2.3.0",
+    "typescript": "4.x"
   },
   "dependencies": {
-    "@wareset-utilites/array": "0.1.5",
-    "@wareset-utilites/is": "0.1.11",
-    "@wareset-utilites/lang": "0.1.9",
-    "@wareset-utilites/object": "0.1.6",
-    "@wareset-utilites/timeout": "0.0.7"
+    "@wareset-utilites/array": "0.1.6",
+    "@wareset-utilites/is": "0.1.12",
+    "@wareset-utilites/lang": "0.1.10",
+    "@wareset-utilites/object": "0.1.7",
+    "@wareset-utilites/timeout": "0.0.8"
   }
 }

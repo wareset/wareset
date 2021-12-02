@@ -3,6 +3,7 @@ export const enum EH_SRV {
 
   subscribers,
 
+  listeners,
   onSubscribe,
   onDestroy,
   onChange,
@@ -20,13 +21,17 @@ export const enum EH_SRV {
   proxy,
   proxyOrigin,
 
-  context
+  destroyer,
+  context,
+  force
 }
 
 export const enum EH_SUB {
   destroy,
   update,
-  needRun
+  needRun,
+  force,
+  type
 }
 
 export const enum EH_CONTEXT {

@@ -7,40 +7,32 @@ import { TypeStore, TypeContext } from '.'
 import { Store, isStore } from '.'
 
 export const contextFactory = (): TypeContext => ({
-  [EH_CONTEXT.QUEUE]: {},
-  [EH_CONTEXT.QUEUE_IS_BLOCKED]: false,
+  [EH_CONTEXT.QUEUE]                 : {},
+  [EH_CONTEXT.QUEUE_IS_BLOCKED]      : false,
   [EH_CONTEXT.QUEUE_HAS_BEEN_CHANGED]: false
 })
 
-// prettier-ignore
 export const storeFactory = ((context?: TypeContext) => {
-  if (!context)
-    context = {
-      [EH_CONTEXT.QUEUE]: {},
-      [EH_CONTEXT.QUEUE_IS_BLOCKED]: false,
-      [EH_CONTEXT.QUEUE_HAS_BEEN_CHANGED]: false
-    }
-
-  return (<T>(
-    value?: T,
+  context || (context = contextFactory())
+  return (
+    value?: any,
     watch?: any,
     proxy?: any,
     props?: any
-  ): TypeStore<T> => {
-    if (!isArray(watch))
+  ): TypeStore => {
+    if (!isArray(watch)) {
       watch = isStore(watch)
-        ? [watch]
-        : ((props = proxy), (proxy = watch), null)
-    if (!isFunction(proxy))
-      proxy = ((props = proxy), null)
+        ? [watch] : (props = proxy, proxy = watch, null)
+    }
+    if (!isFunction(proxy)) proxy = (props = proxy, null)
     return new Store(context!, value, watch, proxy, props)
-  })
+  }
 }) as (context?: TypeContext) => {
   <V, R = V, W1 = V, W2 = V, W3 = V, W4 = V, W5 = V, W6 = V, VP = V, RP = R,
   RET = TypeStore<R extends Promise<any>
   ? (V extends Promise<any> ? (undefined | RP) : (V | RP)) : R>>(
     value: Promise<VP> | TypeStore<V> | V,
-    watch: [TypeStore<W1>,TypeStore<W2>,TypeStore<W3>,TypeStore<W4>,TypeStore<W5>,TypeStore<W6>],
+    watch: [TypeStore<W1>, TypeStore<W2>, TypeStore<W3>, TypeStore<W4>, TypeStore<W5>, TypeStore<W6>],
     proxy: (newValue: (V extends Promise<any> ? VP : V)|W1|W2|W3|W4|W5|W6, store: RET) =>
       Promise<TypeStore<RP> | RP> | TypeStore<R> | R,
     props?: { lazy?: boolean, strict?: boolean, inherit?: boolean }
@@ -49,7 +41,7 @@ export const storeFactory = ((context?: TypeContext) => {
   RET = TypeStore<R extends Promise<any>
   ? (V extends Promise<any> ? (undefined | RP) : (V | RP)) : R>>(
     value: Promise<VP> | TypeStore<V> | V,
-    watch: [TypeStore<W1>,TypeStore<W2>,TypeStore<W3>,TypeStore<W4>,TypeStore<W5>],
+    watch: [TypeStore<W1>, TypeStore<W2>, TypeStore<W3>, TypeStore<W4>, TypeStore<W5>],
     proxy: (newValue: (V extends Promise<any> ? VP : V)|W1|W2|W3|W4|W5, store: RET) =>
       Promise<TypeStore<RP> | RP> | TypeStore<R> | R,
     props?: { lazy?: boolean, strict?: boolean, inherit?: boolean }
@@ -58,7 +50,7 @@ export const storeFactory = ((context?: TypeContext) => {
   RET = TypeStore<R extends Promise<any>
   ? (V extends Promise<any> ? (undefined | RP) : (V | RP)) : R>>(
     value: Promise<VP> | TypeStore<V> | V,
-    watch: [TypeStore<W1>,TypeStore<W2>,TypeStore<W3>,TypeStore<W4>],
+    watch: [TypeStore<W1>, TypeStore<W2>, TypeStore<W3>, TypeStore<W4>],
     proxy: (newValue: (V extends Promise<any> ? VP : V)|W1|W2|W3|W4, store: RET) =>
       Promise<TypeStore<RP> | RP> | TypeStore<R> | R,
     props?: { lazy?: boolean, strict?: boolean, inherit?: boolean }
@@ -67,7 +59,7 @@ export const storeFactory = ((context?: TypeContext) => {
   RET = TypeStore<R extends Promise<any>
   ? (V extends Promise<any> ? (undefined | RP) : (V | RP)) : R>>(
     value: Promise<VP> | TypeStore<V> | V,
-    watch: [TypeStore<W1>,TypeStore<W2>,TypeStore<W3>],
+    watch: [TypeStore<W1>, TypeStore<W2>, TypeStore<W3>],
     proxy: (newValue: (V extends Promise<any> ? VP : V)|W1|W2|W3, store: RET) =>
       Promise<TypeStore<RP> | RP> | TypeStore<R> | R,
     props?: { lazy?: boolean, strict?: boolean, inherit?: boolean }
@@ -76,7 +68,7 @@ export const storeFactory = ((context?: TypeContext) => {
   RET = TypeStore<R extends Promise<any>
   ? (V extends Promise<any> ? (undefined | RP) : (V | RP)) : R>>(
     value: Promise<VP> | TypeStore<V> | V,
-    watch: [TypeStore<W1>,TypeStore<W2>],
+    watch: [TypeStore<W1>, TypeStore<W2>],
     proxy: (newValue: (V extends Promise<any> ? VP : V)|W1|W2, store: RET) =>
       Promise<TypeStore<RP> | RP> | TypeStore<R> | R,
     props?: { lazy?: boolean, strict?: boolean, inherit?: boolean }
@@ -101,30 +93,29 @@ export const storeFactory = ((context?: TypeContext) => {
     props?: { lazy?: boolean, strict?: boolean, inherit?: boolean }
   ): RET
 
-
   <V, W1 = V, W2 = V, W3 = V, W4 = V, W5 = V, W6 = V, VP = V>(
     value: Promise<VP> | TypeStore<V> | V,
-    watch: [TypeStore<W1>,TypeStore<W2>,TypeStore<W3>,TypeStore<W4>,TypeStore<W5>,TypeStore<W6>],
+    watch: [TypeStore<W1>, TypeStore<W2>, TypeStore<W3>, TypeStore<W4>, TypeStore<W5>, TypeStore<W6>],
     props?: { lazy?: boolean, strict?: boolean, inherit?: boolean }
   ): TypeStore<(V extends Promise<any> ? (undefined | VP) : V) | W1 | W2 | W3 | W4 | W5 | W6>
   <V, W1 = V, W2 = V, W3 = V, W4 = V, W5 = V, VP = V>(
     value: Promise<VP> | TypeStore<V> | V,
-    watch: [TypeStore<W1>,TypeStore<W2>,TypeStore<W3>,TypeStore<W4>,TypeStore<W5>],
+    watch: [TypeStore<W1>, TypeStore<W2>, TypeStore<W3>, TypeStore<W4>, TypeStore<W5>],
     props?: { lazy?: boolean, strict?: boolean, inherit?: boolean }
   ): TypeStore<(V extends Promise<any> ? (undefined | VP) : V) | W1 | W2 | W3 | W4 | W5>
   <V, W1 = V, W2 = V, W3 = V, W4 = V, VP = V>(
     value: Promise<VP> | TypeStore<V> | V,
-    watch: [TypeStore<W1>,TypeStore<W2>,TypeStore<W3>,TypeStore<W4>],
+    watch: [TypeStore<W1>, TypeStore<W2>, TypeStore<W3>, TypeStore<W4>],
     props?: { lazy?: boolean, strict?: boolean, inherit?: boolean }
   ): TypeStore<(V extends Promise<any> ? (undefined | VP) : V) | W1 | W2 | W3 | W4>
   <V, W1 = V, W2 = V, W3 = V, VP = V>(
     value: Promise<VP> | TypeStore<V> | V,
-    watch: [TypeStore<W1>,TypeStore<W2>,TypeStore<W3>],
+    watch: [TypeStore<W1>, TypeStore<W2>, TypeStore<W3>],
     props?: { lazy?: boolean, strict?: boolean, inherit?: boolean }
   ): TypeStore<(V extends Promise<any> ? (undefined | VP) : V) | W1 | W2 | W3>
   <V, W1 = V, W2 = V, VP = V>(
     value: Promise<VP> | TypeStore<V> | V,
-    watch: [TypeStore<W1>,TypeStore<W2>],
+    watch: [TypeStore<W1>, TypeStore<W2>],
     props?: { lazy?: boolean, strict?: boolean, inherit?: boolean }
   ): TypeStore<(V extends Promise<any> ? (undefined | VP) : V) | W1 | W2>
 

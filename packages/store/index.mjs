@@ -12,394 +12,425 @@ __src__/Store.ts
 __src__/factory.ts
 index.ts
 */
-import { isPromise } from '@wareset-utilites/is/isPromise';
-import { timeout } from '@wareset-utilites/timeout';
 import { isFunction } from '@wareset-utilites/is/isFunction';
-import { isArray } from '@wareset-utilites/is/isArray';
+import { isThenable } from '@wareset-utilites/is/isThenable';
 import { isObject } from '@wareset-utilites/is/isObject';
 import { is } from '@wareset-utilites/object/is';
+import { isArray } from '@wareset-utilites/is/isArray';
 import { instanceofFactory } from '@wareset-utilites/is/lib/instanceofFactory';
 import { defineProperty } from '@wareset-utilites/object/defineProperty';
 
-var t$1 = e => {
-  e[2](e[0], e[1]);
+var awaiter = (t, o, s) => {
+  isThenable(t) ? t.then(t => {
+    o(t, s);
+  }) : o(t, s);
 };
 
-var awaiter = (o, r, s) => {
-  isPromise(o) ? Promise.all([o, s, r]).then(t$1) : r(o, s);
-};
+var noop = () => {};
 
-var remove = (e, t) => {
-  for (var _o = e.length; _o-- > 0;) {
-    if (e[_o] === t) {
-      e.splice(_o, 1);
+var watchStoreRemove = (t, e) => {
+  for (var _o = t.length; _o-- > 0;) {
+    if (t[_o][1] === e) {
+      t.splice(_o, 1);
       break;
     }
   }
 };
 
-var storeIsUpdating = e => e._.i;
+var isNotEqualValue = (e, i) => !e._.strict && (isObject(i) || isFunction(i)) || !is(e._.k, i);
 
-var t = !1,
-    r$1 = 0,
-    l = [1 / 0],
-    o = [0, null, null];
+var watchStoreSetVals = (t, e) => {
+  for (var _o2 = t.length; _o2-- > 0;) {
+    t[_o2][1] = t[_o2][0]._.k;
 
-var n = () => {
-  var e;
+    for (var _s = t[_o2].length; _s-- > 2;) {
+      e[t[_o2][_s]] = t[_o2][1];
+    }
+  }
+};
 
-  for (; e = l[2];) {
-    e[0] = l[0] + 1, l = e;
+var n = !1,
+    e$1 = 0,
+    t = {
+  v: 0,
+  n: null
+};
+var p$2 = {
+  v: 1 / 0
+};
+var v = p$2;
+
+var l = () => {
+  var t;
+
+  for (; t = v.n;) {
+    t.v = v.v + 1, v = t;
   }
 
-  l = [1 / 0], r$1 = 0, t = !1;
+  v = p$2, e$1 = 0, n = !1;
 };
 
-var createOrder = () => o = o[2] = [o[0] + 1, o, null];
-
-var removeOrder = u => {
-  u[1][2] = u[2], o === u ? o = u[1] : u[2] && (u[2][1] = u[1], l[0] > u[1][0] && (l = u[1]), r$1 < 4e4 ? r$1++ : t || (t = !0, timeout(99, n))), u[0] = -1, u[1] = u[2] = null;
+var createOrder = () => t = t.n = {
+  v: t.v + 1,
+  p: t,
+  n: null
 };
 
-var launchQueue = c => {
-  if (!c.b) {
-    var _o2, a;
+var removeOrder = p => {
+  p.p.n = p.n, t === p ? t = p.p : p.n && (p.n.p = p.p, v.v > p.p.v && (v = p.p), e$1 < 4e4 ? e$1++ : n || (n = !0, setTimeout(l, 99))), p.v = -1, p.p = p.n = null;
+};
 
-    c.b = !0;
-    var _r = c.a,
-        _t = {};
+var c$1 = e => !!e[0]._.j,
+    o = c => isNotEqualValue(c[0], c[1]);
 
-    for (; c.c;) {
-      c.c = !1;
+var launchQueue = e => {
+  if (!e.b) {
+    e.b = !0;
+    var a = {};
 
-      for (var b in _r) {
-        if (_o2 = _r[b], delete _r[b], a = _o2._.a[0], _o2.c && a > 0) if (_o2._.lazy && _o2._.g.some(storeIsUpdating)) _t[a] = _o2;else {
-          if (+b !== a) {
-            _r[a] = _o2, c.c = !0;
+    for (var _r, _t, _s2 = e.a; e.c;) {
+      e.c = !1;
+
+      for (var b in _s2) {
+        if (_r = _s2[b], delete _s2[b], _t = _r._.a.v, _r.c && _t > 0) if (_r._.lazy && _r._.h && _r._.h.some(c$1)) a[_t] = _r;else {
+          if (+b !== _t) {
+            _s2[_t] = _r, e.c = !0;
             break;
           }
 
-          if (_o2.c = !1, _o2.b(), c.c) break;
+          if (_r.c = !1, (_r.d && !(_r.d = !1) || !_r._.h || _r._.h.some(o)) && (_r.b(), e.c)) break;
         }
       }
     }
 
-    c.a = _t, c.b = !1;
+    e.a = a, e.b = !1;
   }
 };
 
-var addSubscriberInQueue = (e, c) => {
-  c.c = !0, e.a[c._.a[0]] = c, e.c = !0;
+var addSubscriberInQueue = (e, c, o) => {
+  c.c = !0, o && (c.d = !0), e.a[c._.a.v] = c, e.c = !0;
 };
 
-var addWatcherLink = (_, e) => {
-  _._.f.push({
-    _: e._,
+var r$1 = [];
+
+var addWatcherLink = (c, i) => {
+  var n = c._,
+      s = i._;
+  (n.g || (n.g = [])).push({
+    _: s,
     b: () => {
-      e.set(e._.inherit ? _._.j : e._.k);
+      watchStoreSetVals(s.h, r$1), i.set(s.inherit ? n.k : s.l);
     },
-    c: !1
-  });
-
-  for (var _o3 of _._.c) {
-    _o3.b();
-  }
+    a: noop,
+    c: !1,
+    d: !1
+  }), runListenUpdate(n, 0);
 };
 
-var removeWatcherLink = (_, e) => {
-  for (var _o4 = _._.f.length; _o4-- > 0;) {
-    if (_._.f[_o4]._ === e._) {
-      _._.f.splice(_o4, 1);
-
-      for (var _e of _._.c) {
-        _e.b();
-      }
-
+var removeWatcherLink = (t, o) => {
+  var r = t._.g;
+  if (r) for (var _c = r.length; _c-- > 0;) {
+    if (r[_c]._ === o._) {
+      r.splice(_c, 1), runListenUpdate(t._, 0);
       break;
     }
   }
 };
 
-var c$1 = o => _(o) ? o._.j : o,
-    m$1 = o => o._.j;
+var storeSubscribe = (m, f, p) => {
+  isArray(m) || (m = [m]);
+  var h = [];
 
-var storeSubscribe = (_$1, a, l) => {
-  var p = isArray(_$1) ? [..._$1] : [_$1],
-      u = [],
-      b = {};
-
-  for (var _o5 of p) {
-    !_(_o5) || _o5._.h || _o5._.a[0] in b || (u.push(_o5), b[_o5._.a[0]] = 1);
+  for (var _t2, _r2 = {}, i = 0; i < m.length; ++i) {
+    _(m[i]) && ((_t2 = m[i]._).i || (_t2.a.v in _r2 ? _r2[_t2.a.v].push(i) : h.push(_r2[_t2.a.v] = [m[i], {}, i])), m[i] = _t2.k);
   }
 
-  var h = p.length === u.length ? m$1 : c$1;
-  var g,
-      y,
-      j = !0,
-      w = !1,
-      z = !u.length;
+  var b,
+      u = !0,
+      c = !1,
+      g = !h.length;
 
-  var x = () => {
-    if (z = !0, j && !y && w) {
-      y = !(j = !1), removeOrder(d._.a);
+  var _$1 = () => {
+    if (g = !0, u && c) {
+      u = !1, removeOrder(w._.a), w.b = w.a = noop;
 
-      for (var _o6 of u) {
-        remove(_o6._.b, d);
-
-        for (var _t2 of _o6._.c) {
-          _t2.b();
-        }
+      for (var _t3, _r3, _e = h.length; _e-- > 0;) {
+        (_t3 = (_r3 = h[_e][0]._).b.indexOf(w)) > -1 && (_r3.b.splice(_t3, 1), runListenUpdate(_r3, 0));
       }
 
-      u.length = 0, awaiter(g, t => {
-        isFunction(t) && t();
-      }), d._.a = d._.g = null, d._ = d.b = d.a = null;
+      h.length = 0, awaiter(b, r => {
+        isFunction(r) && r();
+      });
     }
   },
-      A = o => {
-    g = o, j = !0, z && x();
+      v = t => {
+    b = t, u = !0, g && _$1();
   },
-      F = () => {
-    j && !y && (w = !(j = !1), awaiter(g = a(p.map(h), x), A));
+      y = () => {
+    u && (c = !(u = !1), watchStoreSetVals(h, m), awaiter(b = f(m, _$1), v));
   },
       {
-    lazy: S
-  } = l || {},
-      d = {
+    lazy: d
+  } = p || {},
+      w = {
     _: {
-      lazy: !!S,
+      lazy: !!d,
       a: createOrder(),
-      g: u
+      h: h
     },
-    b: F,
-    a: x,
-    c: !1
+    b: y,
+    a: _$1,
+    c: !1,
+    d: !1
   };
 
-  for (var _o7 of u) {
-    _o7._.b.push(d);
+  for (var _t4, _r4 = h.length; _r4-- > 0;) {
+    ((_t4 = h[_r4][0]._).b || (_t4.b = [])).push(w), runListenUpdate(_t4, 0);
+  }
 
-    for (var _t3 of _o7._.c) {
-      _t3.b();
+  return c || y(), _$1;
+};
+
+var runListenUpdate = (n, t) => {
+  if (n.c) {
+    var _o3 = n.c[0];
+
+    for (; _o3 = _o3.n;) {
+      _o3.v.e === t && _o3.v.b();
     }
   }
-
-  return w || S && u.some(storeIsUpdating) || F(), x;
 };
 
-var s = (s, e, r, c, i) => {
-  var h = s._;
-  var l, p;
+var e = (e, r, s, c, p) => {
+  var i = e._;
+  var l,
+      a,
+      b = i.c;
 
-  var u = () => {
-    p || (p = !0, h.h || remove(h[r], a), awaiter(l, o => {
-      isFunction(o) && o();
-    }), a.b = a.a = null);
-  },
-      b = t => {
-    p || (l = c === (c = i(h, t)) ? l : e(c, u));
-  },
-      a = {
-    b: b,
-    a: u
+  if (!b && !i.i) {
+    var _n = {
+      p: null,
+      n: null
+    };
+    b = i.c = [_n, _n];
+  }
+
+  var u = {
+    e: s,
+    b: n => {
+      a = c === (c = p(i, n)) ? a : r(c, u.a), awaiter(a, n => {
+        a = n;
+      });
+    },
+    a: () => {
+      var e, r, s;
+      l && (r = b, s = 1, (e = l).p && (e.p.n = e.n), r[s] === e ? r[s] = e.p : e.n && (e.n.p = e.p), e.v = e.p = null), u.b = u.a = noop, awaiter(a, t => {
+        isFunction(t) && t();
+      });
+    }
   };
-
-  return h[r].push(a), b(c), h.h && u(), u;
+  var v, f, g;
+  return i.i ? (u.b(c), u.a()) : (v = u, (f = b)[g = 1] = f[g].n = {
+    v: v,
+    p: f[g],
+    n: null
+  }, l = b[1], u.b(c)), u.a;
 },
-    e = t => t.b.length + t.f.length;
+    r = {},
+    s = n => (n.b ? n.b.length : 0) + (n.g ? n.g.length : 0);
 
-var storeOnSubscribe = (t, o) => s(t, o, "c", -1, e);
+var storeOnSubscribe = (n, t) => e(n, t, 0, -1, s);
 
-var r = t => !!t.h;
+var c = (n, t) => !(!n.i && t === r) || r;
 
-var storeOnDestroy = (t, o) => s(t, o, "d", !1, r);
+var storeOnDestroy = (n, t) => e(n, t, 1, r, c);
 
-var c = {},
-    i = (t, o) => o === c ? c : [o, t.j];
+var p$1 = (n, t) => t === r ? r : [t, n.k];
 
-var storeOnChange = (t, o) => s(t, o, "e", c, i);
+var storeOnChange = (n, t) => e(n, t, 2, r, p$1);
 
-var REFER_LIST = [];
-
-var proxyWatch = (o, t) => {
-  awaiter(t._.n(o, t), proxyDefault, t);
+var REFER_LIST = {
+  l: [],
+  b: !0
 };
 
-var proxyAutoWatch = (o, t) => {
-  var e = {};
-  REFER_LIST.push([t, e]);
+var proxyWatch = (t, e) => {
+  REFER_LIST.b = !1;
 
-  var i = t._.n(o, t);
+  var r = e._.o(t, e);
 
-  _(i) && (i = i.get()), REFER_LIST.pop();
-  var r = t._.g;
-  var f;
+  REFER_LIST.b = !0, awaiter(r, proxyDefault, e);
+};
 
-  for (var _s = r.length; _s-- > 0;) {
-    f = r[_s]._.a[0], f in e ? delete e[f] : (removeWatcherLink(r[_s], t), r.splice(_s, 1));
+var proxyAutoWatch = (e, r) => {
+  var l = {};
+  REFER_LIST.l.push([r, l]);
+
+  var f = r._.o(e, r);
+
+  _(f) && (f = f.get()), REFER_LIST.l.pop();
+  var i = r._.h;
+
+  for (var _t5, _o4 = i.length; _o4-- > 0;) {
+    _t5 = i[_o4][0]._.a.v, _t5 in l ? delete l[_t5] : (i.splice(_o4, 1), removeWatcherLink(i[_o4][0], r));
   }
 
-  for (var _s2 in e) {
-    e[_s2] === t || e[_s2]._.h || (addWatcherLink(e[_s2], t), r.push(e[_s2]));
+  for (var _t6 in l) {
+    l[_t6] === r || l[_t6]._.i || (i.push([l[_t6], l[_t6]._.k]), addWatcherLink(l[_t6], r));
   }
 
-  awaiter(i, proxyDefault, t);
+  awaiter(f, proxyDefault, r);
 };
 
 var proxyDefault = (n, p) => {
   var f = p._;
-  if (f.h) f.i = !1, launchQueue(f.o);else if (f.l) {
-    var _o8 = f.l;
-    f.l = null, awaiter(_o8(f.j, p), update, p);
-  } else if (_(n) && (n = n._.j), !is(f.j, n) || !f.strict && (isFunction(n) || isObject(n))) {
-    var _o9 = f.j;
-    p.value = f.j = n;
 
-    for (var _t4 of f.e) {
-      _t4.b(_o9);
+  if (!f.i) {
+    if (f.m) {
+      var _t7 = f.m;
+      return f.m = null, void awaiter(_t7(f.k, p), update, p);
     }
 
-    if (f.l) {
-      var _o10 = f.l;
-      f.l = null, awaiter(_o10(f.j, p), update, p);
-    } else {
-      f.i = !1;
+    if (_(n) && (n = n._.k), f.r || isNotEqualValue(p, n)) {
+      var _t8 = f.k;
 
-      for (var _o11 of f.b) {
-        addSubscriberInQueue(f.o, _o11);
+      if (p.value = f.k = n, f.c) {
+        var _e2 = f.c[0];
+
+        for (; _e2 = _e2.n;) {
+          if (2 === _e2.v.e && (_e2.v.b(_t8), f.m)) {
+            var _e3 = f.m;
+            return f.m = null, p.value = f.k = _t8, void awaiter(_e3(f.k, p), update, p);
+          }
+        }
       }
 
-      for (var _o12 of f.f) {
-        addSubscriberInQueue(f.o, _o12);
+      if (f.b) for (var _o5 = 0; _o5 < f.b.length; ++_o5) {
+        addSubscriberInQueue(f.q, f.b[_o5], f.r);
       }
-
-      launchQueue(f.o);
+      if (f.g) for (var _o6 = 0; _o6 < f.g.length; ++_o6) {
+        addSubscriberInQueue(f.q, f.g[_o6], f.r);
+      }
     }
-  } else f.i = !1, launchQueue(f.o);
+  }
+
+  f.j = f.r = !1, launchQueue(f.q);
 };
 
-var update = (o, t) => {
-  var e = t._;
-  if (e.h) e.i = !1, launchQueue(e.o);else if (e.l) {
-    var _o13 = e.l;
-    e.l = null, awaiter(_o13(e.j, t), update, t);
-  } else e.m(e.k = _(o) ? o._.j : o, t);
+var update = (e, l) => {
+  var n = l._;
+  if (n.i) n.j = !1, launchQueue(n.q);else if (n.m) {
+    var _t9 = n.m;
+    n.m = null, awaiter(_t9(n.k, l), update, l);
+  } else n.n(n.l = _(e) ? e._.k : e, l);
 };
 
 class Store {
   get updating() {
-    return this._.i;
+    return this._.j;
   }
 
   get destroyed() {
-    return this._.h;
+    return !!this._.i;
   }
 
-  constructor(t, o, e, s, n) {
-    var l = isPromise(o),
-        f = !l && _(o),
-        u = l ? void 0 : f ? o._.j : o,
+  set force(t) {
+    this._.r = !!t;
+  }
+
+  constructor(t, e, o, r, l) {
+    var h = isThenable(e),
+        u = !h && _(e),
+        c = h ? void 0 : u ? e._.k : e,
         {
-      lazy: m,
+      lazy: g,
       strict: p,
-      inherit: d
-    } = n || {};
+      inherit: v
+    } = l || {};
 
     if (this._ = {
-      b: [],
-      c: [],
-      d: [],
-      e: [],
-      f: [],
-      g: [],
-      h: !1,
-      i: !1,
       a: createOrder(),
-      j: u,
-      k: u,
-      l: null,
-      n: s,
-      m: s ? e ? proxyWatch : proxyAutoWatch : proxyDefault,
-      o: t,
-      lazy: !!m,
+      b: null,
+      g: null,
+      h: o || r ? [] : null,
+      c: null,
+      i: !1,
+      j: !1,
+      k: c,
+      l: c,
+      m: null,
+      o: r,
+      n: r ? o ? proxyWatch : proxyAutoWatch : proxyDefault,
+      q: t,
+      lazy: !!g,
       strict: void 0 === p || !!p,
-      inherit: void 0 === d ? !s : !!d
-    }, this.value = o, e) {
-      var _t5 = {};
-
-      for (var _o14 of e) {
-        !_(_o14) || _o14._.h || _o14._.a[0] in _t5 || (addWatcherLink(_o14, this), this._.g.push(_o14), _t5[_o14._.a[0]] = 1);
-      }
+      inherit: void 0 === v ? !r : !!v
+    }, this.value = e, o) for (var i = {}, _s3 = o.length; _s3-- > 0;) {
+      !_(o[_s3]) || o[_s3]._.i || o[_s3]._.a.v in i || (this._.h.push([o[_s3], {}]), addWatcherLink(o[_s3], this), i[o[_s3]._.a.v] = 1);
     }
-
-    (l || s) && this.set(o);
+    (h || r) && this.set(e);
   }
 
   get() {
-    return REFER_LIST.length > 0 && (REFER_LIST[REFER_LIST.length - 1][1][this._.a[0]] = this), this._.j;
+    return REFER_LIST.b && REFER_LIST.l.length > 0 && (REFER_LIST.l[REFER_LIST.l.length - 1][1][this._.a.v] = this), this._.k;
   }
 
   set(t) {
-    var o = this._;
-    o.h || (o.i ? o.l = () => t : (o.l = null, o.i = !0, awaiter(t, update, this)));
+    var e = this._;
+    e.i || (e.j ? e.m = () => t : (e.m = null, e.j = !0, awaiter(t, update, this)));
   }
 
   update(t) {
-    var o = this._;
-    o.h || (o.i ? o.l = t : (o.l = null, o.i = !0, awaiter(t(o.j, this), update, this)));
+    var e = this._;
+    e.i || (e.j ? e.m = t : (e.m = null, e.j = !0, awaiter(t(e.k, this), update, this)));
   }
 
   destroy() {
-    var t = this._;
-
-    if (!t.h) {
-      t.h = !0;
-
-      for (var _o15 of t.d) {
-        _o15.b();
-      }
-
-      for (var _o16 of t.b) {
-        remove(_o16._.g, this), _o16._.g.length || _o16.a();
-      }
-
-      for (var _o17 of t.g) {
-        removeWatcherLink(_o17, this);
-      }
-
-      t.f.length = t.g.length = t.b.length = 0;
-
-      for (var _o18 of t.c) {
-        _o18.b(), _o18.a();
-      }
-
-      for (var _o19 of t.d) {
-        _o19.a();
-      }
-
-      t.e.length = t.d.length = t.c.length = 0, t.n = t.m = t.o = null, removeOrder(t.a);
-    }
+    storeDestroy(this);
   }
 
 }
 
-var m = Store.prototype;
-defineProperty(m, "$", {
-  get: m.get,
-  set: m.set
+var storeDestroy = t => {
+  var e = t._;
+
+  if (!e.i) {
+    if (runListenUpdate(e, 1), e.i = !0, e.b) for (var i, _o7 = e.b.length; _o7-- > 0;) {
+      i = e.b[_o7], watchStoreRemove(i._.h, t), i._.h.length || i.a();
+    }
+    if (e.h) for (var _i = e.h.length; _i-- > 0;) {
+      removeWatcherLink(e.h[_i][0], t);
+    }
+
+    if (e.b = e.h = e.g = null, e.c) {
+      var _t10 = e.c[0];
+
+      for (; _t10 = _t10.n;) {
+        0 === _t10.v.e && _t10.v.b(), _t10.v.a();
+      }
+    }
+
+    removeOrder(e.a), e.o = e.n = e.q = null;
+  }
+};
+
+var p = Store.prototype;
+defineProperty(p, "$", {
+  get: p.get,
+  set: p.set
 });
 
-var _loop = function (p, d) {
-  defineProperty(m, d[p], {
+var _loop = function (b, _v) {
+  defineProperty(p, b[_v], {
     value: function (...t) {
-      var o = this.get();
-      return o = null != o && o[t[p]] ? o[t[p]](...t) : o, p ? o : o + "";
+      var e = this.get();
+      return e = null != e && e[t[_v]] ? e[t[_v]](...t) : e, _v ? e : e + "";
     }
   });
 };
 
-for (var p = 3, d = ["toString", "valueOf", "toJSON"]; p-- > 0;) {
-  _loop(p, d);
+for (var _v = 3, b = ["toString", "valueOf", "toJSON"]; _v-- > 0;) {
+  _loop(b, _v);
 }
 
 var _ = instanceofFactory(Store);
@@ -416,4 +447,4 @@ var storeFactory = e => (e || (e = {
   c: !1
 }), (s, c, n, a) => (isArray(c) || (c = _(c) ? [c] : (a = n, n = c, null)), isFunction(n) || (a = n, n = null), new Store(e, s, c, n, a)));
 
-export { Store, contextFactory, _ as isStore, storeFactory, storeOnChange, storeOnDestroy, storeOnSubscribe, storeSubscribe };
+export { Store, contextFactory, _ as isStore, storeDestroy, storeFactory, storeOnChange, storeOnDestroy, storeOnSubscribe, storeSubscribe };

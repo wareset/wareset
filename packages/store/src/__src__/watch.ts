@@ -1,33 +1,46 @@
-import { EH_SRV, EH_SUB } from '.'
+import { EH_SRV, EH_SUB, EN_LISTYPE } from '.'
 import { TypeStore } from '.'
+import { watchStoreSetVals, noop } from '.'
+import { runListenUpdate } from '.'
 
+const __noopArr__: any[] = []
 export const addWatcherLink = (
-  storeWatcher: TypeStore<any>,
-  storeLink: TypeStore<any>
+  storeWatch: TypeStore,
+  storeLink: TypeStore
 ): void => {
-  storeWatcher._[EH_SRV.links].push({
-    _: storeLink._,
+  const storeWatchService = storeWatch._
+  const storeLinkService = storeLink._;
+  (
+    storeWatchService[EH_SRV.links] || (storeWatchService[EH_SRV.links] = [])
+  ).push({
+    _              : storeLinkService,
     [EH_SUB.update]: (): void => {
+      watchStoreSetVals(storeLinkService[EH_SRV.watch]!, __noopArr__)
       storeLink.set(
-        storeLink._.inherit
-          ? storeWatcher._[EH_SRV.value]
-          : storeLink._[EH_SRV.valueOrigin]
+        storeLinkService.inherit
+          ? storeWatchService[EH_SRV.value]
+          : storeLinkService[EH_SRV.valueOrigin]
       )
     },
-    [EH_SUB.needRun]: false
+    [EH_SUB.destroy]: noop,
+    [EH_SUB.needRun]: false,
+    [EH_SUB.force]  : false
   })
-  for (const sub of storeWatcher._[EH_SRV.onSubscribe]) sub[EH_SUB.update]()
+  runListenUpdate(storeWatchService, EN_LISTYPE.onSubscribe)
 }
 
 export const removeWatcherLink = (
-  storeWatcher: TypeStore<any>,
-  storeLink: TypeStore<any>
+  storeWatch: TypeStore,
+  storeLink: TypeStore
 ): void => {
-  for (let i = storeWatcher._[EH_SRV.links].length; i-- > 0; ) {
-    if (storeWatcher._[EH_SRV.links][i]._ === storeLink._) {
-      storeWatcher._[EH_SRV.links].splice(i, 1)
-      for (const sub of storeWatcher._[EH_SRV.onSubscribe]) sub[EH_SUB.update]()
-      break
+  const links = storeWatch._[EH_SRV.links]!
+  if (links) {
+    for (let i = links.length; i-- > 0;) {
+      if (links[i]._ === storeLink._) {
+        links.splice(i, 1)
+        runListenUpdate(storeWatch._, EN_LISTYPE.onSubscribe)
+        break
+      }
     }
   }
 }

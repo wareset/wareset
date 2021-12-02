@@ -1,96 +1,101 @@
-import { isFunction } from '@wareset-utilites/is/isFunction'
-import { isObject } from '@wareset-utilites/is/isObject'
-import { is } from '@wareset-utilites/object/is'
-
-import { EH_SRV, EH_SUB } from '.'
+import { EH_SRV, EH_SUB, EN_LISTYPE } from '.'
 import { TypeStore } from '.'
 
 import { isStore } from '.'
-import { awaiter } from '.'
+import { awaiter, isNotEqualValue } from '.'
 import { launchQueue, addSubscriberInQueue } from '.'
 import { addWatcherLink, removeWatcherLink } from '.'
 
-export const REFER_LIST: [
-  TypeStore<any>,
-  { [key: number]: TypeStore<any> }
-][] = []
+export const REFER_LIST: {
+  readonly l: [TypeStore, { [key: number]: TypeStore }][]
+  b: boolean
+} = { l: [], b: true }
 
-// prettier-ignore
-export const proxyWatch = (_newValue: any, _iam: TypeStore<any>): void =>
-{ awaiter(_iam._[EH_SRV.proxyOrigin]!(_newValue, _iam), proxyDefault, _iam) }
-// prettier-ignore
-export const proxyAutoWatch = (_newValue: any, _iam: TypeStore<any>): void =>
-{
-  const newWatchObj: any = {}
-  REFER_LIST.push([_iam, newWatchObj])
+export const proxyWatch = (_newValue: any, _iam: TypeStore): void => {
+  REFER_LIST.b = false
+  const newValueProxy = _iam._[EH_SRV.proxyOrigin]!(_newValue, _iam)
+  REFER_LIST.b = true
+  awaiter(newValueProxy, proxyDefault, _iam)
+}
+
+export const proxyAutoWatch = (_newValue: any, _iam: TypeStore): void => {
+  const newWatchObj: { [key: number]: TypeStore } = {}
+  REFER_LIST.l.push([_iam, newWatchObj])
   let newValueProxy = _iam._[EH_SRV.proxyOrigin]!(_newValue, _iam)
   if (isStore(newValueProxy)) newValueProxy = newValueProxy.get()
-  REFER_LIST.pop()
+  REFER_LIST.l.pop()
 
-  const watch = _iam._[EH_SRV.watch]
-  let id: number
-  for (let i = watch.length; i-- > 0; ) {
-    id = watch[i]._[EH_SRV.id][0]
+  const watch = _iam._[EH_SRV.watch]!
+  for (let id: number, i = watch.length; i-- > 0;) {
+    id = watch[i][0]._[EH_SRV.id].v
     if (id in newWatchObj) delete newWatchObj[id]
-    else removeWatcherLink(watch[i], _iam), watch.splice(i, 1)
+    else watch.splice(i, 1), removeWatcherLink(watch[i][0], _iam)
   }
 
   for (const k in newWatchObj) {
     if (newWatchObj[k] !== _iam && !newWatchObj[k]._[EH_SRV.destroyed]) {
-      addWatcherLink(newWatchObj[k], _iam), watch.push(newWatchObj[k])
+      watch.push([newWatchObj[k], newWatchObj[k]._[EH_SRV.value]])
+      addWatcherLink(newWatchObj[k], _iam)
     }
   }
   awaiter(newValueProxy, proxyDefault, _iam)
 }
 
-export const proxyDefault = (
-  newValueProxy: any,
-  store: TypeStore<any>
-): void => {
+export const proxyDefault = (newValueProxy: any, store: TypeStore): void => {
   const service = store._
   if (!service[EH_SRV.destroyed]) {
     if (service[EH_SRV.nextcb]) {
       const nextcb = service[EH_SRV.nextcb]!
       service[EH_SRV.nextcb] = null
       awaiter(nextcb(service[EH_SRV.value], store), update, store)
-    } else {
-      if (isStore(newValueProxy)) newValueProxy = newValueProxy._[EH_SRV.value]
+      return
+    }
 
-      if (
-        !is(service[EH_SRV.value], newValueProxy) ||
-        (!service.strict &&
-          (isFunction(newValueProxy) || isObject(newValueProxy)))
-      ) {
-        const oldValue = service[EH_SRV.value]
-        ;(store as any).value = service[EH_SRV.value] = newValueProxy
-        for (const sub of service[EH_SRV.onChange]) sub[EH_SUB.update](oldValue)
+    if (isStore(newValueProxy)) newValueProxy = newValueProxy._[EH_SRV.value]
 
-        if (service[EH_SRV.nextcb]) {
-          const nextcb = service[EH_SRV.nextcb]!
-          service[EH_SRV.nextcb] = null
-          awaiter(nextcb(service[EH_SRV.value], store), update, store)
-        } else {
-          service[EH_SRV.updating] = false
-          for (const sub of service[EH_SRV.subscribers]) {
-            addSubscriberInQueue(service[EH_SRV.context], sub)
+    if (service[EH_SRV.force] || isNotEqualValue(store, newValueProxy)) {
+      const oldValue = service[EH_SRV.value];
+      (store as any).value = service[EH_SRV.value] = newValueProxy
+
+      if (service[EH_SRV.listeners]) {
+        let liso = service[EH_SRV.listeners]![0]
+        while (liso = liso.n!) {
+          if (liso.v[EH_SUB.type] === EN_LISTYPE.onChange) {
+            liso.v[EH_SUB.update](oldValue)
+
+            if (service[EH_SRV.nextcb]) {
+              const nextcb = service[EH_SRV.nextcb]!
+              service[EH_SRV.nextcb] = null;
+              (store as any).value = service[EH_SRV.value] = oldValue
+              awaiter(nextcb(service[EH_SRV.value], store), update, store)
+              return
+            }
           }
-          for (const sub of service[EH_SRV.links]) {
-            addSubscriberInQueue(service[EH_SRV.context], sub)
-          }
-          launchQueue(service[EH_SRV.context])
         }
-      } else {
-        service[EH_SRV.updating] = false
-        launchQueue(service[EH_SRV.context])
+      }
+
+      if (service[EH_SRV.subscribers]) {
+        for (let i = 0; i < service[EH_SRV.subscribers]!.length; ++i) {
+          addSubscriberInQueue(service[EH_SRV.context],
+            service[EH_SRV.subscribers]![i],
+            service[EH_SRV.force])
+        }
+      }
+
+      if (service[EH_SRV.links]) {
+        for (let i = 0; i < service[EH_SRV.links]!.length; ++i) {
+          addSubscriberInQueue(service[EH_SRV.context],
+            service[EH_SRV.links]![i],
+            service[EH_SRV.force])
+        }
       }
     }
-  } else {
-    service[EH_SRV.updating] = false
-    launchQueue(service[EH_SRV.context])
   }
+  service[EH_SRV.updating] = service[EH_SRV.force] = false
+  launchQueue(service[EH_SRV.context])
 }
 
-export const update = (newValue: any, store: TypeStore<any>): void => {
+export const update = (newValue: any, store: TypeStore): void => {
   const service = store._
   if (!service[EH_SRV.destroyed]) {
     if (service[EH_SRV.nextcb]) {
@@ -99,9 +104,9 @@ export const update = (newValue: any, store: TypeStore<any>): void => {
       awaiter(nextcb(service[EH_SRV.value], store), update, store)
     } else {
       service[EH_SRV.proxy](
-        (service[EH_SRV.valueOrigin] = isStore(newValue)
+        service[EH_SRV.valueOrigin] = isStore(newValue)
           ? newValue._[EH_SRV.value]
-          : newValue),
+          : newValue,
         store
       )
     }

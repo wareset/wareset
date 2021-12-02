@@ -1,33 +1,31 @@
-import { timeout } from '@wareset-utilites/timeout'
-
 import { TypeOrder } from '.'
 
 let NORMALIZE = false
 let REMOVED_ORDERS = 0
-let NORMALIZE_ORDER: TypeOrder = [1 / 0] as any
-let PREV_ORDER: TypeOrder = [0, null as any, null]
+let PREV_ORDER: TypeOrder = { v: 0, n: null }
+const NORMALIZE_ORDER_DDEFAULT: TypeOrder = { v: 1 / 0 }
+let NORMALIZE_ORDER: TypeOrder = NORMALIZE_ORDER_DDEFAULT
 
 const normalizeOrders = (): void => {
-  let next: TypeOrder | null
-  while ((next = NORMALIZE_ORDER[2]))
-    (next[0] = NORMALIZE_ORDER[0] + 1), (NORMALIZE_ORDER = next)
-  NORMALIZE_ORDER = [1 / 0] as any
+  let next: TypeOrder | undefined
+  while (next = NORMALIZE_ORDER.n!) next.v = NORMALIZE_ORDER.v + 1, NORMALIZE_ORDER = next
+  NORMALIZE_ORDER = NORMALIZE_ORDER_DDEFAULT
   REMOVED_ORDERS = 0
   NORMALIZE = false
 }
 
 export const createOrder = (): TypeOrder =>
-  (PREV_ORDER = PREV_ORDER[2] = [PREV_ORDER[0] + 1, PREV_ORDER, null])
+  PREV_ORDER = PREV_ORDER.n = { v: PREV_ORDER.v + 1, p: PREV_ORDER, n: null }
 
 export const removeOrder = (id: TypeOrder): void => {
-  id[1][2] = id[2]
-  if (PREV_ORDER === id) PREV_ORDER = id[1]
-  else if (id[2]) {
-    id[2][1] = id[1]
-    if (NORMALIZE_ORDER[0] > id[1][0]) NORMALIZE_ORDER = id[1]
+  id.p!.n = id.n
+  if (PREV_ORDER === id) PREV_ORDER = id.p!
+  else if (id.n) {
+    id.n.p = id.p
+    if (NORMALIZE_ORDER.v > id.p!.v) NORMALIZE_ORDER = id.p!
     if (REMOVED_ORDERS < 4e4) REMOVED_ORDERS++
-    else if (!NORMALIZE) (NORMALIZE = true), timeout(99, normalizeOrders)
+    else if (!NORMALIZE) NORMALIZE = true, setTimeout(normalizeOrders, 99)
   }
-  id[0] = -1
-  id[1] = id[2] = null as any
+  id.v = -1
+  id.p = id.n = null
 }

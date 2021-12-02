@@ -3,30 +3,35 @@ export const enum EH_SRV {
 
   subscribers = "b",
 
-  onSubscribe = "c",
-  onDestroy = "d",
-  onChange = "e",
+  listeners = "c",
+  onSubscribe = "d",
+  onDestroy = "e",
+  onChange = "f",
 
-  links = "f",
-  watch = "g",
+  links = "g",
+  watch = "h",
 
-  destroyed = "h",
-  updating = "i",
+  destroyed = "i",
+  updating = "j",
 
-  value = "j",
-  valueOrigin = "k",
+  value = "k",
+  valueOrigin = "l",
 
-  nextcb = "l",
-  proxy = "m",
-  proxyOrigin = "n",
+  nextcb = "m",
+  proxy = "n",
+  proxyOrigin = "o",
 
-  context = "o"
+  destroyer = "p",
+  context = "q",
+  force = "r"
 }
 
 export const enum EH_SUB {
   destroy = "a",
   update = "b",
-  needRun = "c"
+  needRun = "c",
+  force = "d",
+  type = "e"
 }
 
 export const enum EH_CONTEXT {
