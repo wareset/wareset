@@ -3,21 +3,7 @@ declare type TypeCallback = (e: TypeDetail) => any;
 declare type TypeCallbackKey = (e: KeyboardEvent) => any;
 declare type TypeAddPointerEvent = (element: Element, type: string | string[], callback: TypeCallback | TypeCallback[]) => TypeUnlistener;
 declare type TypeAddKeyboardEvent = (type: string | string[], callback: TypeCallbackKey | TypeCallbackKey[]) => TypeUnlistener;
-declare type TypeEvent = typeof EVENTS[keyof typeof EVENTS];
-declare const EVENTS: {
-    readonly s: "start";
-    readonly m: "move";
-    readonly e: "end";
-    readonly t: "tap";
-    readonly d: "dbltap";
-    readonly p: "pan";
-    readonly h: "hold";
-    readonly r: "repeat";
-    readonly fi: "focusin";
-    readonly fo: "focusout";
-    readonly hi: "hoverin";
-    readonly ho: "hoverout";
-};
+declare type TypeEvent = 'start' | 'move' | 'end' | 'tap' | 'dbltap' | 'pan' | 'hold' | 'repeat' | 'focusin' | 'focusout' | 'hoverin' | 'hoverout';
 declare type TypeDetail = ReturnType<typeof createDetail>;
 declare const createDetail: (type: TypeEvent, isMouse: boolean, e: any) => {
     type: TypeEvent;

@@ -7,14 +7,14 @@ Object.defineProperty(exports, "__esModule", {
     value: !0
 });
 
-var e, t, r, i, a, s, n, l, o, p, f, h, u, v = "undefined" != typeof window, d = () => {}, c = () => d, m = Array.isArray, y = "__wseventer__", g = /\((\w+)\)|([A-Z]\w+)|^([a-z]+)|(?<=\W)(?:([.\d]+)|(touch)|(mouse)|(stop)|(prevent)|(self)|(once)|(x|h\w*)|(y|v\w*)|([tu]\w*)|([bd]\w*)|(l\w*)|(r\w*))/g, w = e => {
-    var t, r, i, a, s, n, l, o, p, f, h, u, v = "", d = .5;
+var e, t, r, i, a, s, n, l = "__wseventer__", o = 1, p = "undefined" != typeof window, f = () => {}, h = () => f, u = Array.isArray, v = /\((\w+)\)|([A-Z]\w+)|^([a-z]+)|(?<=\W)(?:([.\d]+)|(touch)|(mouse)|(stop)|(prevent)|(self)|(once)|(x|h\w*)|(y|v\w*)|([tu]\w*)|([bd]\w*)|(l\w*)|(r\w*))/g, d = e => {
+    var t, r, i, a, s, n, l, o, p, f, h, u, d = "", c = .5;
     t = r = i = a = s = n = l = o = p = f = u = h = !1;
-    var c = 0, m = {};
-    return e.replace(g, ((e, y, g, w, _, k, x, b, E, A, K, X, Y, I, S, F, P) => (w ? v = w : _ ? d = +_ || d : b ? t = !!b : E ? r = !!E : A ? i = !!A : K ? a = !!K : X ? s = !!X : Y ? n = !!Y : I ? l = !!I : S ? o = !!S : F ? p = !!F : P ? f = !!P : k ? h = !!k : x ? u = !!x : (y || g) && (c++, 
-    m[y || g] = 1), ""))), d *= 1e3, m.len = c, {
-        type: v,
-        time: d,
+    var m = 0, y = {};
+    return e.replace(v, ((e, v, g, w, _, k, x, b, E, A, K, X, Y, I, S, F, P) => (w ? d = w : _ ? c = +_ || c : b ? t = !!b : E ? r = !!E : A ? i = !!A : K ? a = !!K : X ? s = !!X : Y ? n = !!Y : I ? l = !!I : S ? o = !!S : F ? p = !!F : P ? f = !!P : k ? h = !!k : x ? u = !!x : (v || g) && (m++, 
+    y[v || g] = 1), ""))), c *= 1e3, y.len = m, {
+        type: d,
+        time: c,
         sp: t,
         pt: r,
         sf: i,
@@ -26,222 +26,221 @@ var e, t, r, i, a, s, n, l, o, p, f, h, u, v = "undefined" != typeof window, d =
         d: o,
         l: p,
         r: f,
-        keys: c ? m : null,
+        keys: m ? y : null,
         thme: h || u,
         th: h,
         me: u
     };
-}, _ = 1, k = "start", x = "move", b = "end", E = "tap", A = "dbltap", K = "pan", X = "hold", Y = "repeat", I = "focusin", S = "focusout", F = "hoverin", P = "hoverout", j = "up", z = "down", C = "left", D = "right", L = {}, M = [], O = () => {
-    if (O = d, v) {
-        var e = 0, t = (t, r) => {
-            ++e >= (e = 1) && ve(t, r, !0);
-        }, r = (t, r) => {
-            --e <= (e = -1) && ve(t, r, !1);
-        }, i = (e, t) => {
-            var r = e.code, i = e.key;
-            if (t ? L[r + i] = [ r, i, e.keyCode ] : delete L[r + i], t) for (var a, s = M.length; s-- > 0; ) if ((a = M[s][0]).len) {
-                if (R(a)) for (var n = M[s][1], l = n.length; l-- > 0; ) n[l](e);
-            } else M.splice(s, 1);
-        }, a = {
-            mousedown: e => {
-                t(e, k);
-            },
-            mousemove: e => {
-                t(e, x);
-            },
-            mouseup: e => {
-                t(e, b);
-            },
-            touchstart: e => {
-                r(e, k);
-            },
-            touchmove: e => {
-                r(e, x);
-            },
-            touchend: e => {
-                r(e, b);
-            },
-            keydown: e => {
-                i(e, !0);
-            },
-            keyup: e => {
-                i(e, !1);
-            }
-        };
-        for (var s in a) document.addEventListener(s, a[s]);
-    }
-}, R = e => {
-    var t = e.len;
-    for (var r in L) {
-        if (!(L[r][0] in e || L[r][1] in e || L[r][2] in e)) break;
-        t--;
-    }
-    return !t;
-}, W = t => !t.xy || e === C && (t.x || t.l) || e === D && (t.x || t.r) || e === j && (t.y || t.u) || e === z && (t.y || t.d), Z = v ? window.getSelection ? () => {
-    window.getSelection().removeAllRanges();
-} : () => {
-    document.selection.empty();
-} : d, q = e => e < 0 ? -e : e, B = e => {
-    for (var t = 0, r = e.length; r-- > 0; ) t += e[r];
-    return t;
-}, G = (e, t, r, i) => {
-    var a = e[0];
-    if (!a.keys || R(a.keys)) for (var s = 0; s < e[1].length; s++) e[1][s](V(t, r, i));
-}, H = !1, J = !1, N = !1, Q = !1, T = !1, U = !1, V = (l, o, p) => ({
+}, c = [], m = !1, y = !1, g = !1, w = !1, _ = !1, k = !1, x = (l, o, p) => ({
     type: l,
     direction: e,
-    isFirst: T,
-    isFinal: U,
+    isFirst: m,
+    isFinal: y,
     page: {
         x: t,
         y: r
     },
     delta: {
-        x: s,
-        y: n
-    },
-    offset: {
         x: i,
         y: a
     },
+    offset: {
+        x: s,
+        y: n
+    },
     key: {
-        alt: H,
-        ctrl: J,
-        meta: N,
-        shift: Q
+        alt: g,
+        ctrl: w,
+        meta: _,
+        shift: k
     },
     touch: !o,
     mouse: o,
     evt: p
-}), $ = {}, ee = {}, te = !1, re = [], ie = 0, ae = 0, se = 0, ne = 0, le = 0, oe = 0, pe = !1, fe = !1, he = [ 0, 0, 0, 0, 0, 0, 0 ], ue = [ 0, 0, 0, 0, 0, 0, 0 ], ve = (v, d, c) => {
-    l = v.target, f = v.timeStamp, H = !!v.altKey, J = !!v.ctrlKey, N = !!v.metaKey, 
-    Q = !!v.shiftKey;
-    var {clientX: m, clientY: g, pageX: w, pageY: _} = c ? v : v.touches[0] || {
-        clientX: se,
-        clientY: ne,
-        pageX: ie,
-        pageY: ae
-    };
-    pe = !1;
-    var L = o, M = p;
-    p = l, d === x ? te && !fe && (fe = !0) : (re.forEach(clearInterval), re.length = 0, 
-    d === k ? (o = l, te = !0, h = f, se = m, ne = g, le = oe = 0) : (te = !1, u = f, 
-    fe && (fe = !(pe = !0)))), s = -se + (se = m), n = -ne + (ne = g), i = le += s, 
-    a = oe += n, t = ie = w, r = ae = _;
-    var O = 1e3 * (q(i) + q(a));
-    he.push(s), ue.push(n), he.shift(), ue.shift();
-    var R = B(he), V = B(ue);
-    e = q(R) > q(V) ? R < 0 ? C : D : V < 0 ? j : z;
-    var ve, de, ce, me, ye, ge, we = L !== o, _e = M !== p, ke = {}, xe = {}, be = {};
-    if (we) {
-        if (de = o) do {
-            if (ve = de[y]) {
-                if (ve.id in $) break;
-                for (var Ee = ve._.length; Ee-- > 0; ) (ye = (me = (ce = ve._[Ee])[0]).type) ? (!me.thme || me.th === !c && me.me === c) && (ye === I || ye === F && _e && !(ve.id in ee)) && G(ce, ye, c, v) : ve._.splice(Ee, 1);
+}), b = () => {
+    if (b = f, p) {
+        var o, h, u, v, d, E, A = {}, K = "start", X = "move", Y = "end", I = "hold", S = "hoverin", F = "hoverout", P = "down", j = "left", z = "right", C = e => {
+            var t = e.len;
+            for (var r in A) {
+                if (!(A[r][0] in e || A[r][1] in e || A[r][2] in e)) break;
+                t--;
             }
-        } while (de = de.parentElement);
-    } else if (_e && (de = p)) do {
-        if (ve = de[y]) {
-            if (ve.id in ee) break;
-            for (var Ae = ve._.length; Ae-- > 0; ) (ye = (me = (ce = ve._[Ae])[0]).type) ? (!me.thme || me.th === !c && me.me === c) && ye === F && G(ce, ye, c, v) : ve._.splice(Ae, 1);
-        }
-    } while (de = de.parentElement);
-    de = l;
-    do {
-        if (ve = de[y]) {
-            ke[ve.id] = !0, xe[ve.id] = !0;
-            for (var Ke = ve._.length; Ke-- > 0; ) if (ye = (me = (ce = ve._[Ke])[0]).type, 
-            ge = ce[2], ye) {
-                if (!(ye in be || me.sf && de !== l || me.thme && (me.th !== !c || me.me !== c))) switch (me.pt && v.preventDefault(), 
-                me.sp && (be[ye] = !0, v.stopPropagation()), ye) {
-                  case d:
-                    (d !== x || W(me)) && G(ce, d, c, v);
-                    break;
-
-                  case E:
-                    d === b && u - h < me.time && G(ce, ye, c, v);
-                    break;
-
-                  case A:
-                    d === b && (u - ge.s > me.time && (ge.is = 0), (ge.is = 0 | ++ge.is) && (1 === ge.is ? ge.s = h : (ge.is = 0, 
-                    G(ce, ye, c, v))));
-                    break;
-
-                  case K:
-                    (d === x && te || pe) && (pe && ge.is || O > me.time && W(me)) && ((U = pe) ? ge.is = !1 : ge.is || (T = ge.is = !0), 
-                    Z(), G(ce, ye, c, v), T = U = !1);
-                    break;
-
-                  case X:
-                  case Y:
-                    d === k && re.push(ge.sti = setInterval(((e, t, r, i, a) => {
-                        t === X && clearInterval(a.sti), Z(), G(e, t, r, i);
-                    }), me.time, ce, ye, c, v, ge));
+            return !t;
+        }, D = t => !t.xy || e === j && (t.x || t.l) || e === z && (t.x || t.r) || "up" === e && (t.y || t.u) || e === P && (t.y || t.d), L = p ? window.getSelection ? () => {
+            window.getSelection().removeAllRanges();
+        } : () => {
+            document.selection.empty();
+        } : f, M = e => e < 0 ? -e : e, O = e => {
+            for (var t = 0, r = e.length; r-- > 0; ) t += e[r];
+            return t;
+        }, R = (e, t, r, i) => {
+            var a = e[0];
+            if (!a.keys || C(a.keys)) for (var s = 0; s < e[1].length; s++) e[1][s](x(t, r, i));
+        }, W = {}, Z = {}, q = !1, B = [], G = 0, H = 0, J = 0, N = 0, Q = 0, T = 0, U = !1, V = !1, $ = [ 0, 0, 0, 0, 0, 0, 0 ], ee = [ 0, 0, 0, 0, 0, 0, 0 ], te = (p, f, c) => {
+            o = p.target, v = p.timeStamp, g = !!p.altKey, w = !!p.ctrlKey, _ = !!p.metaKey, 
+            k = !!p.shiftKey;
+            var {clientX: x, clientY: b, pageX: A, pageY: C} = c ? p : p.touches[0] || {
+                clientX: J,
+                clientY: N,
+                pageX: G,
+                pageY: H
+            };
+            U = !1;
+            var te = h, re = u;
+            u = o, f === X ? q && !V && (V = !0) : (B.forEach(clearInterval), B.length = 0, 
+            f === K ? (h = o, q = !0, d = v, J = x, N = b, Q = T = 0) : (q = !1, E = v, V && (V = !(U = !0)))), 
+            i = -J + (J = x), a = -N + (N = b), s = Q += i, n = T += a, t = G = A, r = H = C;
+            var ie = 1e3 * (M(s) + M(n));
+            $.push(i), ee.push(a), $.shift(), ee.shift();
+            var ae = O($), se = O(ee);
+            e = M(ae) > M(se) ? ae < 0 ? j : z : se < 0 ? "up" : P;
+            var ne, le, oe, pe, fe, he, ue = te !== h, ve = re !== u, de = {}, ce = {}, me = {};
+            if (ue) {
+                if (le = h) do {
+                    if (ne = le[l]) {
+                        if (ne.id in W) break;
+                        for (var ye = ne._.length; ye-- > 0; ) (fe = (pe = (oe = ne._[ye])[0]).type) ? (!pe.thme || pe.th === !c && pe.me === c) && ("focusin" === fe || fe === S && ve && !(ne.id in Z)) && R(oe, fe, c, p) : ne._.splice(ye, 1);
+                    }
+                } while (le = le.parentElement);
+            } else if (ve && (le = u)) do {
+                if (ne = le[l]) {
+                    if (ne.id in Z) break;
+                    for (var ge = ne._.length; ge-- > 0; ) (fe = (pe = (oe = ne._[ge])[0]).type) ? (!pe.thme || pe.th === !c && pe.me === c) && fe === S && R(oe, fe, c, p) : ne._.splice(ge, 1);
                 }
-            } else ve._.splice(Ke, 1);
-        }
-    } while (de = de.parentElement);
-    if (we) {
-        if (de = L) do {
-            if (ve = de[y]) {
-                if (ve.id in ke) break;
-                for (var Xe = ve._.length; Xe-- > 0; ) (ye = (me = (ce = ve._[Xe])[0]).type) ? (!me.thme || me.th === !c && me.me === c) && (ye === S || ye === P && _e && !(ve.id in xe)) && G(ce, ye, c, v) : ve._.splice(Xe, 1);
+            } while (le = le.parentElement);
+            le = o;
+            do {
+                if (ne = le[l]) {
+                    de[ne.id] = !0, ce[ne.id] = !0;
+                    for (var we = ne._.length; we-- > 0; ) if (fe = (pe = (oe = ne._[we])[0]).type, 
+                    he = oe[2], fe) {
+                        if (!(fe in me || pe.sf && le !== o || pe.thme && (pe.th !== !c || pe.me !== c))) switch (pe.pt && p.preventDefault(), 
+                        pe.sp && (me[fe] = !0, p.stopPropagation()), fe) {
+                          case f:
+                            (f !== X || D(pe)) && R(oe, f, c, p);
+                            break;
+
+                          case "tap":
+                            f === Y && E - d < pe.time && R(oe, fe, c, p);
+                            break;
+
+                          case "dbltap":
+                            f === Y && (E - he.s > pe.time && (he.is = 0), (he.is = 0 | ++he.is) && (1 === he.is ? he.s = d : (he.is = 0, 
+                            R(oe, fe, c, p))));
+                            break;
+
+                          case "pan":
+                            (f === X && q || U) && (U && he.is || ie > pe.time && D(pe)) && ((y = U) ? he.is = !1 : he.is || (m = he.is = !0), 
+                            L(), R(oe, fe, c, p), m = y = !1);
+                            break;
+
+                          case I:
+                          case "repeat":
+                            f === K && B.push(he.sti = setInterval(((e, t, r, i, a) => {
+                                t === I && clearInterval(a.sti), L(), R(e, t, r, i);
+                            }), pe.time, oe, fe, c, p, he));
+                        }
+                    } else ne._.splice(we, 1);
+                }
+            } while (le = le.parentElement);
+            if (ue) {
+                if (le = te) do {
+                    if (ne = le[l]) {
+                        if (ne.id in de) break;
+                        for (var _e = ne._.length; _e-- > 0; ) (fe = (pe = (oe = ne._[_e])[0]).type) ? (!pe.thme || pe.th === !c && pe.me === c) && ("focusout" === fe || fe === F && ve && !(ne.id in ce)) && R(oe, fe, c, p) : ne._.splice(_e, 1);
+                    }
+                } while (le = le.parentElement);
+                W = de, Z = ce;
+            } else if (ve) {
+                if (le = re) do {
+                    if (ne = le[l]) {
+                        if (ne.id in ce) break;
+                        for (var ke = ne._.length; ke-- > 0; ) (fe = (pe = (oe = ne._[ke])[0]).type) ? (!pe.thme || pe.th === !c && pe.me === c) && fe === F && R(oe, fe, c, p) : ne._.splice(ke, 1);
+                    }
+                } while (le = le.parentElement);
+                Z = ce;
             }
-        } while (de = de.parentElement);
-        $ = ke, ee = xe;
-    } else if (_e) {
-        if (de = M) do {
-            if (ve = de[y]) {
-                if (ve.id in xe) break;
-                for (var Ye = ve._.length; Ye-- > 0; ) (ye = (me = (ce = ve._[Ye])[0]).type) ? (!me.thme || me.th === !c && me.me === c) && ye === P && G(ce, ye, c, v) : ve._.splice(Ye, 1);
+            f === Y && (J = x, N = b, Q = T = 0);
+        }, re = 0, ie = (e, t) => {
+            ++re >= (re = 1) && te(e, t, !0);
+        }, ae = (e, t) => {
+            --re <= (re = -1) && te(e, t, !1);
+        }, se = (e, t) => {
+            var r = e.code, i = e.key;
+            if (t ? A[r + i] = [ r, i, e.keyCode ] : delete A[r + i], t) for (var a, s = c.length; s-- > 0; ) if ((a = c[s][0]).len) {
+                if (C(a)) for (var n = c[s][1], l = n.length; l-- > 0; ) n[l](e);
+            } else c.splice(s, 1);
+        }, ne = {
+            mousedown: e => {
+                ie(e, K);
+            },
+            mousemove: e => {
+                ie(e, X);
+            },
+            mouseup: e => {
+                ie(e, Y);
+            },
+            touchstart: e => {
+                ae(e, K);
+            },
+            touchmove: e => {
+                ae(e, X);
+            },
+            touchend: e => {
+                ae(e, Y);
+            },
+            keydown: e => {
+                se(e, !0);
+            },
+            keyup: e => {
+                se(e, !1);
             }
-        } while (de = de.parentElement);
-        ee = xe;
+        };
+        for (var le in ne) document.addEventListener(le, ne[le]);
     }
-    d === b && (se = m, ne = g, le = oe = 0);
-}, de = (e, t, r) => {
-    var i = w(t);
+}, E = (e, t, r) => {
+    var i = d(t);
     if (!i.type) throw t;
-    var a = (e[y] || (e[y] = {
-        id: _++,
+    var a = (e[l] || (e[l] = {
+        id: o++,
         _: []
-    }))._, s = a.push([ i, m(r) ? r.slice(0) : [ r ], {} ]), n = () => {
+    }))._, s = a.push([ i, u(r) ? r.slice(0) : [ r ], {} ]), n = () => {
         i.type = "";
     };
     return i.oe && a[s - 1][1].unshift(n), n;
-}, ce = (e, t) => {
-    var r = w(e), i = r.keys;
+}, A = (e, t) => {
+    var r = d(e), i = r.keys;
     if (!i) throw e;
-    var a = M.push([ i, m(t) ? t.slice(0) : [ t ] ]), s = () => {
+    var a = c.push([ i, u(t) ? t.slice(0) : [ t ] ]), s = () => {
         i.len = 0;
     };
-    return r.oe && M[a - 1][1].unshift(s), s;
-}, me = v ? (e, t, r) => {
-    O();
-    var i = d;
-    if (m(t)) {
-        for (var a = [], s = 0; s < t.length; s++) a.push(de(e, t[s], r));
+    return r.oe && c[a - 1][1].unshift(s), s;
+}, K = p ? (e, t, r) => {
+    b();
+    var i = f;
+    if (u(t)) {
+        for (var a = [], s = 0; s < t.length; s++) a.push(E(e, t[s], r));
         i = () => {
             for (;a.length; ) a.pop()();
         };
-    } else i = de(e, t, r);
+    } else i = E(e, t, r);
     return i;
-} : c, ye = v ? (e, t) => {
-    O();
-    var r = d;
-    if (m(e)) {
-        for (var i = [], a = 0; a < e.length; a++) i.push(ce(e[a], t));
+} : h, X = p ? (e, t) => {
+    b();
+    var r = f;
+    if (u(e)) {
+        for (var i = [], a = 0; a < e.length; a++) i.push(A(e[a], t));
         r = () => {
             for (;i.length; ) i.pop()();
         };
-    } else r = ce(e, t);
+    } else r = A(e, t);
     return r;
-} : c, ge = v ? e => {
-    e && y in e && delete e[y];
-} : d, we = {
-    taps: me,
-    keys: ye,
-    untaps: ge
+} : h, Y = p ? e => {
+    e && l in e && delete e[l];
+} : f, I = {
+    taps: K,
+    keys: X,
+    untaps: Y
 };
 
-exports.default = we, exports.keys = ye, exports.taps = me, exports.untaps = ge;
+exports.default = I, exports.keys = X, exports.taps = K, exports.untaps = Y;
