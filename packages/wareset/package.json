@@ -1,21 +1,18 @@
 {
   "name": "wareset",
-  "version": "0.0.10",
-  "description": "Test repository",
-  "author": "wareset <git@wareset.com>",
-  "homepage": "https://github.com/wareset/wareset#readme",
+  "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Monorepo for projects",
   "license": "MIT",
-  "main": "dist/index",
-  "module": "dist/index.mjs",
-  "files": [
-    "dist",
-    "README.md"
-  ],
+  "homepage": "https://github.com/wareset/wareset/tree/master/packages/wareset#readme",
+  "bugs": {
+    "url": "https://github.com/wareset/wareset/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/wareset/wareset.git"
   },
-  "bugs": {
-    "url": "https://github.com/wareset/wareset/issues"
-  }
+  "author": "rease <rease@wareset.com>"
 }

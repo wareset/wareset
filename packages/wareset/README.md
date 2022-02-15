@@ -1,3 +1,3 @@
 # `wareset`
 
-Monorepo for components testing and accounting
+Monorepo for projects
