@@ -60,7 +60,7 @@ export class ParsedUrl {
     if (this._route.indexOf('%') > -1) {
       this._route = decodeURIComponent(this._route)
     }
-    this._routes = this._route.split('/')
+    this._routes = this._route.length > 0 ? this._route.split('/') : []
   }
 
   get protocol(): string {
