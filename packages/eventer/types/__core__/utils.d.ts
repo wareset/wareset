@@ -1,0 +1,38 @@
+import { TypeElement, TypeEventSettings } from '.';
+export declare const __WSE__ = "__wse__";
+export declare const isBrowser: boolean;
+export declare const isPointers: boolean;
+export declare const isArray: (arg: any) => arg is any[];
+export declare const noop: () => void;
+export declare const noopNoop: () => (() => void);
+export declare const preventDefault: (e: any) => void;
+export declare const stopPropagation: (e: any) => void;
+export declare const addEvent: (target: TypeElement, type: string, listener: any, options: any) => void;
+export declare const delEvent: (target: TypeElement, type: string, listener: any) => void;
+export declare const getEventSettings: (s: string) => {
+    type: string;
+    num: number;
+    self: boolean;
+    trusted: boolean;
+    once: boolean;
+    stop: boolean;
+    prevent: boolean;
+    passive: boolean;
+    capture: boolean;
+    x: boolean;
+    y: boolean;
+    u: boolean;
+    d: boolean;
+    l: boolean;
+    r: boolean;
+    xy: boolean;
+    keys: {
+        [key: string]: any;
+    };
+    kLen: number;
+};
+export declare const wrap_base: (fns: Function[]) => (this: any, e: any) => void;
+export declare const wrap_keys: (fn: Function, es: TypeEventSettings) => (this: any, e: any) => void;
+export declare const wrap_self: (fn: Function) => (this: any, e: any) => void;
+export declare const wrap_trusted: (fn: Function) => (this: any, e: any) => void;
+export declare const pressedKeysIsEqual: (es: TypeEventSettings) => boolean;
