@@ -1,7 +1,7 @@
 /* eslint-disable no-loop-func */
 import { TypeElement, TypeUnlistener, TypeEventSettings } from '.'
 import {
-  __WSE__,
+  wmset,
   addEvent, delEvent,
   isBrowser, noop, noopNoop,
   isArray, isPointers,
@@ -62,9 +62,12 @@ export const cursor = ((): TypeCursor => {
       // @ts-ignore
       : (): void => { document.selection.empty() }
       
-  const __WSEHOVERS__ = '__hovers__'
-  const __WSECURSOR__ = '__cursor__'
-  const __WSESIMPLE__ = '__simple__'
+  // const __WSEHOVERS__ = '__hovers__'
+  // const __WSECURSOR__ = '__cursor__'
+  // const __WSESIMPLE__ = '__simple__'
+  const WMH = new WeakMap()
+  const WMC = new WeakMap()
+  const WMS = new WeakMap()
 
   const EVENT_START = 'start', EVENT_MOVE = 'move', EVENT_END = 'end'
   const EVENT_CLICK = 'click', EVENT_DBLCLICK = 'dblclick'
@@ -102,14 +105,14 @@ export const cursor = ((): TypeCursor => {
   })
 
   const runHovers = (el: any, type: TypeHovers, event: any): void => {
-    if (__WSE__ in el && __WSEHOVERS__ in el[__WSE__] &&
-      type in el[__WSE__][__WSEHOVERS__]) {
-      const items = el[__WSE__][__WSEHOVERS__][type]
+    const wseh = WMH.get(el)
+    if (wseh && type in wseh) {
+      const items = wseh[type]
       for (let fns: Function[], i = 0; fns = items[i], i < items.length; i++) {
         for (let j = 0; j < fns.length; j++) fns[j](createDetail(type, event))
         if (!fns.length) items.splice(i--, 1)
       }
-      if (!items.length) delete el[__WSE__][__WSEHOVERS__][type]
+      if (!items.length) delete wseh[type]
     }
   }
 
@@ -223,14 +226,12 @@ export const cursor = ((): TypeCursor => {
       es: TypeEventSettings, callback: Function, addition: any, type: string
 
     for (element = target; element; element = element.parentNode) {
-      if (__WSE__ in element && __WSESIMPLE__ in element[__WSE__]) {
-        wsec = element[__WSE__][__WSESIMPLE__]
+      if (wsec = WMS.get(element)) {
         for (let i = 0; i < wsec.length; i++) {
           if ((item = wsec[i])[1] === noop) {
             wsec.splice(i--, 1)
             if (!wsec.length) {
-              delete element[__WSE__][__WSESIMPLE__]
-              if (!(__WSECURSOR__ in element[__WSE__])) delGlobalPreventDefault(element)
+              WMS.delete(element), WMC.has(element) || delGlobalPreventDefault(element)
             }
           } else if (!((type = (es = item[0]).type) in STOPS)) {
             if (es.stop) STOPS[type] = true
@@ -244,14 +245,12 @@ export const cursor = ((): TypeCursor => {
       }
     }
     for (element = lastStarted; element; element = element.parentNode) {
-      if (__WSE__ in element && __WSECURSOR__ in element[__WSE__]) {
-        wsec = element[__WSE__][__WSECURSOR__]
+      if (wsec = WMC.get(element)) {
         for (let i = 0; i < wsec.length; i++) {
           if ((item = wsec[i])[1] === noop) {
             wsec.splice(i--, 1)
             if (!wsec.length) {
-              delete element[__WSE__][__WSECURSOR__]
-              if (!(__WSESIMPLE__ in element[__WSE__])) delGlobalPreventDefault(element)
+              WMC.delete(element), WMS.has(element) || delGlobalPreventDefault(element)
             }
           } else if (!((type = (es = item[0]).type) in STOPS)) {
             if (es.stop) STOPS[type] = true
@@ -265,7 +264,7 @@ export const cursor = ((): TypeCursor => {
                 break
               case EVENT_DBLCLICK:
                 if (headtype === EVENT_END) {
-                  if (timerEnd - addition.s > es.num) addition.is = 0
+                  if (timerEnd - (addition.s || 0) > es.num) addition.is = 0
                   if (addition.is = ++addition.is | 0) {
                     if (addition.is === 1) addition.s = timerStart
                     else addition.is = 0, callback(createDetail(type, e))
@@ -361,8 +360,6 @@ export const cursor = ((): TypeCursor => {
     if (!isArray(event)) {
       // @ts-ignore
       const fns = [].concat(listeners) as any[]
-      // @ts-ignore
-      const wse = target[__WSE__] || (target[__WSE__] = {})
       const es = getEventSettings(event)
       
       const TYPE = es.type
@@ -375,7 +372,7 @@ export const cursor = ((): TypeCursor => {
         case EVENT_FOCUS_OUT: {
           unsub = (): void => { fns.length = 0 }
           if (es.once) fns.push(unsub)
-          const wseh = wse[__WSEHOVERS__] || (wse[__WSEHOVERS__] = {})
+          const wseh = WMH.get(target) || wmset(WMH, target, {})
           TYPE in wseh ? wseh[TYPE].push(fns) : wseh[TYPE] = [fns]
           break
         }
@@ -397,12 +394,12 @@ export const cursor = ((): TypeCursor => {
           if (es.kLen) cb = wrap_keys(cb, es)
           if (es.self) cb = wrap_self(cb)
           if (es.trusted) cb = wrap_trusted(cb)
-          const item = [es, cb, {}]
-          const OBJ = isSimple ? __WSESIMPLE__ : __WSECURSOR__
-          if (!(__WSESIMPLE__ in wse || __WSECURSOR__ in wse)) {
+          if (!(WMS.has(target) || WMC.has(target))) {
             setGlobalPreventDefault(target as any)
           }
-          OBJ in wse ? wse[OBJ].push(item) : wse[OBJ] = [item]
+          const item = [es, cb, {}]
+          const WM = isSimple ? WMS : WMC
+          const a = WM.get(target) || wmset(WM, target, []); a.push(item)
           break
         }
         default:

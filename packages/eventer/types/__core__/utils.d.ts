@@ -1,5 +1,4 @@
 import { TypeElement, TypeEventSettings } from '.';
-export declare const __WSE__ = "__wse__";
 export declare const isBrowser: boolean;
 export declare const isPointers: boolean;
 export declare const isArray: (arg: any) => arg is any[];
@@ -9,6 +8,7 @@ export declare const preventDefault: (e: any) => void;
 export declare const stopPropagation: (e: any) => void;
 export declare const addEvent: (target: TypeElement, type: string, listener: any, options: any) => void;
 export declare const delEvent: (target: TypeElement, type: string, listener: any) => void;
+export declare const wmset: <T>(weakmap: WeakMap<any, any>, key: any, value: T) => T;
 export declare const getEventSettings: (s: string) => {
     type: string;
     num: number;

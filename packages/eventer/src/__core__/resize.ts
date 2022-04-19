@@ -1,6 +1,6 @@
 import { TypeUnlistener } from '.'
 
-import { __WSE__, isBrowser, noopNoop, noop } from '.'
+import { wmset, isBrowser, noopNoop, noop } from '.'
 
 export declare type TypeResizeEvent<T = Element> = {
   target: T
@@ -20,14 +20,13 @@ export const resize = ((): TypeResize => {
 
   type TypeWSR = [Function[][], DOMRectReadOnly, [number, number]]
 
-  const __WSERESIZE__ = '__resize__'
+  const WMR = new WeakMap()
 
   const getWH = (e: any): [number, number] =>
     'offsetWidth' in e ? [e.offsetWidth, e.offsetHeight] : [e.clientWidth, e.clientHeight]
 
   const update = (target: Element): void => {
-    // @ts-ignore
-    const wsr = target[__WSE__][__WSERESIZE__]
+    const wsr = WMR.get(target)
     let [width, height] = getWH(target)
 
     if (wsr[2][0] !== width || wsr[2][1] !== height) {
@@ -40,8 +39,7 @@ export const resize = ((): TypeResize => {
           fns[l]({ target, width, height, top: rect.top, left: rect.left })
           if (!fns.length) {
             wsr[0].splice(j--, 1)
-            // @ts-ignore
-            wsr[0].length || (observer.unobserve(target), delete target[__WSE__][__WSERESIZE__])
+            wsr[0].length || (observer.unobserve(target), WMR.delete(target))
           }
         }
       }
@@ -79,9 +77,8 @@ export const resize = ((): TypeResize => {
     const fns = [].concat(listeners) as any[]
 
     let rect: DOMRectReadOnly
-    const wse = target[__WSE__] || (target[__WSE__] = {})
-    const wser: TypeWSR = wse[__WSERESIZE__] || (observer.observe(target),
-    wse[__WSERESIZE__] = [[], target.getBoundingClientRect(), getWH(target)])
+    const wser: TypeWSR = WMR.get(target) || (observer.observe(target),
+    wmset(WMR, target, [[], target.getBoundingClientRect(), getWH(target)]))
     wser[0].push(fns)
 
     if (autostart) {

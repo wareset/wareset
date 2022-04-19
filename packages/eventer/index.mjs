@@ -9,8 +9,7 @@ __core__/cursor.ts
 index.ts
 */
 /* filename: __core__/utils.ts
-  timestamp: 2022-02-28T08:45:33.942Z */
-var __WSE__ = '__wse__';
+  timestamp: 2022-04-12T14:33:56.147Z */
 var isBrowser = typeof window !== 'undefined';
 var isPointers = isBrowser && 'onpointermove' in document;
 var isArray = Array.isArray;
@@ -34,6 +33,8 @@ var addEvent = (target, type, listener, options) => {
 var delEvent = (target, type, listener) => {
   target.removeEventListener(type, listener);
 };
+
+var wmset = (weakmap, key, value) => (weakmap.set(key, value), value);
 
 var REG = /^([a-z]+)|([.\d]+)|\(([^)]+)\)|\[([^\]]+)\]|(?<=\W)(\w+)/g; // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 
@@ -118,7 +119,7 @@ var KEYPAD_LISTENERS = [];
         PRESSED_KEYS[e.code + e.key] = [e.code, e.key]; // console.log([e.code, e.key], e)
 
         for (var i = 0; i < KEYPAD_LISTENERS.length; i++) {
-          if (!KEYPAD_LISTENERS[i][0].kLen) KEYPAD_LISTENERS.splice(i--, 1);else if (pressedKeysIsEqual(KEYPAD_LISTENERS[i][0])) KEYPAD_LISTENERS[i][1](e);
+          if (!KEYPAD_LISTENERS[i][0].kLen) KEYPAD_LISTENERS.splice(i--, 1);else if (KEYPAD_LISTENERS[i][0].type === 'test' || pressedKeysIsEqual(KEYPAD_LISTENERS[i][0])) KEYPAD_LISTENERS[i][1](e);
         }
       }, false);
     };
@@ -134,7 +135,7 @@ var keypad = isBrowser ? (event, listeners) => {
     // @ts-ignore
     var fns = [].concat(listeners);
     var es = getEventSettings(event);
-    if (!es.kLen) throw event;
+    if (!es.kLen) es.kLen = 1, es.type = 'test';
 
     unsub = () => {
       es.kLen = fns.length = 0;
@@ -165,13 +166,12 @@ var keypad = isBrowser ? (event, listeners) => {
 
 var resize = (() => {
   if (!isBrowser) return noopNoop;
-  var __WSERESIZE__ = '__resize__';
+  var WMR = new WeakMap();
 
   var getWH = e => 'offsetWidth' in e ? [e.offsetWidth, e.offsetHeight] : [e.clientWidth, e.clientHeight];
 
   var update = target => {
-    // @ts-ignore
-    var wsr = target[__WSE__][__WSERESIZE__];
+    var wsr = WMR.get(target);
     var [width, height] = getWH(target);
 
     if (wsr[2][0] !== width || wsr[2][1] !== height) {
@@ -190,9 +190,8 @@ var resize = (() => {
           });
 
           if (!fns.length) {
-            wsr[0].splice(j--, 1); // @ts-ignore
-
-            wsr[0].length || (observer.unobserve(target), delete target[__WSE__][__WSERESIZE__]);
+            wsr[0].splice(j--, 1);
+            wsr[0].length || (observer.unobserve(target), WMR.delete(target));
           }
         }
       }
@@ -246,8 +245,7 @@ var resize = (() => {
     listen();
     var fns = [].concat(listeners);
     var rect;
-    var wse = target[__WSE__] || (target[__WSE__] = {});
-    var wser = wse[__WSERESIZE__] || (observer.observe(target), wse[__WSERESIZE__] = [[], target.getBoundingClientRect(), getWH(target)]);
+    var wser = WMR.get(target) || (observer.observe(target), wmset(WMR, target, [[], target.getBoundingClientRect(), getWH(target)]));
     wser[0].push(fns);
 
     if (autostart) {
@@ -347,10 +345,13 @@ var cursor = (() => {
   } // @ts-ignore
   : () => {
     document.selection.empty();
-  };
-  var __WSEHOVERS__ = '__hovers__';
-  var __WSECURSOR__ = '__cursor__';
-  var __WSESIMPLE__ = '__simple__';
+  }; // const __WSEHOVERS__ = '__hovers__'
+  // const __WSECURSOR__ = '__cursor__'
+  // const __WSESIMPLE__ = '__simple__'
+
+  var WMH = new WeakMap();
+  var WMC = new WeakMap();
+  var WMS = new WeakMap();
   var EVENT_START = 'start',
       EVENT_MOVE = 'move',
       EVENT_END = 'end';
@@ -400,8 +401,10 @@ var cursor = (() => {
   });
 
   var runHovers = (el, type, event) => {
-    if (__WSE__ in el && __WSEHOVERS__ in el[__WSE__] && type in el[__WSE__][__WSEHOVERS__]) {
-      var items = el[__WSE__][__WSEHOVERS__][type];
+    var wseh = WMH.get(el);
+
+    if (wseh && type in wseh) {
+      var items = wseh[type];
 
       for (var fns, i = 0; fns = items[i], i < items.length; i++) {
         for (var j = 0; j < fns.length; j++) {
@@ -411,7 +414,7 @@ var cursor = (() => {
         if (!fns.length) items.splice(i--, 1);
       }
 
-      if (!items.length) delete el[__WSE__][__WSEHOVERS__][type];
+      if (!items.length) delete wseh[type];
     }
   };
 
@@ -552,16 +555,13 @@ var cursor = (() => {
     var element, wsec, item, es, callback, addition, type;
 
     for (element = target; element; element = element.parentNode) {
-      if (__WSE__ in element && __WSESIMPLE__ in element[__WSE__]) {
-        wsec = element[__WSE__][__WSESIMPLE__];
-
+      if (wsec = WMS.get(element)) {
         for (var i = 0; i < wsec.length; i++) {
           if ((item = wsec[i])[1] === noop) {
             wsec.splice(i--, 1);
 
             if (!wsec.length) {
-              delete element[__WSE__][__WSESIMPLE__];
-              if (!(__WSECURSOR__ in element[__WSE__])) delGlobalPreventDefault(element);
+              WMS.delete(element), WMC.has(element) || delGlobalPreventDefault(element);
             }
           } else if (!((type = (es = item[0]).type) in STOPS)) {
             if (es.stop) STOPS[type] = true;
@@ -576,16 +576,13 @@ var cursor = (() => {
     }
 
     for (element = lastStarted; element; element = element.parentNode) {
-      if (__WSE__ in element && __WSECURSOR__ in element[__WSE__]) {
-        wsec = element[__WSE__][__WSECURSOR__];
-
+      if (wsec = WMC.get(element)) {
         for (var _i = 0; _i < wsec.length; _i++) {
           if ((item = wsec[_i])[1] === noop) {
             wsec.splice(_i--, 1);
 
             if (!wsec.length) {
-              delete element[__WSE__][__WSECURSOR__];
-              if (!(__WSESIMPLE__ in element[__WSE__])) delGlobalPreventDefault(element);
+              WMC.delete(element), WMS.has(element) || delGlobalPreventDefault(element);
             }
           } else if (!((type = (es = item[0]).type) in STOPS)) {
             if (es.stop) STOPS[type] = true;
@@ -601,7 +598,7 @@ var cursor = (() => {
 
               case EVENT_DBLCLICK:
                 if (headtype === EVENT_END) {
-                  if (timerEnd - addition.s > es.num) addition.is = 0;
+                  if (timerEnd - (addition.s || 0) > es.num) addition.is = 0;
 
                   if (addition.is = ++addition.is | 0) {
                     if (addition.is === 1) addition.s = timerStart;else addition.is = 0, callback(createDetail(type, e));
@@ -723,9 +720,7 @@ var cursor = (() => {
 
     if (!isArray(event)) {
       // @ts-ignore
-      var fns = [].concat(listeners); // @ts-ignore
-
-      var wse = target[__WSE__] || (target[__WSE__] = {});
+      var fns = [].concat(listeners);
       var es = getEventSettings(event);
       var TYPE = es.type;
       var isSimple = false;
@@ -741,7 +736,7 @@ var cursor = (() => {
             };
 
             if (es.once) fns.push(unsub);
-            var wseh = wse[__WSEHOVERS__] || (wse[__WSEHOVERS__] = {});
+            var wseh = WMH.get(target) || wmset(WMH, target, {});
             TYPE in wseh ? wseh[TYPE].push(fns) : wseh[TYPE] = [fns];
             break;
           }
@@ -769,14 +764,15 @@ var cursor = (() => {
             if (es.kLen) cb = wrap_keys(cb, es);
             if (es.self) cb = wrap_self(cb);
             if (es.trusted) cb = wrap_trusted(cb);
-            var item = [es, cb, {}];
-            var OBJ = isSimple ? __WSESIMPLE__ : __WSECURSOR__;
 
-            if (!(__WSESIMPLE__ in wse || __WSECURSOR__ in wse)) {
+            if (!(WMS.has(target) || WMC.has(target))) {
               setGlobalPreventDefault(target);
             }
 
-            OBJ in wse ? wse[OBJ].push(item) : wse[OBJ] = [item];
+            var item = [es, cb, {}];
+            var WM = isSimple ? WMS : WMC;
+            var a = WM.get(target) || wmset(WM, target, []);
+            a.push(item);
             break;
           }
 
@@ -805,7 +801,7 @@ var cursor = (() => {
   return cursor;
 })();
 /* filename: index.ts
-  timestamp: 2022-02-28T08:45:33.695Z */
+  timestamp: 2022-04-12T14:33:55.886Z */
 
 
 var index = {

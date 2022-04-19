@@ -25,7 +25,8 @@ const KEYPAD_LISTENERS: [TypeEventSettings, Function][] = []
     
         for (let i = 0; i < KEYPAD_LISTENERS.length; i++) {
           if (!KEYPAD_LISTENERS[i][0].kLen) KEYPAD_LISTENERS.splice(i--, 1)
-          else if (pressedKeysIsEqual(KEYPAD_LISTENERS[i][0])) KEYPAD_LISTENERS[i][1](e)
+          else if (KEYPAD_LISTENERS[i][0].type === 'test' ||
+          pressedKeysIsEqual(KEYPAD_LISTENERS[i][0])) KEYPAD_LISTENERS[i][1](e)
         }
       }, false)
     }
@@ -48,8 +49,7 @@ export const keypad: TypeKeypad = isBrowser ? (
     // @ts-ignore
     const fns = [].concat(listeners) as any[]
     const es = getEventSettings(event)
-    if (!es.kLen) throw event
-
+    if (!es.kLen) es.kLen = 1, es.type = 'test'
     unsub = (): void => { es.kLen = fns.length = 0 }
 
     let cb = wrap_base(fns)

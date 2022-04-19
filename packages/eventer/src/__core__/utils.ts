@@ -4,8 +4,6 @@
 import { TypeElement, TypeEventSettings } from '.'
 import { PRESSED_KEYS } from '.'
 
-export const __WSE__ = '__wse__'
-
 export const isBrowser = typeof window !== 'undefined'
 
 export const isPointers = isBrowser && 'onpointermove' in document
@@ -28,6 +26,10 @@ export const delEvent = (
 ): void => {
   target.removeEventListener(type, listener)
 }
+
+export const wmset = <T>(
+  weakmap: WeakMap<any, any>, key: any, value: T
+): T => (weakmap.set(key, value), value)
 
 const REG = /^([a-z]+)|([.\d]+)|\(([^)]+)\)|\[([^\]]+)\]|(?<=\W)(\w+)/g
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
