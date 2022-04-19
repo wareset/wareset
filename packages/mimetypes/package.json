@@ -1,0 +1,56 @@
+{
+  "name": "@wareset/mimetypes",
+  "version": "0.0.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "wip: Additional events for mobile and desktop",
+  "keywords": [
+    "mimetypes"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/wareset/wareset/tree/master/packages/mimetypes#readme",
+  "bugs": {
+    "url": "https://github.com/wareset/wareset/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wareset/wareset.git"
+  },
+  "author": "rease <rease@wareset.com>",
+  "main": "index",
+  "module": "index.mjs",
+  "types": "index.d.ts",
+  "files": [
+    "README.md",
+    "index.d.ts",
+    "index.js",
+    "index.mjs",
+    "lib",
+    "mimeheads",
+    "mimenotes",
+    "types"
+  ],
+  "scripts": {
+    "data:watch": "cd ./data && nodemon --inspect ./index.js --watch ./index.js",
+    "dester": "dester ./src ./ --babel -t types",
+    "build": "npm run -s dester -- -s -r -m",
+    "dev": "npm run -s dester -- -w --no-r",
+    "build:dist": "rollup -c __scripts__/rollup.config.js",
+    "pkg:name": "cat package.json | grep '\"name\":' | cut -d '\"' -f4",
+    "pkg:version": "cat package.json | grep '\"version\":' | cut -d '\"' -f4",
+    "git:get:tag": "echo $(npm run -s pkg:name)@$(npm run -s pkg:version)",
+    "git:set:tag": "t=$(npm run -s git:get:tag) && git tag -a $t -m $t",
+    "git:commit": "npm run -s build && git add . && read -p 'Commit: ' c; c=${c:-v$(npm run -s pkg:version)} && n=$(npm run -s pkg:name) && git commit -m \"$n: $c\"",
+    "commit": "read -p 'Version [patch]: ' V; V=${V:-patch} && npm version --force --no-git-tag-version $V; echo $V && read -p 'Push? (y/N): ' G && read -p 'Publish? (y/N): ' P && npm run -s git:commit && case $G in Y|y) $(git push);; esac && case $P in Y|y) $(npm run -s git:set:tag && git push --tags && npm -s publish);; esac"
+  },
+  "devDependencies": {
+    "dester": "0.x",
+    "typescript": "4.x",
+    "nodemon": "^2.0.0",
+    "@types/sax": "1.2.4",
+    "sax": "1.2.4",
+    "node-fetch": "^3.2.0",
+    "shared-mime-info": "git+https://gitlab.freedesktop.org/xdg/shared-mime-info.git"
+  }
+}
