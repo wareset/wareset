@@ -12,6 +12,7 @@ export declare interface TypeStore<T = any> {
     set(newValue: Promise<T> | TypeStore<T> | T): void;
     update(cb: (value: T, store: this) => Promise<T> | T): void;
     destroy(): void;
+    subscribe(callback: (value: T, unsub: TypeUnsubscriber) => void | (() => void) | Promise<() => void>): TypeUnsubscriber;
     toString(...a: any[]): string;
     valueOf(...a: any[]): TypeValueOf<T>;
     toJSON(...a: any[]): any;

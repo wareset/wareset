@@ -1,4 +1,4 @@
-import { TypeValueOf, TypeStore, TypeService, TypeContext } from '.';
+import { TypeValueOf, TypeStore, TypeService, TypeContext, TypeUnsubscriber } from '.';
 declare class Store<T> implements TypeStore<T> {
     readonly '@wareset/store': true;
     readonly _: TypeService<T>;
@@ -18,6 +18,7 @@ declare class Store<T> implements TypeStore<T> {
     get(): T;
     set(newValue: Promise<TypeStore<T> | T> | TypeStore<T> | T): void;
     update(cb: (value: T, store: this) => Promise<T> | T): void;
+    subscribe(callback: (value: T, unsub: TypeUnsubscriber) => void | (() => void) | Promise<() => void>): TypeUnsubscriber;
     destroy(): void;
 }
 export declare const storeDestroy: (store: TypeStore) => void;

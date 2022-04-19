@@ -18,13 +18,12 @@ const {
 } = require('fs')
 
 const {
+  jsx2tokens,
   TOKEN_SPACE,
-  TOKEN_PUCNTUATOR
-} = require('rastree/core/template/lib/source2Tokens')
-const { source2Tokens } = require('rastree/core/template/lib/source2Tokens')
-const { trimTokens } = require('rastree/core/template/lib/trimTokens')
-// prettier-ignore
-const { stringifyTokens } = require('rastree/core/template/lib/stringifyTokens')
+  TOKEN_PUCNTUATOR,
+  trimTokens,
+  stringifyTokens
+} = require('@rastree/jsx2tokens')
 const { enumChars } = require('enum-chars')
 
 const DIR_SRC_CORE = pathResolve(__dirname, '../src/__src__')
@@ -39,7 +38,7 @@ let word = ''
 const initChange = () => {
   const source = fsReadFileSync(FILE_ENUMS_DEV).toString()
 
-  const tokens = source2Tokens(source).tokens
+  const tokens = jsx2tokens(source)
 
   let cur = []
   let arr = [cur]

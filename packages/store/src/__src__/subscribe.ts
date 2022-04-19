@@ -26,7 +26,7 @@ export const storeSubscribe = ((
   ) => void | (() => void) | Promise<() => void>,
   _props?: { lazy?: boolean }
 ): TypeUnsubscriber => {
-  if (!isArray(list)) list = [list]
+  list = isArray(list) ? [...list] : [list]
 
   const watch: TypeWatch[] = []
   for (let service: TypeService, listCache: { [key: string]: TypeWatch } = {},

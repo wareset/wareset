@@ -4,7 +4,7 @@ import resolve from '@rollup/plugin-node-resolve'
 import { minify } from 'terser'
 
 const terser = {
-  async renderChunk(code) {
+  async renderChunk (code) {
     return await minify(code, { safari10: true })
   }
 }
@@ -12,28 +12,28 @@ const terser = {
 const babelrc = (ie) => ({
   babelHelpers: 'bundled',
   // babelrc: false,
-  presets: [
+  presets     : [
     [
       '@babel/preset-env',
       {
-        corejs: 3,
-        loose: true,
-        bugfixes: true,
-        modules: false,
+        corejs     : 3,
+        loose      : true,
+        bugfixes   : true,
+        modules    : false,
         useBuiltIns: 'entry', // 'entry', 'usage'
-        targets: '> 1%, not dead' + (ie ? ', ie ' + +ie : '')
+        targets    : '> 1%, not dead' + (ie ? ', ie ' + +ie : '')
       }
     ]
   ]
 })
 
 const bundle = (min, ie) => ({
-  input: 'index.mjs',
+  input : 'index.mjs',
   output: [
     {
       format: ie ? 'iife' : 'umd',
-      name: 'store',
-      file: `dist/store${ie ? '.ie' : ''}${min ? '.min' : ''}.js`
+      name  : 'store',
+      file  : `dist/store${ie ? '.ie' : ''}${min ? '.min' : ''}.js`
     }
   ],
   plugins: [
@@ -41,11 +41,11 @@ const bundle = (min, ie) => ({
     babel(babelrc(ie)),
     min && terser,
     {
-      renderChunk(code) {
+      renderChunk (code) {
         return `/* eslint-disable */
 /**
  * @license
- * Copyright 2020-2021 @wareset/store Authors
+ * Copyright 2020-2022 @wareset/store Authors
  * SPDX-License-Identifier: MIT
  */
 ${code}`

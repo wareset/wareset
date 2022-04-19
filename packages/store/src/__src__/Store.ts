@@ -10,7 +10,8 @@ import {
   TypeStore,
   TypeService,
   TypeContext,
-  TypeSubscriber
+  TypeSubscriber,
+  TypeUnsubscriber
 } from '.'
 
 import { awaiter, watchStoreRemove } from '.'
@@ -18,6 +19,7 @@ import { createOrder, removeOrder } from '.'
 import { addWatcherLink, removeWatcherLink } from '.'
 import { REFER_LIST, proxyWatch, proxyAutoWatch, proxyDefault, update } from '.'
 import { runListenUpdate } from '.'
+import { storeSubscribe } from '.'
 
 class Store<T> implements TypeStore<T> {
   // eslint-disable-next-line quotes
@@ -90,8 +92,8 @@ class Store<T> implements TypeStore<T> {
       strict : strict === void 0 || !!strict,
       inherit: inherit === void 0 ? !proxy : !!inherit
       // [EH_SRV.force]: false
-    };
-    (this as any).value = value
+    }
+    ;(this as any).value = value
 
     if (watch) {
       for (let watchCache: any = {},
@@ -141,6 +143,10 @@ class Store<T> implements TypeStore<T> {
         awaiter(cb(service[EH_SRV.value], this), update, this)
       }
     }
+  }
+
+  public subscribe(callback: (value: T, unsub: TypeUnsubscriber) => void | (() => void) | Promise<() => void>): TypeUnsubscriber {
+    return storeSubscribe([this], (a: any[], unsub) => callback(a[0], unsub))
   }
 
   public destroy(): void {
@@ -193,7 +199,7 @@ defineProperty(StorePrototype, '$', { get: StorePrototype.get, set: StorePrototy
 
 for (let i = 3, a = ['toString', 'valueOf', 'toJSON']; i-- > 0;) {
   defineProperty(StorePrototype, a[i], {
-    value: function(...a: any[]) {
+    value: function (...a: any[]) {
       let val = this.get()
       val = val == null || !val[a[i]] ? val : val[a[i]](...a)
       return i ? val : val + ''
