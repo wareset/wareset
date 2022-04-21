@@ -21,10 +21,12 @@ export { EXTENSIONS }
 export const ext = (file: string): keyof TypeEXTNAMES | '' => {
   file = file.trim()
   let ext = '' as any
-  for (let c: string, s = '', i = file.length; i-- > 0;) {
-    if ((c = file[i]) === '.') s in EXTENSIONS && (ext = s)
-    else if (c === '/' || c === '\\') break
-    s = c + s
+  for (let c: string, s = '', su = '', sl = '', i = file.length; i-- > 0;) {
+    if ((c = file[i]) === '.') {
+      s in EXTENSIONS && (ext = s) ||
+      su in EXTENSIONS && (ext = su) || sl in EXTENSIONS && (ext = sl)
+    } else if (c === '/' || c === '\\') break
+    s = c + s, su = c.toUpperCase() + su, sl = c.toLowerCase() + sl
   }
   return ext
 }

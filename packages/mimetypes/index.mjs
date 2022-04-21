@@ -7,17 +7,17 @@ import { EXTENSIONS as r, MIME_TYPES as e, MIME_NAMES as i } from "./lib/mimes";
 
 var a = {};
 
-for (var f in r) {
-    a[f] = [];
-    for (var o = r[f], t = 0, l = 0; l < o.length; l++) a[f][t++] = e[o[l]] + "/" + i[o[l++]][o[l]];
+for (var o in r) {
+    a[o] = [];
+    for (var t = r[o], n = 0, f = 0; f < t.length; f++) a[o][n++] = e[t[f]] + "/" + i[t[f++]][t[f]];
 }
 
-var m = r => {
-    for (var e, i = "", f = "", o = (r = r.trim()).length; o-- > 0; ) {
-        if ("." === (e = r[o])) f in a && (i = f); else if ("/" === e || "\\" === e) break;
-        f = e + f;
+var s = r => {
+    for (var e, i = "", o = "", t = "", n = "", f = (r = r.trim()).length; f-- > 0; ) {
+        if ("." === (e = r[f])) o in a && (i = o) || t in a && (i = t) || n in a && (i = n); else if ("/" === e || "\\" === e) break;
+        o = e + o, t = e.toUpperCase() + t, n = e.toLowerCase() + n;
     }
     return i;
-}, n = r => (r = m(r)) && "." + r, v = r => (r = m(r)) ? a[r][0] : r, s = r => (r = m(r)) ? a[r].slice(0) : [];
+}, l = r => (r = s(r)) && "." + r, m = r => (r = s(r)) ? a[r][0] : r, v = r => (r = s(r)) ? a[r].slice(0) : [];
 
-export { a as EXTENSIONS, m as ext, n as extname, v as mime, s as mimeList };
+export { a as EXTENSIONS, s as ext, l as extname, m as mime, v as mimeList };

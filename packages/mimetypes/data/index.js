@@ -35,7 +35,8 @@ const parseTypes = async (path, EXTENSIONS) => {
 
       const exts = arr
       if (exts.length) {
-        for (const ext of exts) {
+        for (let ext of exts) {
+          // ext = ext.toLowerCase()
           if (!/^[-\w.+]+$/.test(ext)) console.log('BAD', ext)
           else if (!(ext in EXTENSIONS)) EXTENSIONS[ext] = [mime]
           else if (!EXTENSIONS[ext].includes(mime)) EXTENSIONS[ext].push(mime)
@@ -144,7 +145,8 @@ const parseSharedMimeInfo = async (EXTENSIONS, COMMENTS, HEADMIMES) => {
       }
     }
     if (exts.length) {
-      for (const ext of exts) {
+      for (let ext of exts) {
+        // ext = ext.toLowerCase()
         if (!(ext in EXTENSIONS)) EXTENSIONS[ext] = []
         if (!EXTENSIONS[ext].temp) EXTENSIONS[ext].temp = []
         EXTENSIONS[ext].temp.push([exts.length, mimes])
@@ -329,8 +331,8 @@ const createOptimizedData = async () => {
 
 //! Нужно раскомментить, чтобы скомпилить
 const main = async () => {
-  // await createMimeJson()
-  // await createOptimizedData()
+  await createMimeJson()
+  await createOptimizedData()
 }
 
 setTimeout(main, 250)
