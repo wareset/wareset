@@ -65,7 +65,7 @@ const getNodeModulesPackage = async (packageName, dir, oldDir) => {
 }
 
 const parseSharedMimeInfo = async (EXTENSIONS, COMMENTS, HEADMIMES) => {
-  const packageName = 'shared-mime-info'
+  const packageName = 'xdg--shared-mime-info'
   const DIR_SHARED_MIME = await getNodeModulesPackage(packageName)
   if (!DIR_SHARED_MIME) throw 'Not found ' + packageName
   const FILE_MIMES = nodePath.resolve(DIR_SHARED_MIME, 'data', 'freedesktop.org.xml.in')
