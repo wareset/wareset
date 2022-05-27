@@ -3,10 +3,32 @@
 dester builds:
 mimenotes.ts
 */
-Object.defineProperty(exports, "__esModule", {
-    value: !0
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
 });
 
-for (var e = require("../lib/notes"), r = require("../lib/mimes"), E = {}, T = e.NOTES_DATA.length; T--; ) for (var o, t = e.NOTES_DATA[T].length; t--; ) null != (o = e.NOTES_DATA[T][t]) && (E[r.MIME_TYPES[T] + "/" + r.MIME_NAMES[T][t]] = e.NOTES_LIST[o]);
+var notes = require('../lib/notes');
 
-exports.MIME_NOTES = E, exports.mimeNote = e => E[e] || "";
+var mimes = require('../lib/mimes');
+/* filename: mimenotes.ts
+  timestamp: 2022-05-11T09:37:23.837Z */
+
+
+var MIME_NOTES = {};
+
+for (var i = notes.NOTES_DATA.length; i--;) {
+  for (var c, j = notes.NOTES_DATA[i].length; j--;) {
+    if ((c = notes.NOTES_DATA[i][j]) != null) {
+      // @ts-ignore
+      MIME_NOTES[mimes.MIME_TYPES[i] + '/' + mimes.MIME_NAMES[i][j]] = notes.NOTES_LIST[c];
+    }
+  }
+}
+
+var mimeNote = mime => // @ts-ignore
+MIME_NOTES[mime] || '';
+
+exports.MIME_NOTES = MIME_NOTES;
+exports.mimeNote = mimeNote;

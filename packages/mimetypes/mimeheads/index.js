@@ -3,11 +3,32 @@
 dester builds:
 mimeheads.ts
 */
-Object.defineProperty(exports, "__esModule", {
-    value: !0
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
 });
 
-for (var e, r = require("../lib/heads"), E = require("../lib/mimes"), M = {}, A = r.HEADS_DATA.length; A--; ) for (var _ in r.HEADS_DATA[A]) e = r.HEADS_DATA[A][_ = +_], 
-M[E.MIME_TYPES[A] + "/" + E.MIME_NAMES[A][_]] = E.MIME_TYPES[e[0]] + "/" + E.MIME_NAMES[e[0]][e[1]];
+var heads = require('../lib/heads');
 
-exports.MIME_HEADS = M, exports.mimeHead = e => M[e] || "";
+var mimes = require('../lib/mimes');
+/* filename: mimeheads.ts
+  timestamp: 2022-05-11T09:37:22.447Z */
+
+
+var MIME_HEADS = {};
+
+for (var mimeArr, i = heads.HEADS_DATA.length; i--;) {
+  for (var j in heads.HEADS_DATA[i]) {
+    // @ts-ignore
+    mimeArr = heads.HEADS_DATA[i][j = +j]; // @ts-ignore
+
+    MIME_HEADS[mimes.MIME_TYPES[i] + '/' + mimes.MIME_NAMES[i][j]] = mimes.MIME_TYPES[mimeArr[0]] + '/' + mimes.MIME_NAMES[mimeArr[0]][mimeArr[1]];
+  }
+}
+
+var mimeHead = mime => // @ts-ignore
+MIME_HEADS[mime] || '';
+
+exports.MIME_HEADS = MIME_HEADS;
+exports.mimeHead = mimeHead;

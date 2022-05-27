@@ -3,12 +3,23 @@
 dester builds:
 mimenotes.ts
 */
-import { NOTES_DATA as r, NOTES_LIST as o } from "../lib/notes";
+import { NOTES_DATA, NOTES_LIST } from '../lib/notes';
+import { MIME_TYPES, MIME_NAMES } from '../lib/mimes';
+/* filename: mimenotes.ts
+  timestamp: 2022-05-11T09:37:23.837Z */
 
-import { MIME_TYPES as l, MIME_NAMES as m } from "../lib/mimes";
+var MIME_NOTES = {};
 
-for (var t = {}, e = r.length; e--; ) for (var i, f = r[e].length; f--; ) null != (i = r[e][f]) && (t[l[e] + "/" + m[e][f]] = o[i]);
+for (var i = NOTES_DATA.length; i--;) {
+  for (var c, j = NOTES_DATA[i].length; j--;) {
+    if ((c = NOTES_DATA[i][j]) != null) {
+      // @ts-ignore
+      MIME_NOTES[MIME_TYPES[i] + '/' + MIME_NAMES[i][j]] = NOTES_LIST[c];
+    }
+  }
+}
 
-var n = r => t[r] || "";
+var mimeNote = mime => // @ts-ignore
+MIME_NOTES[mime] || '';
 
-export { t as MIME_NOTES, n as mimeNote };
+export { MIME_NOTES, mimeNote };

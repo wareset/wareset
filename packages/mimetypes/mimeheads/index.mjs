@@ -3,12 +3,23 @@
 dester builds:
 mimeheads.ts
 */
-import { HEADS_DATA as r } from "../lib/heads";
+import { HEADS_DATA } from '../lib/heads';
+import { MIME_TYPES, MIME_NAMES } from '../lib/mimes';
+/* filename: mimeheads.ts
+  timestamp: 2022-05-11T09:37:22.447Z */
 
-import { MIME_TYPES as o, MIME_NAMES as i } from "../lib/mimes";
+var MIME_HEADS = {};
 
-for (var m, a = {}, e = r.length; e--; ) for (var f in r[e]) m = r[e][f = +f], a[o[e] + "/" + i[e][f]] = o[m[0]] + "/" + i[m[0]][m[1]];
+for (var mimeArr, i = HEADS_DATA.length; i--;) {
+  for (var j in HEADS_DATA[i]) {
+    // @ts-ignore
+    mimeArr = HEADS_DATA[i][j = +j]; // @ts-ignore
 
-var t = r => a[r] || "";
+    MIME_HEADS[MIME_TYPES[i] + '/' + MIME_NAMES[i][j]] = MIME_TYPES[mimeArr[0]] + '/' + MIME_NAMES[mimeArr[0]][mimeArr[1]];
+  }
+}
 
-export { a as MIME_HEADS, t as mimeHead };
+var mimeHead = mime => // @ts-ignore
+MIME_HEADS[mime] || '';
+
+export { MIME_HEADS, mimeHead };

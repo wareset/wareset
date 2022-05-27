@@ -3,24 +3,68 @@
 dester builds:
 index.ts
 */
-Object.defineProperty(exports, "__esModule", {
-    value: !0
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
 });
 
-var e = require("./lib/mimes"), r = {};
+var mimes = require('./lib/mimes');
+/* filename: index.ts
+  timestamp: 2022-05-11T09:47:49.430Z */
+// export const EXTNAMES = {} as Readonly<{ [K in keyof typeof EXTENSIONS]?: string[] }>
+// export const EXTNAMES = {} as Readonly<Record<keyof typeof EXTENSIONS, string[]>>
 
-for (var t in e.EXTENSIONS) {
-    r[t] = [];
-    for (var i = e.EXTENSIONS[t], o = 0, s = 0; s < i.length; s++) r[t][o++] = e.MIME_TYPES[i[s]] + "/" + e.MIME_NAMES[i[s++]][i[s]];
+
+var EXTENSIONS = {};
+
+for (var _ext in mimes.EXTENSIONS) {
+  // @ts-ignore
+  EXTENSIONS[_ext] = []; // @ts-ignore
+
+  for (var a = mimes.EXTENSIONS[_ext], j = 0, i = 0; i < a.length; i++) {
+    // @ts-ignore
+    EXTENSIONS[_ext][j++] = mimes.MIME_TYPES[a[i]] + '/' + mimes.MIME_NAMES[a[i++]][a[i]];
+  }
+} // @ts-ignore
+
+
+var MIMES = {};
+
+for (var _i = mimes.MIME_TYPES.length; _i-- > 0;) {
+  MIMES[mimes.MIME_TYPES[_i]] = {};
+
+  for (var _j = mimes.MIME_NAMES[_i].length; _j-- > 0;) {
+    MIMES[mimes.MIME_TYPES[_i]][mimes.MIME_NAMES[_i][_j]] = true;
+  }
 }
 
-var a = e => {
-    for (var t, i = "", o = "", s = "", a = "", E = (e = e.trim()).length; E-- > 0; ) {
-        if ("." === (t = e[E])) o in r && (i = o) || s in r && (i = s) || a in r && (i = a); else if ("/" === t || "\\" === t) break;
-        o = t + o, s = t.toUpperCase() + s, a = t.toLowerCase() + a;
-    }
-    return i;
+var ext = file => {
+  file = file.trim();
+  var ext = '';
+
+  for (var c, s = '', su = '', sl = '', _i2 = file.length; _i2-- > 0;) {
+    if ((c = file[_i2]) === '.') {
+      s in EXTENSIONS && (ext = s) || su in EXTENSIONS && (ext = su) || sl in EXTENSIONS && (ext = sl);
+    } else if (c === '/' || c === '\\') break;
+
+    s = c + s, su = c.toUpperCase() + su, sl = c.toLowerCase() + sl;
+  }
+
+  return ext;
 };
 
-exports.EXTENSIONS = r, exports.ext = a, exports.extname = e => (e = a(e)) && "." + e, 
-exports.mime = e => (e = a(e)) ? r[e][0] : e, exports.mimeList = e => (e = a(e)) ? r[e].slice(0) : [];
+var extname = filepath => (filepath = ext(filepath)) && '.' + filepath;
+
+var mime = filepath => // @ts-ignore
+(filepath = ext(filepath)) ? EXTENSIONS[filepath][0] : filepath;
+
+var mimeList = filepath => // @ts-ignore
+(filepath = ext(filepath)) ? EXTENSIONS[filepath].slice(0) : [];
+
+exports.EXTENSIONS = EXTENSIONS;
+exports.MIME_TYPES = MIMES;
+exports.ext = ext;
+exports.extname = extname;
+exports.mime = mime;
+exports.mimeList = mimeList;

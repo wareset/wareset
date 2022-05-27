@@ -16,7 +16,16 @@ for (const ext in EXTENSIONS_ORIGIN) {
   }
 }
 
-export { EXTENSIONS }
+// @ts-ignore
+const MIMES: { [K in typeof MIME_TYPES[number]]: { [key: string]: true } } = {}
+for (let i = MIME_TYPES.length; i-- > 0;) {
+  MIMES[MIME_TYPES[i]] = {}
+  for (let j = MIME_NAMES[i].length; j-- > 0;) {
+    MIMES[MIME_TYPES[i]][MIME_NAMES[i][j]] = true
+  }
+}
+
+export { EXTENSIONS, MIMES as MIME_TYPES }
 
 export const ext = (file: string): keyof TypeEXTNAMES | '' => {
   file = file.trim()
