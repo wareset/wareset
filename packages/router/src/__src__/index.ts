@@ -8,19 +8,22 @@ export * from './utils'
 import {
   TypeRoute,
   TypeHttpServer, TypeHttpsServer,
-  TypeHandler, TypeHandlerForStatuses,
+  TypeHandler, TypeHandlerForErrors,
   TypeIncomingMessage, TypeServerResponse
 } from './types'
 export * from './types'
 
 import { createRoute } from './createRoute'
 import { ParsedUrl } from './ParsedUrl'
+export { ParsedUrl }
 
 const METHODS = 'get|head|post|put|delete|connect|options|trace|patch'
 const METHODS_LOWERS = METHODS.split('|')
 const METHODS_UPPERS = METHODS.toUpperCase().split('|')
-METHODS_LOWERS.push('all')
-METHODS_UPPERS.push(METHODS)
+// METHODS_LOWERS.push('all')
+// METHODS_UPPERS.push(METHODS)
+
+export { METHODS_LOWERS as METHODS }
 
 export class Router {
   declare _routes: {
@@ -29,7 +32,7 @@ export class Router {
   declare listen: TypeHttpServer['listen']
   declare baseUrl: string
 
-  declare all: (route: string, ...handlers: TypeHandler[] | TypeHandler[][]) => this
+  // declare all: (route: string, ...handlers: TypeHandler[] | TypeHandler[][]) => this
   declare get: (route: string, ...handlers: TypeHandler[] | TypeHandler[][]) => this
   declare head: (route: string, ...handlers: TypeHandler[] | TypeHandler[][]) => this
   declare post: (route: string, ...handlers: TypeHandler[] | TypeHandler[][]) => this
@@ -54,7 +57,7 @@ export class Router {
       useBefore?: TypeHandler | TypeHandler[]
       useAfter?: TypeHandler | TypeHandler[]
       statusCodes?: {
-        [key: string]: TypeHandlerForStatuses | TypeHandlerForStatuses[]
+        [key: string]: TypeHandlerForErrors | TypeHandlerForErrors[]
       }
       statusCodesFactory?: typeof statusCodesFactoryDefalut
       queryParser?: typeof queryParserDefault
@@ -88,9 +91,11 @@ export class Router {
 
         req.baseUrl = this.baseUrl
         req.originalUrl = req.url!
-        req._parsedUrl = new ParsedUrl(req)
+        req._parsedUrl = req._parsedUrlWS = new ParsedUrl(req)
         req.query =
-          req._parsedUrl.query !== null ? queryParser(req._parsedUrl.query) : {}
+          req._parsedUrl.query != null ? queryParser(req._parsedUrl.query) : {}
+
+        if (!res.locals) res.locals = {}
 
         const count = req._parsedUrl._routes.length
         let matches: any = null
@@ -129,7 +134,7 @@ export class Router {
 
         const handlers = [useBefore, statusCodes[404] as any, useAfter]
 
-        if (matches !== null) {
+        if (matches != null) {
           req.params = matches.groups || {}
           handlers[1] = slug.handlers
           // console.log('SLUG', req.params, slug)
@@ -137,8 +142,7 @@ export class Router {
           req.params = {}
         }
 
-        let i = -1
-        let j = 0
+        let i = -1, j = 0
         const next = (err?: any): void => {
           if (err != null) {
             if (j === 2) handlers[2] = []

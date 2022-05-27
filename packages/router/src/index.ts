@@ -1,10 +1,11 @@
+export { Router, METHODS } from './__src__'
 import { Router } from './__src__'
 export default Router
 
-export {
+export type {
   TypeHandler,
-  TypeHandlerForStatuses,
-  TypeHandlerError,
+  TypeHandlerForErrors,
+  TypeError,
   TypeIncomingMessage,
   TypeServerResponse
 } from './__src__'

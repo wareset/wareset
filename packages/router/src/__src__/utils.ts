@@ -1,4 +1,4 @@
-import { TypeHandler, TypeHandlerForStatuses } from '.'
+import { TypeHandler, TypeHandlerForErrors } from '.'
 
 export const trimSlashes = (s: string): string =>
   s.replace(/^[/\\]+|[/\\]+$/g, '')
@@ -17,7 +17,7 @@ export const getMethods = (method: string | string[]): string[] =>
         .split(/[^-\w]+/))
   )
 
-export const queryParser = (s: string): { [key: string]: string | string[] } => {
+export const queryParser = (s: string): { [key: string]: string | string[] | undefined } => {
   const res: any = {}
   const decode = s.indexOf('%') > -1
   for (let a = s.split('&'), k: string, v: string, i = 0; i < a.length; i++) {
@@ -33,7 +33,7 @@ export const queryParser = (s: string): { [key: string]: string | string[] } => 
 }
 
 export const statusCodesFactory =
-(_code: number): TypeHandlerForStatuses => (_req, _res, _next, _err): void => {
+(_code: number): TypeHandlerForErrors => (_req, _res, _next, _err): void => {
   _res.statusCode = _code
   _res.end(_err ? JSON.stringify(_err, null, 2) : '' + _code)
 }

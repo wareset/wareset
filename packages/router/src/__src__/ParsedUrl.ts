@@ -28,6 +28,7 @@ export class ParsedUrl {
   pathname: string
   search: string | null
   query: string | null
+  raw: string
   _raw: string
   _route: string
   _routes: string[]
@@ -44,7 +45,7 @@ export class ParsedUrl {
       hostname: void 0,
       port    : void 0
     }
-    this._raw = req.url!
+    this.raw = this._raw = req.url!
 
     this.path = this._raw
     this.pathname = this._raw
@@ -58,7 +59,7 @@ export class ParsedUrl {
 
     this._route = trimSlashes(this.pathname)
     if (this._route.indexOf('%') > -1) {
-      this._route = decodeURIComponent(this._route)
+      try { this._route = decodeURIComponent(this._route) } catch {}
     }
     this._routes = this._route.length > 0 ? this._route.split('/') : []
   }
