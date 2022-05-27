@@ -2,7 +2,7 @@
   "name": "wareset-monorepo",
   "private": true,
   "license": "MIT",
-  "author": "rease <rease@wareset.com>",
+  "author": "rease <cftcview@gmail.com>",
   "description": "This is the monorepo for Wareset LLC",
   "workspaces": [
     "packages/*"
