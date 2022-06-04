@@ -8,816 +8,377 @@ __core__/native.ts
 __core__/cursor.ts
 index.ts
 */
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
+Object.defineProperty(exports, "__esModule", {
+    value: !0
 });
-/* filename: __core__/utils.ts
-  timestamp: 2022-04-12T14:33:56.147Z */
 
-var isBrowser = typeof window !== 'undefined';
-var isPointers = isBrowser && 'onpointermove' in document;
-var isArray = Array.isArray;
-
-var noop = () => {};
-
-var noopNoop = () => noop;
-
-var preventDefault = e => {
-  e.preventDefault();
-};
-
-var stopPropagation = e => {
-  e.stopPropagation();
-};
-
-var addEvent = (target, type, listener, options) => {
-  target.addEventListener(type, listener, options);
-};
-
-var delEvent = (target, type, listener) => {
-  target.removeEventListener(type, listener);
-};
-
-var wmset = (weakmap, key, value) => (weakmap.set(key, value), value);
-
-var REG = /^([a-z]+)|([.\d]+)|\(([^)]+)\)|\[([^\]]+)\]|(?<=\W)(\w+)/g; // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-
-var getEventSettings = s => {
-  var res = {
-    type: '',
-    num: 500,
-    self: false,
-    trusted: false,
-    once: false,
-    stop: false,
-    prevent: false,
-    passive: false,
-    capture: false,
-    x: false,
-    y: false,
-    u: false,
-    d: false,
-    l: false,
-    r: false,
-    xy: false,
-    keys: {},
-    kLen: 0
-  };
-  REG.lastIndex = 0;
-  var matches, v;
-
-  for (; matches = REG.exec(s);) {
-    // event type
-    if (v = matches[1]) res.type = v; // special for time events
-    else if (v = matches[2]) res.num = +v * 1000; // KeyCodes
-
-    if ((v = matches[3]) || (v = matches[4])) res.kLen++, res.keys[v] = 1; // other
-    else if (v = matches[5]) (v in res || (v = v[0]) in res) && (res[v] = true);
-  }
-
-  res.xy = res.x || res.y || res.u || res.d || res.l || res.r;
-  return res;
-};
-
-var wrap_base = fns => function (e) {
-  for (var i = 0; i < fns.length; i++) {
-    fns[i].call(this, e);
-  }
-};
-
-var wrap_keys = (fn, es) => function (e) {
-  pressedKeysIsEqual(es) && fn.call(this, e);
-};
-
-var wrap_self = fn => function (e) {
-  e.target === this && fn.call(this, e);
-};
-
-var wrap_trusted = fn => function (e) {
-  e.isTrusted && fn.call(this, e);
-};
-
-var pressedKeysIsEqual = es => {
-  var n = es.kLen;
-
-  for (var k in PRESSED_KEYS) {
-    // @ts-ignore
-    if (PRESSED_KEYS[k][0] in es.keys || PRESSED_KEYS[k][1] in es.keys) n--;else break;
-  }
-
-  return n <= 0;
-};
-
-var PRESSED_KEYS = {};
-var KEYPAD_LISTENERS = [];
+var e = "undefined" != typeof window, t = e && "onpointermove" in document, r = Array.isArray, n = () => {}, s = () => n, a = e => {
+    e.preventDefault();
+}, o = e => {
+    e.stopPropagation();
+}, i = (e, t, r, n) => {
+    e.addEventListener(t, r, n);
+}, l = (e, t, r) => {
+    e.removeEventListener(t, r);
+}, c = (e, t, r) => (e.set(t, r), r), p = /^([a-z]+)|([.\d]+)|\(([^)]+)\)|\[([^\]]+)\]|(?<=\W)(\w+)/g, h = e => {
+    var t, r, n = {
+        type: "",
+        num: 500,
+        self: !1,
+        trusted: !1,
+        once: !1,
+        stop: !1,
+        prevent: !1,
+        passive: !1,
+        capture: !1,
+        x: !1,
+        y: !1,
+        u: !1,
+        d: !1,
+        l: !1,
+        r: !1,
+        xy: !1,
+        keys: {},
+        kLen: 0
+    };
+    for (p.lastIndex = 0; t = p.exec(e); ) (r = t[1]) ? n.type = r : (r = t[2]) && (n.num = 1e3 * +r), 
+    (r = t[3]) || (r = t[4]) ? (n.kLen++, n.keys[r] = 1) : (r = t[5]) && (r in n || (r = r[0]) in n) && (n[r] = !0);
+    return n.xy = n.x || n.y || n.u || n.d || n.l || n.r, n;
+}, u = e => function(t) {
+    for (var r = 0; r < e.length; r++) e[r].call(this, t);
+}, f = (e, t) => function(r) {
+    d(t) && e.call(this, r);
+}, v = e => function(t) {
+    t.target === this && e.call(this, t);
+}, g = e => function(t) {
+    t.isTrusted && e.call(this, t);
+}, d = e => {
+    var t = e.kLen;
+    for (var r in y) {
+        if (!(y[r][0] in e.keys) && !(y[r][1] in e.keys)) break;
+        t--;
+    }
+    return t <= 0;
+}, y = {}, k = [];
 
 (() => {
-  if (isBrowser) {
-    var keysListen = () => {
-      addEvent(document, 'keyup', e => {
-        // @ts-ignore
-        delete PRESSED_KEYS[e.code + e.key];
-      }, false);
-      addEvent(document, 'keydown', e => {
-        // @ts-ignore
-        PRESSED_KEYS[e.code + e.key] = [e.code, e.key]; // console.log([e.code, e.key], e)
-
-        for (var i = 0; i < KEYPAD_LISTENERS.length; i++) {
-          if (!KEYPAD_LISTENERS[i][0].kLen) KEYPAD_LISTENERS.splice(i--, 1);else if (KEYPAD_LISTENERS[i][0].type === 'test' || pressedKeysIsEqual(KEYPAD_LISTENERS[i][0])) KEYPAD_LISTENERS[i][1](e);
-        }
-      }, false);
-    };
-
-    keysListen();
-  }
+    if (e) {
+        i(document, "keyup", (e => {
+            delete y[e.code + e.key];
+        }), !1), i(document, "keydown", (e => {
+            y[e.code + e.key] = [ e.code, e.key ];
+            for (var t = 0; t < k.length; t++) k[t][0].kLen ? ("test" === k[t][0].type || d(k[t][0])) && k[t][1](e) : k.splice(t--, 1);
+        }), !1);
+    }
 })();
 
-var keypad = isBrowser ? (event, listeners) => {
-  var unsub;
-
-  if (!isArray(event)) {
-    // @ts-ignore
-    var fns = [].concat(listeners);
-    var es = getEventSettings(event);
-    if (!es.kLen) es.kLen = 1, es.type = 'test';
-
-    unsub = () => {
-      es.kLen = fns.length = 0;
-    };
-
-    var cb = wrap_base(fns);
-    if (es.once) fns.push(unsub);
-    if (es.stop) fns.unshift(stopPropagation);
-    if (es.prevent) fns.unshift(preventDefault);
-    if (es.trusted) cb = wrap_trusted(cb);
-    KEYPAD_LISTENERS.push([es, cb]);
-  } else {
-    var unsubs = [];
-
-    for (var i = 0; i < event.length; i++) {
-      unsubs.push(keypad(event[i], listeners));
-    }
-
-    unsub = () => {
-      for (; unsubs.length;) {
-        unsubs.pop()();
-      }
-    };
-  }
-
-  return unsub;
-} : noopNoop;
-
-var resize = (() => {
-  if (!isBrowser) return noopNoop;
-  var WMR = new WeakMap();
-
-  var getWH = e => 'offsetWidth' in e ? [e.offsetWidth, e.offsetHeight] : [e.clientWidth, e.clientHeight];
-
-  var update = target => {
-    var wsr = WMR.get(target);
-    var [width, height] = getWH(target);
-
-    if (wsr[2][0] !== width || wsr[2][1] !== height) {
-      wsr[2][0] = width, wsr[2][1] = height;
-      var rect = wsr[1] = target.getBoundingClientRect();
-      width = rect.right - rect.left, height = rect.bottom - rect.top;
-
-      for (var j = 0; j < wsr[0].length; j++) {
-        for (var fns = wsr[0][j], l = 0; l < fns.length; l++) {
-          fns[l]({
-            target,
-            width,
-            height,
-            top: rect.top,
-            left: rect.left
-          });
-
-          if (!fns.length) {
-            wsr[0].splice(j--, 1);
-            wsr[0].length || (observer.unobserve(target), WMR.delete(target));
-          }
-        }
-      }
-    }
-  };
-
-  var observer;
-
-  var listen = () => {
-    listen = noop;
-
-    if (typeof ResizeObserver !== 'undefined') {
-      observer = new ResizeObserver(a => {
-        for (var i = 0; i < a.length; i++) {
-          update(a[i].target);
-        }
-      });
+var m = e ? (e, t) => {
+    var n;
+    if (r(e)) {
+        for (var s = [], i = 0; i < e.length; i++) s.push(m(e[i], t));
+        n = () => {
+            for (;s.length; ) s.pop()();
+        };
     } else {
-      var E0 = [0];
-      var timeoutid;
-      var ELEMENTS = [];
-      var __STO__ = setTimeout,
-          __CTO__ = clearTimeout;
-
-      var loop = () => {
-        __CTO__(timeoutid);
-
-        for (E0[0] = 0; E0[0] < ELEMENTS.length; E0[0]++) {
-          update(ELEMENTS[E0[0]]);
-        }
-
-        if (ELEMENTS.length) timeoutid = __STO__(loop, 20);
-      };
-
-      document.addEventListener('visibilitychange', () => {
-        document.hidden ? __CTO__(timeoutid) : loop();
-      }, false);
-      observer = {};
-
-      observer.observe = target => {
-        ELEMENTS.push(target), __STO__(loop, 20);
-      };
-
-      observer.unobserve = () => {
-        ELEMENTS.splice(E0[0]--, 1);
-      };
+        var l = [].concat(t), c = h(e);
+        c.kLen || (c.kLen = 1, c.type = "test"), n = () => {
+            c.kLen = l.length = 0;
+        };
+        var p = u(l);
+        c.once && l.push(n), c.stop && l.unshift(o), c.prevent && l.unshift(a), c.trusted && (p = g(p)), 
+        k.push([ c, p ]);
     }
-  };
-
-  return (target, listeners, autostart = true) => {
-    listen();
-    var fns = [].concat(listeners);
-    var rect;
-    var wser = WMR.get(target) || (observer.observe(target), wmset(WMR, target, [[], target.getBoundingClientRect(), getWH(target)]));
-    wser[0].push(fns);
-
-    if (autostart) {
-      rect = wser[1];
-      var width = rect.right - rect.left,
-          height = rect.bottom - rect.top;
-
-      for (var i = 0; i < fns.length; i++) {
-        fns[i]({
-          target,
-          width,
-          height,
-          top: rect.top,
-          left: rect.left
+    return n;
+} : s, w = (() => {
+    if (!e) return s;
+    var t, r = new WeakMap, a = e => "offsetWidth" in e ? [ e.offsetWidth, e.offsetHeight ] : [ e.clientWidth, e.clientHeight ], o = e => {
+        var n = r.get(e), [s, o] = a(e);
+        if (n[2][0] !== s || n[2][1] !== o) {
+            n[2][0] = s, n[2][1] = o;
+            var i = n[1] = e.getBoundingClientRect();
+            s = i.right - i.left, o = i.bottom - i.top;
+            for (var l = 0; l < n[0].length; l++) for (var c = n[0][l], p = 0; p < c.length; p++) c[p]({
+                target: e,
+                width: s,
+                height: o,
+                top: i.top,
+                left: i.left
+            }), c.length || (n[0].splice(l--, 1), n[0].length || (t.unobserve(e), r.delete(e)));
+        }
+    }, i = () => {
+        if (i = n, "undefined" != typeof ResizeObserver) t = new ResizeObserver((e => {
+            for (var t = 0; t < e.length; t++) o(e[t].target);
+        })); else {
+            var e, r = [ 0 ], s = [], a = setTimeout, l = clearTimeout, c = () => {
+                for (l(e), r[0] = 0; r[0] < s.length; r[0]++) o(s[r[0]]);
+                s.length && (e = a(c, 20));
+            };
+            document.addEventListener("visibilitychange", (() => {
+                document.hidden ? l(e) : c();
+            }), !1), (t = {}).observe = e => {
+                s.push(e), a(c, 20);
+            }, t.unobserve = () => {
+                s.splice(r[0]--, 1);
+            };
+        }
+    };
+    return (e, n, s = !0) => {
+        i();
+        var o, l = [].concat(n), p = r.get(e) || (t.observe(e), c(r, e, [ [], e.getBoundingClientRect(), a(e) ]));
+        if (p[0].push(l), s) for (var h = (o = p[1]).right - o.left, u = o.bottom - o.top, f = 0; f < l.length; f++) l[f]({
+            target: e,
+            width: h,
+            height: u,
+            top: o.top,
+            left: o.left
         });
-      }
-    }
-
-    return () => {
-      fns.length = 0;
+        return () => {
+            l.length = 0;
+        };
     };
-  };
-})();
-
-var native = isBrowser ? (target, event, listeners) => {
-  var unsub;
-
-  if (!isArray(event)) {
-    // @ts-ignore
-    var fns = [].concat(listeners);
-    var es = getEventSettings(event);
-    if (!es.type) throw event;
-
-    unsub = () => {
-      fns.length = 0, delEvent(target, es.type, cb);
-    };
-
-    var cb = wrap_base(fns);
-    if (es.once) fns.push(unsub);
-    if (es.stop) fns.unshift(stopPropagation);
-    if (es.prevent) fns.unshift(preventDefault);
-    if (es.kLen) cb = wrap_keys(cb, es);
-    if (es.self) cb = wrap_self(cb);
-    if (es.trusted) cb = wrap_trusted(cb);
-    addEvent(target, es.type, cb, {
-      passive: es.passive,
-      capture: es.capture
-    });
-  } else {
-    var unsubs = [];
-
-    for (var i = 0; i < event.length; i++) {
-      unsubs.push(native(target, event[i], listeners));
-    }
-
-    unsub = () => {
-      for (; unsubs.length;) {
-        unsubs.pop()();
-      }
-    };
-  }
-
-  return unsub;
-} : noopNoop;
-
-var cursor = (() => {
-  if (!isBrowser) return noopNoop;
-
-  var __composedPath__ = e => {
-    var res = [];
-    var el = e.target;
-
-    do {
-      res.push(el);
-    } while (el = el.parentNode);
-
-    res.push(window);
-    return res;
-  };
-
-  var __abs__ = n => n < 0 ? -n : n;
-
-  var __sum__ = a => {
-    var res = 0;
-
-    for (var i = a.length; i-- > 0;) {
-      res += a[i];
-    }
-
-    return res;
-  };
-
-  var alloyPanAndMove = data => !data.xy || DIRECTION === DIRECTION_L && (data.x || data.l) || DIRECTION === DIRECTION_R && (data.x || data.r) || DIRECTION === DIRECTION_U && (data.y || data.u) || DIRECTION === DIRECTION_D && (data.y || data.d);
-
-  var checkSelect = !isBrowser ? noop : window.getSelection ? () => {
-    window.getSelection().removeAllRanges();
-  } // @ts-ignore
-  : () => {
-    document.selection.empty();
-  }; // const __WSEHOVERS__ = '__hovers__'
-  // const __WSECURSOR__ = '__cursor__'
-  // const __WSESIMPLE__ = '__simple__'
-
-  var WMH = new WeakMap();
-  var WMC = new WeakMap();
-  var WMS = new WeakMap();
-  var EVENT_START = 'start',
-      EVENT_MOVE = 'move',
-      EVENT_END = 'end';
-  var EVENT_CLICK = 'click',
-      EVENT_DBLCLICK = 'dblclick';
-  var EVENT_PAN = 'pan',
-      EVENT_PRESS = 'press',
-      EVENT_REPEAT = 'repeat';
-  var EVENT_HOVER_IN = 'hoverin',
-      EVENT_HOVER_OUT = 'hoverout';
-  var EVENT_FOCUS_IN = 'focusin',
-      EVENT_FOCUS_OUT = 'focusout';
-  var DIRECTION_U = 'up',
-      DIRECTION_D = 'down';
-  var DIRECTION_L = 'left',
-      DIRECTION_R = 'right';
-  var target;
-
-  var createDetail = (type, event) => ({
-    type: type,
-    target,
-    direction: DIRECTION,
-    isFirst: IS_FIRST,
-    isFinal: IS_FINAL,
-    page: {
-      x: _pageX,
-      y: _pageY
-    },
-    delta: {
-      x: _deltaX,
-      y: _deltaY
-    },
-    offset: {
-      x: _offsetX,
-      y: _offsetY
-    },
-    client: {
-      x: _clientX,
-      y: _clientY
-    },
-    screen: {
-      x: _screenX,
-      y: _screenY
-    },
-    isTrusted: event.isTrusted,
-    event: event
-  });
-
-  var runHovers = (el, type, event) => {
-    var wseh = WMH.get(el);
-
-    if (wseh && type in wseh) {
-      var items = wseh[type];
-
-      for (var fns, i = 0; fns = items[i], i < items.length; i++) {
-        for (var j = 0; j < fns.length; j++) {
-          fns[j](createDetail(type, event));
-        }
-
-        if (!fns.length) items.splice(i--, 1);
-      }
-
-      if (!items.length) delete wseh[type];
-    }
-  };
-
-  var DIRECTION;
-  var IS_FIRST = false,
-      IS_FINAL = false;
-  var _clientX = 0,
-      _clientY = 0,
-      _screenX = 0,
-      _screenY = 0,
-      _pageX = 0,
-      _pageY = 0,
-      _offsetX = 0,
-      _offsetY = 0,
-      _deltaX = 0,
-      _deltaY = 0;
-  var directionXArr = [0, 0, 0, 0, 0];
-  var directionYArr = [0, 0, 0, 0, 0];
-  var timer, timerStart, timerEnd;
-  var isFinal = false,
-      isPaning = false,
-      isPress = false;
-  var STI = [];
-  var lastHovered = {};
-  var lastFocused = {};
-  var lastHoveredList = [];
-  var lastFocusedList = [];
-  var lastStarted = {};
-
-  var update = (e, headtype, isMouse) => {
-    // console.log(e)
-    // @ts-ignore
-    if (!isMouse && e.touches.length !== 1) return;
-    var nextHovered = target = e.target;
-    var nextFocused = headtype !== EVENT_MOVE ? nextHovered : lastFocused;
-    var needUpdateHovered = lastHovered !== nextHovered;
-    var needUpdateFocused = lastFocused !== nextFocused; // @ts-ignore
-
-    var {
-      clientX,
-      clientY,
-      pageX,
-      pageY,
-      screenX,
-      screenY
-    } = isMouse ? e : e.touches[0] || {
-      clientX: _clientX,
-      clientY: _clientY,
-      pageX: _pageX,
-      pageY: _pageY,
-      screenX: _screenX,
-      screenY: _screenY
-    };
-    timer = e.timeStamp;
-    isFinal = false;
-
-    if (headtype === EVENT_MOVE) {
-      if (isPress && !isPaning) isPaning = true;
+})(), x = e ? (e, t, n) => {
+    var s;
+    if (r(t)) {
+        for (var c = [], p = 0; p < t.length; p++) c.push(x(e, t[p], n));
+        s = () => {
+            for (;c.length; ) c.pop()();
+        };
     } else {
-      STI.forEach(clearInterval), STI.length = 0;
-
-      if (headtype === EVENT_START) {
-        lastStarted = target;
-        isPress = true;
-        timerStart = timer;
-        _clientX = clientX, _clientY = clientY, _offsetX = _offsetY = 0;
-      } else {
-        isPress = false;
-        timerEnd = timer;
-        if (isPaning) isPaning = !(isFinal = true);
-      }
-    } // не меняй их местами
-
-
-    _deltaX = -_clientX + (_clientX = clientX);
-    _deltaY = -_clientY + (_clientY = clientY);
-    _offsetX += _deltaX, _offsetY += _deltaY;
-    _screenX = screenX, _screenY = screenY;
-    _pageX = pageX, _pageY = pageY;
-    var dist2 = (__abs__(_offsetX) + __abs__(_offsetY)) * 1000;
-    directionXArr.shift(), directionYArr.shift();
-    directionXArr.push(_deltaX), directionYArr.push(_deltaY);
-
-    var dirX = __sum__(directionXArr),
-        dirY = __sum__(directionYArr);
-
-    DIRECTION = __abs__(dirX) > __abs__(dirY) ? dirX < 0 ? DIRECTION_L : DIRECTION_R : dirY < 0 ? DIRECTION_U : DIRECTION_D;
-
-    if (needUpdateHovered || needUpdateFocused) {
-      var path = e.composedPath && e.composedPath() || __composedPath__(e);
-
-      var pathlen = path.length - 2;
-
-      if (needUpdateHovered) {
-        lastHovered = nextHovered;
-        var nextHoveredList = path;
-        var nhi = pathlen;
-        var lhi = lastHoveredList.length - 2;
-
-        for (;;) {
-          if (nextHoveredList[nhi] === lastHoveredList[lhi]) nhi--, lhi--;else break;
-        }
-
-        for (; lhi >= 0; lhi--) {
-          runHovers(lastHoveredList[lhi], EVENT_HOVER_OUT, e);
-        }
-
-        for (; nhi >= 0; nhi--) {
-          runHovers(nextHoveredList[nhi], EVENT_HOVER_IN, e);
-        }
-
-        lastHoveredList = nextHoveredList;
-      }
-
-      if (needUpdateFocused) {
-        lastFocused = nextFocused;
-        var nextFocusedList = path;
-        var nfi = pathlen;
-        var lfi = lastFocusedList.length - 2;
-
-        for (;;) {
-          if (nextFocusedList[nfi] === lastFocusedList[lfi]) nfi--, lfi--;else break;
-        }
-
-        for (; lfi >= 0; lfi--) {
-          runHovers(lastFocusedList[lfi], EVENT_FOCUS_OUT, e);
-        }
-
-        for (; nfi >= 0; nfi--) {
-          runHovers(nextFocusedList[nfi], EVENT_FOCUS_IN, e);
-        }
-
-        lastFocusedList = nextFocusedList;
-      }
+        var d = [].concat(n), y = h(t);
+        if (!y.type) throw t;
+        s = () => {
+            d.length = 0, l(e, y.type, k);
+        };
+        var k = u(d);
+        y.once && d.push(s), y.stop && d.unshift(o), y.prevent && d.unshift(a), y.kLen && (k = f(k, y)), 
+        y.self && (k = v(k)), y.trusted && (k = g(k)), i(e, y.type, k, {
+            passive: y.passive,
+            capture: y.capture
+        });
     }
-
-    var STOPS = {};
-    var element, wsec, item, es, callback, addition, type;
-
-    for (element = target; element; element = element.parentNode) {
-      if (wsec = WMS.get(element)) {
-        for (var i = 0; i < wsec.length; i++) {
-          if ((item = wsec[i])[1] === noop) {
-            wsec.splice(i--, 1);
-
-            if (!wsec.length) {
-              WMS.delete(element), WMC.has(element) || delGlobalPreventDefault(element);
+    return s;
+} : s, b = (() => {
+    if (!e) return s;
+    var o, p, d, y, k, m, w = e => e < 0 ? -e : e, x = e => {
+        for (var t = 0, r = e.length; r-- > 0; ) t += e[r];
+        return t;
+    }, b = e => !e.xy || p === F && (e.x || e.l) || p === H && (e.x || e.r) || p === B && (e.y || e.u) || p === C && (e.y || e.d), L = e ? window.getSelection ? () => {
+        window.getSelection().removeAllRanges();
+    } : () => {
+        document.selection.empty();
+    } : n, W = new WeakMap, X = new WeakMap, Y = new WeakMap, z = "start", M = "move", R = "end", T = "click", E = "dblclick", I = "press", P = "repeat", A = "hoverin", N = "hoverout", O = "focusin", S = "focusout", B = "up", C = "down", F = "left", H = "right", _ = (e, t) => ({
+        type: e,
+        target: o,
+        direction: p,
+        isFirst: D,
+        isFinal: q,
+        page: {
+            x: U,
+            y: V
+        },
+        delta: {
+            x: ee,
+            y: te
+        },
+        offset: {
+            x: Z,
+            y: $
+        },
+        client: {
+            x: G,
+            y: J
+        },
+        screen: {
+            x: K,
+            y: Q
+        },
+        isTrusted: t.isTrusted,
+        event: t
+    }), j = (e, t, r) => {
+        var n = W.get(e);
+        if (n && t in n) {
+            for (var s, a = n[t], o = 0; s = a[o], o < a.length; o++) {
+                for (var i = 0; i < s.length; i++) s[i](_(t, r));
+                s.length || a.splice(o--, 1);
             }
-          } else if (!((type = (es = item[0]).type) in STOPS)) {
-            if (es.stop) STOPS[type] = true;
-            callback = item[1], addition = item[2];
-
-            if (headtype !== EVENT_MOVE || alloyPanAndMove(es)) {
-              callback(createDetail(type, e));
-            }
-          }
+            a.length || delete n[t];
         }
-      }
-    }
-
-    for (element = lastStarted; element; element = element.parentNode) {
-      if (wsec = WMC.get(element)) {
-        for (var _i = 0; _i < wsec.length; _i++) {
-          if ((item = wsec[_i])[1] === noop) {
-            wsec.splice(_i--, 1);
-
-            if (!wsec.length) {
-              WMC.delete(element), WMS.has(element) || delGlobalPreventDefault(element);
-            }
-          } else if (!((type = (es = item[0]).type) in STOPS)) {
-            if (es.stop) STOPS[type] = true;
-            callback = item[1], addition = item[2];
-
-            switch (type) {
-              case EVENT_CLICK:
-                if (headtype === EVENT_END && timerEnd - timerStart < es.num) {
-                  callback(createDetail(type, e));
-                }
-
-                break;
-
-              case EVENT_DBLCLICK:
-                if (headtype === EVENT_END) {
-                  if (timerEnd - (addition.s || 0) > es.num) addition.is = 0;
-
-                  if (addition.is = ++addition.is | 0) {
-                    if (addition.is === 1) addition.s = timerStart;else addition.is = 0, callback(createDetail(type, e));
-                  }
-                }
-
-                break;
-
-              case EVENT_PAN:
-                if (headtype === EVENT_MOVE && isPress || isFinal) {
-                  if (isFinal && addition.is || dist2 > es.num && alloyPanAndMove(es)) {
-                    if (IS_FINAL = isFinal) addition.is = false;else if (!addition.is) IS_FIRST = addition.is = true;
-                    checkSelect(), callback(createDetail(type, e));
-                    IS_FIRST = IS_FINAL = false;
-                  }
-                }
-
-                break;
-
-              case EVENT_PRESS:
-              case EVENT_REPEAT:
-                if (headtype === EVENT_START) {
-                  STI.push(addition.sti = setInterval((type, e, add) => {
-                    type === EVENT_PRESS && clearInterval(add.sti);
-                    checkSelect(), callback(createDetail(type, e));
-                  }, es.num, type, e, addition));
-                }
-
-                break;
-              // throw type
-            }
-          }
-        }
-      }
-    } // console.log(e.path, e.composedPath(), composedPath(e))
-
-
-    if (headtype === EVENT_END) {
-      _clientX = clientX, _clientY = clientY, _offsetX = _offsetY = 0;
-    }
-  };
-
-  var obj;
-
-  if (isPointers) {
-    obj = {
-      pointerdown: e => {
-        update(e, EVENT_START, true);
-      },
-      pointermove: e => {
-        update(e, EVENT_MOVE, true);
-      },
-      pointerup: e => {
-        update(e, EVENT_END, true);
-      },
-      pointercancel: e => {
-        update(e, EVENT_END, true);
-      }
-    };
-  } else {
-    // For bug in dev tools
-    var __type__ = 0;
-
-    var mouseWrapper = (e, type) => {
-      ++__type__ >= (__type__ = 1) && update(e, type, true);
-    };
-
-    var touchWrapper = (e, type) => {
-      --__type__ <= (__type__ = -1) && update(e, type, false);
-    };
-
-    obj = {
-      mousedown: e => {
-        mouseWrapper(e, EVENT_START);
-      },
-      mousemove: e => {
-        mouseWrapper(e, EVENT_MOVE);
-      },
-      mouseup: e => {
-        mouseWrapper(e, EVENT_END);
-      },
-      touchstart: e => {
-        touchWrapper(e, EVENT_START);
-      },
-      touchmove: e => {
-        touchWrapper(e, EVENT_MOVE);
-      },
-      touchend: e => {
-        touchWrapper(e, EVENT_END);
-      },
-      touchcancel: e => {
-        touchWrapper(e, EVENT_END);
-      }
-    };
-  }
-
-  var EVENTS_FOR_RESET = ['click', 'dblclick'];
-
-  for (var event in obj) {
-    addEvent(document, event, obj[event], false), EVENTS_FOR_RESET.push(event);
-  }
-
-  var setGlobalPreventDefault = el => {
-    for (var i = 0; i < EVENTS_FOR_RESET.length; i++) {
-      addEvent(el, EVENTS_FOR_RESET[i], preventDefault, {
-        passive: false
-      });
-    }
-  };
-
-  var delGlobalPreventDefault = el => {
-    for (var i = 0; i < EVENTS_FOR_RESET.length; i++) {
-      delEvent(el, EVENTS_FOR_RESET[i], preventDefault);
-    }
-  };
-
-  var cursor = (target, event, listeners) => {
-    var unsub;
-
-    if (!isArray(event)) {
-      // @ts-ignore
-      var fns = [].concat(listeners);
-      var es = getEventSettings(event);
-      var TYPE = es.type;
-      var isSimple = false;
-
-      switch (TYPE) {
-        case EVENT_HOVER_IN:
-        case EVENT_HOVER_OUT:
-        case EVENT_FOCUS_IN:
-        case EVENT_FOCUS_OUT:
-          {
-            unsub = () => {
-              fns.length = 0;
+    }, D = !1, q = !1, G = 0, J = 0, K = 0, Q = 0, U = 0, V = 0, Z = 0, $ = 0, ee = 0, te = 0, re = [ 0, 0, 0, 0, 0 ], ne = [ 0, 0, 0, 0, 0 ], se = !1, ae = !1, oe = !1, ie = [], le = {}, ce = {}, pe = [], he = [], ue = {}, fe = (e, t, r) => {
+        if (r || 1 === e.touches.length) {
+            var s = o = e.target, a = t !== M ? s : ce, i = le !== s, l = ce !== a, {clientX: c, clientY: h, pageX: u, pageY: f, screenX: v, screenY: g} = r ? e : e.touches[0] || {
+                clientX: G,
+                clientY: J,
+                pageX: U,
+                pageY: V,
+                screenX: K,
+                screenY: Q
             };
-
-            if (es.once) fns.push(unsub);
-            var wseh = WMH.get(target) || wmset(WMH, target, {});
-            TYPE in wseh ? wseh[TYPE].push(fns) : wseh[TYPE] = [fns];
-            break;
-          }
-
-        case EVENT_START:
-        case EVENT_MOVE: // @ts-ignore
-        // eslint-disable-next-line no-fallthrough
-
-        case EVENT_END:
-          isSimple = true;
-        // eslint-disable-next-line no-fallthrough
-
-        case EVENT_CLICK:
-        case EVENT_DBLCLICK:
-        case EVENT_PAN:
-        case EVENT_PRESS:
-        case EVENT_REPEAT:
-          {
-            unsub = () => {
-              fns.length = 0, item[1] = noop;
-            };
-
-            var cb = wrap_base(fns);
-            if (es.once) fns.push(unsub);
-            if (es.kLen) cb = wrap_keys(cb, es);
-            if (es.self) cb = wrap_self(cb);
-            if (es.trusted) cb = wrap_trusted(cb);
-
-            if (!(WMS.has(target) || WMC.has(target))) {
-              setGlobalPreventDefault(target);
+            d = e.timeStamp, se = !1, t === M ? oe && !ae && (ae = !0) : (ie.forEach(clearInterval), 
+            ie.length = 0, t === z ? (ue = o, oe = !0, y = d, G = c, J = h, Z = $ = 0) : (oe = !1, 
+            k = d, ae && (ae = !(se = !0)))), ee = -G + (G = c), te = -J + (J = h), $ += te, 
+            K = v, Q = g, U = u, V = f;
+            var m = 1e3 * (w(Z += ee) + w($));
+            re.shift(), ne.shift(), re.push(ee), ne.push(te);
+            var W = x(re), fe = x(ne);
+            if (p = w(W) > w(fe) ? W < 0 ? F : H : fe < 0 ? B : C, i || l) {
+                var ve = e.composedPath && e.composedPath() || (e => {
+                    var t = [], r = e.target;
+                    do {
+                        t.push(r);
+                    } while (r = r.parentNode);
+                    return t.push(window), t;
+                })(e), ge = ve.length - 2;
+                if (i) {
+                    le = s;
+                    for (var de = ve, ye = ge, ke = pe.length - 2; de[ye] === pe[ke]; ) ye--, ke--;
+                    for (;ke >= 0; ke--) j(pe[ke], N, e);
+                    for (;ye >= 0; ye--) j(de[ye], A, e);
+                    pe = de;
+                }
+                if (l) {
+                    ce = a;
+                    for (var we = ve, xe = ge, be = he.length - 2; we[xe] === he[be]; ) xe--, be--;
+                    for (;be >= 0; be--) j(he[be], S, e);
+                    for (;xe >= 0; xe--) j(we[xe], O, e);
+                    he = we;
+                }
             }
+            var Le, We, Xe, Ye, ze, Me, Re, Te = {};
+            for (Le = o; Le; Le = Le.parentNode) if (We = Y.get(Le)) for (var Ee = 0; Ee < We.length; Ee++) (Xe = We[Ee])[1] === n ? (We.splice(Ee--, 1), 
+            We.length || (Y.delete(Le), X.has(Le) || me(Le))) : (Re = (Ye = Xe[0]).type) in Te || (Ye.stop && (Te[Re] = !0), 
+            ze = Xe[1], Me = Xe[2], (t !== M || b(Ye)) && ze(_(Re, e)));
+            for (Le = ue; Le; Le = Le.parentNode) if (We = X.get(Le)) for (var Ie = 0; Ie < We.length; Ie++) if ((Xe = We[Ie])[1] === n) We.splice(Ie--, 1), 
+            We.length || (X.delete(Le), Y.has(Le) || me(Le)); else if (!((Re = (Ye = Xe[0]).type) in Te)) switch (Ye.stop && (Te[Re] = !0), 
+            ze = Xe[1], Me = Xe[2], Re) {
+              case T:
+                t === R && k - y < Ye.num && ze(_(Re, e));
+                break;
 
-            var item = [es, cb, {}];
-            var WM = isSimple ? WMS : WMC;
-            var a = WM.get(target) || wmset(WM, target, []);
-            a.push(item);
-            break;
-          }
+              case E:
+                t === R && (k - (Me.s || 0) > Ye.num && (Me.is = 0), (Me.is = 0 | ++Me.is) && (1 === Me.is ? Me.s = y : (Me.is = 0, 
+                ze(_(Re, e)))));
+                break;
 
-        default:
-          throw event;
-      } // console.log(es)
-      // type in wse ? wse[type].push(item) : wse[type] = [item]
+              case "pan":
+                (t === M && oe || se) && (se && Me.is || m > Ye.num && b(Ye)) && ((q = se) ? Me.is = !1 : Me.is || (D = Me.is = !0), 
+                L(), ze(_(Re, e)), D = q = !1);
+                break;
 
-    } else {
-      var unsubs = [];
-
-      unsub = () => {
-        for (; unsubs.length;) {
-          unsubs.pop()();
+              case I:
+              case P:
+                t === z && ie.push(Me.sti = setInterval(((e, t, r) => {
+                    e === I && clearInterval(r.sti), L(), ze(_(e, t));
+                }), Ye.num, Re, e, Me));
+            }
+            t === R && (G = c, J = h, Z = $ = 0);
         }
-      };
-
-      for (var i = 0; i < event.length; i++) {
-        unsubs.push(cursor(target, event[i], listeners));
-      }
+    };
+    if (t) m = {
+        pointerdown: e => {
+            fe(e, z, !0);
+        },
+        pointermove: e => {
+            fe(e, M, !0);
+        },
+        pointerup: e => {
+            fe(e, R, !0);
+        },
+        pointercancel: e => {
+            fe(e, R, !0);
+        }
+    }; else {
+        var ve = 0, ge = (e, t) => {
+            ++ve >= (ve = 1) && fe(e, t, !0);
+        }, de = (e, t) => {
+            --ve <= (ve = -1) && fe(e, t, !1);
+        };
+        m = {
+            mousedown: e => {
+                ge(e, z);
+            },
+            mousemove: e => {
+                ge(e, M);
+            },
+            mouseup: e => {
+                ge(e, R);
+            },
+            touchstart: e => {
+                de(e, z);
+            },
+            touchmove: e => {
+                de(e, M);
+            },
+            touchend: e => {
+                de(e, R);
+            },
+            touchcancel: e => {
+                de(e, R);
+            }
+        };
     }
+    var ye = [ "click", "dblclick" ];
+    for (var ke in m) i(document, ke, m[ke], !1), ye.push(ke);
+    var me = e => {
+        for (var t = 0; t < ye.length; t++) l(e, ye[t], a);
+    }, we = (e, t, s) => {
+        var o;
+        if (r(t)) {
+            var l = [];
+            o = () => {
+                for (;l.length; ) l.pop()();
+            };
+            for (var p = 0; p < t.length; p++) l.push(we(e, t[p], s));
+        } else {
+            var d = [].concat(s), y = h(t), k = y.type, m = !1;
+            switch (k) {
+              case A:
+              case N:
+              case O:
+              case S:
+                o = () => {
+                    d.length = 0;
+                }, y.once && d.push(o);
+                var w = W.get(e) || c(W, e, {});
+                k in w ? w[k].push(d) : w[k] = [ d ];
+                break;
 
-    return unsub;
-  };
+              case z:
+              case M:
+              case R:
+                m = !0;
 
-  return cursor;
-})();
-/* filename: index.ts
-  timestamp: 2022-04-12T14:33:55.886Z */
+              case T:
+              case E:
+              case "pan":
+              case I:
+              case P:
+                o = () => {
+                    d.length = 0, b[1] = n;
+                };
+                var x = u(d);
+                y.once && d.push(o), y.kLen && (x = f(x, y)), y.self && (x = v(x)), y.trusted && (x = g(x)), 
+                Y.has(e) || X.has(e) || (e => {
+                    for (var t = 0; t < ye.length; t++) i(e, ye[t], a, {
+                        passive: !1
+                    });
+                })(e);
+                var b = [ y, x, {} ], L = m ? Y : X;
+                (L.get(e) || c(L, e, [])).push(b);
+                break;
 
-
-var index = {
-  resize,
-  keypad,
-  native,
-  cursor
+              default:
+                throw t;
+            }
+        }
+        return o;
+    };
+    return we;
+})(), L = {
+    resize: w,
+    keypad: m,
+    native: x,
+    cursor: b
 };
-exports.cursor = cursor;
-exports["default"] = index;
-exports.keypad = keypad;
-exports.native = native;
-exports.resize = resize;
+
+exports.cursor = b, exports.default = L, exports.keypad = m, exports.native = x, 
+exports.resize = w;
