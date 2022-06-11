@@ -5,6 +5,9 @@ import {
 import { create, getHandlers, getMethods, trimSlashes } from './utils'
 export * from './utils'
 
+import { ResJson } from './res'
+export * from './res'
+
 import {
   TypeRoute,
   TypeHttpServer, TypeHttpsServer,
@@ -86,6 +89,8 @@ export class Router {
     server.on(
       'request',
       (req: TypeIncomingMessage, res: TypeServerResponse): void => {
+        res.json = ResJson.bind(res)
+        
         // console.log(req)
         const method = req.method!.toUpperCase()
 

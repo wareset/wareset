@@ -6,6 +6,8 @@ import type {
 
 import type { ParsedUrl } from '.'
 
+import { ResJson } from '.'
+
 import type { Server as TypeHttpsServer } from 'https'
 
 export { TypeHttpServer, TypeHttpsServer }
@@ -35,6 +37,7 @@ export interface TypeIncomingMessage extends IncomingMessage {
 
 export interface TypeServerResponse extends ServerResponse {
   locals: { [key: string]: any }
+  json: typeof ResJson
   [key: string]: any
 }
 

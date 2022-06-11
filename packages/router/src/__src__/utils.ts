@@ -32,8 +32,10 @@ export const queryParser = (s: string): { [key: string]: string | string[] | und
   return res
 }
 
+export const stringify = JSON.stringify
+
 export const statusCodesFactory =
 (_code: number): TypeHandlerForErrors => (_req, _res, _next, _err): void => {
   _res.statusCode = _code
-  _res.end(_err ? JSON.stringify(_err, null, 2) : '' + _code)
+  _res.end(_err ? stringify(_err, null, 2) : '' + _code)
 }
