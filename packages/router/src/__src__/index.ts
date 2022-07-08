@@ -46,35 +46,40 @@ export class Router {
   declare trace: (route: string, ...handlers: TypeHandler[] | TypeHandler[][]) => this
   declare patch: (route: string, ...handlers: TypeHandler[] | TypeHandler[][]) => this
 
+  declare statusCodes: { [key: string]: TypeHandlerForErrors[] }
+
   constructor(
     readonly server: TypeHttpServer | TypeHttpsServer,
     {
       baseUrl = '',
-      useBefore = [],
-      useAfter = [],
-      statusCodes = {},
+      useBefore = [] as TypeHandler[],
+      useAfter = [] as TypeHandler[],
+      statusCodes = {} as { [key: string]: TypeHandlerForErrors | TypeHandlerForErrors[] },
       statusCodesFactory = statusCodesFactoryDefalut,
       queryParser = queryParserDefault
-    }: {
-      baseUrl?: string
-      useBefore?: TypeHandler | TypeHandler[]
-      useAfter?: TypeHandler | TypeHandler[]
-      statusCodes?: {
-        [key: string]: TypeHandlerForErrors | TypeHandlerForErrors[]
-      }
-      statusCodesFactory?: typeof statusCodesFactoryDefalut
-      queryParser?: typeof queryParserDefault
     } = {}
+    // : {
+    //   baseUrl?: string
+    //   useBefore?: TypeHandler | TypeHandler[]
+    //   useAfter?: TypeHandler | TypeHandler[]
+    //   statusCodes?: {
+    //     [key: string]: TypeHandlerForErrors | TypeHandlerForErrors[]
+    //   }
+    //   statusCodesFactory?: typeof statusCodesFactoryDefalut
+    //   queryParser?: typeof queryParserDefault
+    // } = {}
   ) {
     this._routes = create(null)
+    this.baseUrl = trimSlashes(baseUrl)
     useBefore = getHandlers(useBefore)
     useAfter = getHandlers(useAfter)
+    // console.log(this)
 
     const _statusCodes = create(null)
     for (const k in statusCodes) {
       if (/* not NaN */ +k === +k) _statusCodes[k] = getHandlers(statusCodes[k])
     }
-    statusCodes = _statusCodes
+    this.statusCodes = statusCodes = _statusCodes
 
     for (let k = 2, a = [404, 500]; k-- > 0;) {
       if (!(a[k] in statusCodes)) statusCodes[a[k]] = [statusCodesFactory(a[k])]
@@ -83,8 +88,6 @@ export class Router {
     for (let k = METHODS_LOWERS.length; k-- > 0;) {
       (this as any)[METHODS_LOWERS[k]] = (this as any).add.bind(this, METHODS_UPPERS[k])
     }
-
-    this.baseUrl = trimSlashes(baseUrl)
 
     server.on(
       'request',
@@ -106,31 +109,28 @@ export class Router {
         let matches: any = null
         let slug!: TypeRoute
 
-        if (method in this._routes) {
-          SEARCH_ROUTE: {
-            if (count in this._routes[method]) {
-              for (let i = 0, l = this._routes[method][count].length; i < l; i++) {
-                if ((matches = (slug = this._routes[method][count][i])
-                  .regex.exec(req._parsedUrl._route)) !== null) {
-                  break SEARCH_ROUTE
-                }
+        SEARCH_ROUTE: if (method in this._routes) {
+          if (count in this._routes[method]) {
+            for (let a = this._routes[method][count], i = 0, l = a.length; i < l; i++) {
+              if ((matches = req._parsedUrl._route.match((slug = a[i]).regex)) != null) {
+                break SEARCH_ROUTE
               }
             }
-            // if (999 in this._routes[method]) {
-            //   for (let i = 0, l = this._routes[method][999].length; i < l; i++) {
-            //     if ((slug = this._routes[method][999][i]).count <= count &&
-            //       (matches = slug.regex.exec(req._parsedUrl._route)) !== null) {
-            //       break SEARCH_ROUTE
-            //     }
-            //   }
-            // }
-            for (let j = count; j >= 0; --j) {
-              if (j in this._routes[method][-1]) {
-                for (let i = 0, l = this._routes[method][-1][j].length; i < l; i++) {
-                  if ((matches = (slug = this._routes[method][-1][j][i])
-                    .regex.exec(req._parsedUrl._route)) !== null) {
-                    break SEARCH_ROUTE
-                  }
+          }
+            
+          // if (999 in this._routes[method]) {
+          //   for (let i = 0, l = this._routes[method][999].length; i < l; i++) {
+          //     if ((slug = this._routes[method][999][i]).count <= count &&
+          //       (matches = slug.regex.exec(req._parsedUrl._route)) !== null) {
+          //       break SEARCH_ROUTE
+          //     }
+          //   }
+          // }
+          for (let j = count; j >= 0; --j) {
+            if (j in this._routes[method][-1]) {
+              for (let a = this._routes[method][-1][j], i = 0, l = a.length; i < l; i++) {
+                if ((matches = req._parsedUrl._route.match((slug = a[i]).regex)) != null) {
+                  break SEARCH_ROUTE
                 }
               }
             }
@@ -140,6 +140,7 @@ export class Router {
         const handlers = [useBefore, statusCodes[404] as any, useAfter]
 
         if (matches != null) {
+          console.log(111, matches)
           req.params = matches.groups || {}
           handlers[1] = slug.handlers
           // console.log('SLUG', req.params, slug)
