@@ -1,3 +1,0 @@
-# `@wareset/router`
-
-WIP: router
