@@ -1,0 +1,3 @@
+# `@wareset/jwt`
+
+wip
