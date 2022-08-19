@@ -4,7 +4,7 @@ import resolve from '@rollup/plugin-node-resolve'
 import { minify } from 'terser'
 
 const terser = {
-  async renderChunk (code) {
+  async renderChunk(code) {
     return await minify(code, { safari10: true })
   }
 }
@@ -41,7 +41,7 @@ const bundle = (min, ie) => ({
     babel(babelrc(ie)),
     min && terser,
     {
-      renderChunk (code) {
+      renderChunk(code) {
         return `/* eslint-disable */
 /**
  * @license

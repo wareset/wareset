@@ -1,3 +1,3 @@
 # `@wareset/store`
 
-WIP: in progress
+wip: in progress

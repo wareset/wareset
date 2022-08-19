@@ -23,7 +23,7 @@ const {
   TOKEN_PUCNTUATOR,
   trimTokens,
   stringifyTokens
-} = require('@rastree/jsx2tokens')
+} = require('rastree/jsx2tokens')
 const { enumChars } = require('enum-chars')
 
 const DIR_SRC_CORE = pathResolve(__dirname, '../src/__src__')
@@ -38,7 +38,7 @@ let word = ''
 const initChange = () => {
   const source = fsReadFileSync(FILE_ENUMS_DEV).toString()
 
-  const tokens = jsx2tokens(source)
+  const tokens = jsx2tokens(source, { useJSX: false })
 
   let cur = []
   let arr = [cur]
