@@ -36,6 +36,8 @@ module.exports = {
     // 'plugin:prettier/recommended',
   ],
 
+  ignorePatterns: ['**/dist/**/*', '**/build/**/*', '**/node_modules/**/*'],
+
   rules: {
     // Possible Problems
     'array-callback-return'          : 'error',
@@ -112,7 +114,7 @@ module.exports = {
     'dot-notation'                  : 'error',
     'eqeqeq'                        : ['error', 'smart'],
     'func-name-matching'            : 'error',
-    'func-names'                    : ['error', 'as-needed'],
+    'func-names'                    : 'off', // ['error', 'as-needed'],
     'func-style'                    : ['error', 'declaration', { allowArrowFunctions: true }],
     'grouped-accessor-pairs'        : 'error',
     'guard-for-in'                  : 'off',
@@ -148,14 +150,14 @@ module.exports = {
     'no-extra-bind'                 : 'error',
     'no-extra-boolean-cast'         : 'error',
     'no-extra-label'                : 'error',
-    'no-extra-semi'                 : 'error',
+    'no-extra-semi'                 : 'off', // 'error',
     'no-floating-decimal'           : 'error',
     'no-global-assign'              : 'error',
     'no-implicit-coercion'          : 'off',
     'no-implicit-globals'           : 'off',
     'no-implied-eval'               : 'off',
     'no-inline-comments'            : 'off',
-    'no-invalid-this'               : 'error',
+    'no-invalid-this'               : 'off',
     'no-iterator'                   : 'error',
     'no-label-var'                  : 'error',
     'no-labels'                     : 'off',
