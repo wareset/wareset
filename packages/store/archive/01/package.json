@@ -1,0 +1,69 @@
+{
+  "name": "@wareset/store",
+  "version": "0.4.0",
+  "description": "wip",
+  "license": "MIT",
+  "homepage": "https://github.com/wareset/wareset/tree/master/packages/store",
+  "bugs": {
+    "url": "https://github.com/wareset/wareset/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wareset/wareset.git"
+  },
+  "author": "rease <cftcview@gmail.com>",
+  "main": "index",
+  "module": "index.mjs",
+  "types": "index.d.ts",
+  "files": [
+    "README.md",
+    "__types__",
+    "index.d.ts",
+    "index.js",
+    "index.mjs"
+  ],
+  "scripts": {
+    "test": "jest --",
+    "dester": "dester ./src ./ --babel",
+    "modify:enums": "node __scripts__/enums.js",
+    "dev:modify:enums": "nodemon __scripts__/enums.js --dev --inspect",
+    "build": "npm run -s modify:enums && sleep 1 && npm run -s dester -- -s -r -m",
+    "dev": "npm run -s modify:enums -- --dev & sleep 1 && npm run -s dester -- -w --no-r -m & wait",
+    "build:dist": "rollup -c __scripts__/rollup.config.js",
+    "pkg:name": "cat package.json | grep '\"name\":' | cut -d '\"' -f4",
+    "pkg:version": "cat package.json | grep '\"version\":' | cut -d '\"' -f4",
+    "git:get:tag": "echo $(npm run -s pkg:name)@$(npm run -s pkg:version)",
+    "git:set:tag": "t=$(npm run -s git:get:tag) && git tag -a $t -m $t",
+    "git:commit": "npm run -s build && git add . && read -p 'Commit: ' c; c=${c:-v$(npm run -s pkg:version)} && n=$(npm run -s pkg:name) && git commit -m \"$n: $c\"",
+    "commit": "read -p 'Version [patch]: ' V; V=${V:-patch} && npm version --force --no-git-tag-version $V; echo $V && read -p 'Push? (y/N): ' G && read -p 'Publish? (y/N): ' P && npm run -s git:commit && case $G in Y|y) $(git push);; esac && case $P in Y|y) $(npm run -s git:set:tag && git push --tags && npm -s publish);; esac"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.21.8",
+    "@babel/plugin-proposal-class-properties": "^7.18.0",
+    "@babel/plugin-transform-block-scoping": "^7.18.0",
+    "@babel/plugin-transform-template-literals": "^7.18.0",
+    "@babel/preset-env": "^7.21.5",
+    "@rollup/plugin-babel": "^6.0.2",
+    "@rollup/plugin-node-resolve": "^15.0.2",
+    "@types/jest": "^28.1.6",
+    "@types/node": "^12.20.0",
+    "@wareset-utilites/array": "0.1.7",
+    "@wareset-utilites/lang": "0.1.10",
+    "dester": "1.0.x",
+    "enum-chars": "1.2.x",
+    "jest": "^29.3.1",
+    "rastree": "0.2.x",
+    "rollup": "^3.22.0",
+    "terser": "^5.17.4",
+    "ts-jest": "^28.0.7",
+    "ts-node": "^10.9.0",
+    "tslib": "^2.6.1",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "@wareset-utilites/array": "0.1.7",
+    "@wareset-utilites/is": "0.1.12",
+    "@wareset-utilites/lang": "0.1.10",
+    "@wareset-utilites/object": "0.1.7"
+  }
+}
