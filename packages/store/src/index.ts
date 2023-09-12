@@ -95,7 +95,7 @@ class Computed {
   // stamp
   m: object | null
 
-  cb: (this: Store<any>) => void
+  readonly cb: (this: Store<any>) => void
 
   constructor(store: Store<any>, fn: Function) {
     this.s = store

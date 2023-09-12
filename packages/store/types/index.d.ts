@@ -29,7 +29,7 @@ declare class Computed {
     a: boolean;
     u: boolean;
     m: object | null;
-    cb: (this: Store<any>) => void;
+    readonly cb: (this: Store<any>) => void;
     constructor(store: Store<any>, fn: Function);
     ps(): void;
     tt(): void;
