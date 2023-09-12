@@ -112,7 +112,7 @@ declare function store<T>(value: T, props?: {
 }): IStore<T>;
 declare function store<T, P>(value: T, props: {
     pass: P;
-    start?: (iam: IStore<T>) => void | ((iam: IStore<T>) => void);
+    start?: (iam: IStoreSecurity<T, P>) => void | ((iam: IStoreSecurity<T, P>) => void);
     preset?: (newValue: T, oldValue: T) => T;
     compute?: (value: T) => T;
 }): IStoreSecurity<T, P>;
