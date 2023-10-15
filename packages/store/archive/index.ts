@@ -9,7 +9,7 @@ interface ISubscriber {
   f: (...a: any) => void
 }
 
-interface IService<T = any, P = any> {
+interface IService<T, P> {
   // index
   i: number
   // subscribers items
@@ -22,22 +22,22 @@ interface IService<T = any, P = any> {
   // preset
   p: ((newValue: T, oldValue: T) => T) | null
   // if first subscriber
-  f: ((iam: IWSignal<T, P>) => void | ((iam: IWSignal<T, P>) => void)) | null
+  f: ((iam: IWStore<T, P>) => void | ((iam: IWStore<T, P>) => void)) | null
   // if last unsubscriber
-  l: ((iam: IWSignal<T, P>) => void) | null | void
-  // protect fn
+  l: ((iam: IWStore<T, P>) => void) | null | void
+  // pass fn
   r: ((key: any) => P) | null
 }
 
 interface IComputedService {
-  // signal
-  readonly s: IWSignal
+  // store
+  readonly s: IWStore
   // fn
   readonly c: Function
   // observe
-  o: any[] | null
+  o: IWStore[] | null
   // items
-  readonly i: IWSignal[]
+  readonly i: IWStore[]
   // cache
   readonly x: { v: any; m: object | null; u: Function }[]
 
@@ -45,6 +45,8 @@ interface IComputedService {
   g: any
   // locks
   l: number
+  // allow run
+  // r: boolean
   // needTest
   t: boolean
   // needRunComptute
@@ -52,15 +54,15 @@ interface IComputedService {
   // stamp
   m: object | null
 
-  f: (this: IWSignal) => void
+  f: (this: IWStore) => void
 }
 
-declare class IWSignal<T = any, P = any> {
+declare class IWStore<T = any, P = any> {
   declare readonly _: IService<T, P>
   readonly _value: T
   get $(): T
   get(): T
-  set(v: T, protect?: P): this
+  set(v: T, pass?: P): this
   subscribe(callback: (value: T) => void): () => void
   toString(...a: any): T extends { toString(...a: any): infer I } ? I : string
   valueOf(...a: any): T extends { valueOf(...a: any): infer I } ? I : T
@@ -68,11 +70,15 @@ declare class IWSignal<T = any, P = any> {
 }
 
 function noop() {}
-let QUEUE: IWSignal[] = []
+let QUEUE: IWStore[] = []
 
 let STORE = function (value: any, props: any) {
   function THROW(s: string) {
-    throw '@wareset/signal: ' + s
+    throw '@wareset/store: ' + s
+  }
+
+  function cycleDetected() {
+    throw '@wareset/store: cycle detected'
   }
 
   const is =
@@ -81,9 +87,9 @@ let STORE = function (value: any, props: any) {
       return x === y ? x !== 0 || 1 / x === 1 / y : x !== x && y !== y
     } as typeof Object.is)
 
-  function run_queue(iam: WaresetSignal) {
+  function run_queue(iam: WaresetStore) {
     // console.log('Q', QUEUE.length)
-    if (QUEUE.length > 4e4) THROW('queue cycle')
+    if (QUEUE.length > 4e4) THROW('queue loop')
     if ((iam._.i = QUEUE.push(iam) - 1) === 0) {
       for (let i = 0, _: IService<any, any>; i < QUEUE.length; i++) {
         if ((_ = (iam = QUEUE[i])._).i === i) {
@@ -97,10 +103,8 @@ let STORE = function (value: any, props: any) {
   }
 
   let COMPUTED: IComputedService | null = null
-  function peek(a: any[]) {
-    const res: any[] = Array(a.length)
-    for (let i = 0; i < a.length; i++) res[i] = isSignal(a[i]) ? a[i].get() : a[i]
-    return res
+  function peek(v$: WaresetStore) {
+    return v$.get()
   }
 
   function setNeedUpdate(a: IComputedService[]) {
@@ -109,35 +113,31 @@ let STORE = function (value: any, props: any) {
   // let ii = 0
   let GVERSION = {}
 
-  function computedCheckBeforeSet(iam: IComputedService) {
-    if (iam.l === 0 && iam.g !== GVERSION) {
-      iam.l++
-      const COMPUTED_PREV = COMPUTED
-      COMPUTED = null
-      if (!iam.m && !iam.o) {
-        iam.m = GVERSION
-        COMPUTED = iam
-        iam.c(iam.s._value, null)
-        COMPUTED = null
-      }
-      for (let i = 0; i < iam.x.length; i++) {
-        if (iam.i[i]._.c) computedTest(iam.i[i]._.c!)
-        iam.x[i].v = iam.i[i]._value
-      }
-      COMPUTED = COMPUTED_PREV
-      iam.g = GVERSION
-      iam.t = false
-      iam.l--
-      iam.u = false
-    }
-  }
+  // function computedCheckBeforeSet(iam: IComputedService) {
+  //   if (iam.l === 0) {
+  //     iam.l++
+  //     iam.g = GVERSION
+  //     if (iam.u && !iam.o) {
+  //       const COMPUTED_PREV = COMPUTED
+  //       COMPUTED = iam
+  //       iam.c(iam.s._value, null)
+  //       COMPUTED = COMPUTED_PREV
+  //     }
+  //     for (let i = 0; i < iam.x.length; i++) {
+  //       if (iam.i[i]._.c) computedTest(iam.i[i]._.c!)
+  //       iam.x[i].v = iam.i[i]._value
+  //     }
+  //     iam.t = iam.u = false
+  //     iam.l--
+  //   }
+  // }
   function computedTest(iam: IComputedService) {
     // console.log('TEST 1', GVERSION !== iam.g)
-    if (iam.l === 0 && iam.g !== GVERSION && (iam.t || iam.s._.s.n === iam.s._.s)) {
+    if (iam.l === 0 && GVERSION !== iam.g && (iam.t || iam.s._.s.n === iam.s._.s)) {
       // console.log('TEST', ++ii)
       iam.l++
-      const COMPUTED_PREV = COMPUTED
-      COMPUTED = null
+      iam.g = GVERSION
+      // iam.u = !iam.m
       if (!iam.u) {
         for (let i = 0; i < iam.x.length; i++) {
           if (iam.i[i]._.c) computedTest(iam.i[i]._.c!)
@@ -147,39 +147,39 @@ let STORE = function (value: any, props: any) {
           }
         }
       }
-      let value: any
       if (iam.u) {
         iam.m = GVERSION
+        const COMPUTED_PREV = COMPUTED
         COMPUTED = iam.o ? null : iam
-        value = iam.c(iam.s._value, iam.o && peek(iam.o))
-        COMPUTED = null
+        const value = iam.c(iam.s._value, iam.o && iam.o.map(peek))
+        COMPUTED = COMPUTED_PREV
         for (let i = iam.x.length; i-- > 0; ) {
           if (iam.o || iam.x[i].m === iam.m) iam.x[i].v = iam.i[i]._value
           else iam.i.splice(i, 1), iam.x.splice(i, 1)[0].u()
         }
-      }
-      COMPUTED = COMPUTED_PREV
-      iam.g = GVERSION
-      iam.t = false
-      iam.l--
-      if (iam.u) {
-        iam.u = false
+        iam.t = iam.u = false
         iam.s.set(value, iam.s._.r && iam.s._.r(security))
       }
+      iam.t = iam.u = false
+      iam.l--
+    } else if (iam.l > 0 && iam.u) {
+      cycleDetected()
     }
   }
 
-  function computedItemSubscribe(iam: IComputedService, item: WaresetSignal) {
+  function computedItemSubscribe(iam: IComputedService, item: WaresetStore) {
     const w = item._.w
     w.push(iam)
     iam.l++
     const u = item.subscribe(iam.f)
     iam.l--
     return function () {
-      w.splice(w.lastIndexOf(iam), 1), u()
+      const i = w.lastIndexOf(iam)
+      if (i > -1) w.splice(i, 1)
+      u()
     }
   }
-  function computedItemCheck(iam: IComputedService, item: WaresetSignal) {
+  function computedItemCheck(iam: IComputedService, item: WaresetStore) {
     if (item !== iam.s) {
       const i = iam.i.indexOf(item)
       // const isNeedSubscribe = iam.s._.s.n !== iam.s._.s
@@ -192,7 +192,7 @@ let STORE = function (value: any, props: any) {
         })
       } else {
         // if (isNeedSubscribe === (iam.x[i].u === noop)) {
-        //   console.error('@wareset/signal: sub error')
+        //   console.error('@wareset/store: sub error')
         //   // isNeedSubscribe ? iam.on() : iam.tn()
         // }
         iam.x[i].m = iam.m
@@ -201,22 +201,22 @@ let STORE = function (value: any, props: any) {
   }
 
   function computedStart(iam: IComputedService) {
-    for (let i = 0; i < iam.x.length && iam.s._.s.n !== iam.s._.s; i++) {
+    for (let i = 0; i < iam.x.length; i++) {
       if (iam.x[i].u === noop) iam.x[i].u = computedItemSubscribe(iam, iam.i[i])
     }
     iam.t = true
     computedTest(iam)
   }
   function computedUnsub(iam: IComputedService) {
-    for (let u: any, i = iam.x.length; i-- > 0 && iam.s._.s.n === iam.s._.s; ) {
-      ;(u = iam.x[i].u), (iam.x[i].u = noop), u()
+    for (let i = iam.x.length; i-- > 0; ) {
+      iam.x[i].u(), (iam.x[i].u = noop)
     }
   }
 
-  function computedCreate(signal: WaresetSignal, compute: Function, observe?: WaresetSignal[]) {
+  function computedCreate(store: WaresetStore, compute: Function, observe?: WaresetStore[]) {
     let count = 0
-    const iam: IComputedService = (signal._.c = {
-      s: signal,
+    const iam: IComputedService = (store._.c = {
+      s: store,
       c: compute,
       o: null,
       i: [],
@@ -228,8 +228,9 @@ let STORE = function (value: any, props: any) {
       m: null,
       l: 0,
 
+      // r: true,
       f() {
-        if (iam.l === 0 && iam.g !== GVERSION && iam.t) {
+        if (iam.l === 0 && GVERSION !== iam.g && iam.t) {
           if (count <= 0) {
             count = 0
             for (let i = 0; i < iam.x.length; i++) {
@@ -243,22 +244,22 @@ let STORE = function (value: any, props: any) {
     })
 
     if (observe) {
-      const o: any[] = []
+      const o: WaresetStore[] = []
       for (let i = 0; i < observe.length; i++) {
-        if (isSignal(observe[i])) computedItemCheck(iam, observe[i])
-        o.push(observe[i])
+        computedItemCheck(iam, observe[i]), o.push(observe[i])
       }
       iam.o = o
+      iam.u = false
     }
   }
 
   function security(sec: any) {
     return function (key: any) {
-      return key === security ? sec : null
+      return key === security ? sec : void 0
     }
   }
 
-  class WaresetSignal<T = any, P = any> {
+  class WaresetStore<T = any, P = any> {
     declare readonly _: IService<T, P>
     declare _value: T
     declare $: T
@@ -266,11 +267,11 @@ let STORE = function (value: any, props: any) {
     constructor(
       value: T,
       props?: {
-        protect?: P
-        prepare?: (iam: WaresetSignal<T, P>) => void | ((iam: WaresetSignal<T, P>) => void)
-        control?: (newValue: T, oldValue: T) => T
+        pass?: P
+        start?: (iam: WaresetStore<T, P>) => void | ((iam: WaresetStore<T, P>) => void)
+        preset?: (newValue: T, oldValue: T) => T
         compute?: (value: T, observe: any[]) => T
-        observe?: WaresetSignal[]
+        observe?: WaresetStore[]
       }
     ) {
       this._ = {
@@ -281,11 +282,11 @@ let STORE = function (value: any, props: any) {
         // cur qc
         n: null as unknown as ISubscriber,
         // sec sc
-        r: props && props.protect != null ? security(props.protect) : null,
+        r: props && props.pass != null ? security(props.pass) : null,
         // pre ps
-        p: (props && props.control) || null,
+        p: (props && props.preset) || null,
         // fst fs
-        f: (props && props.prepare) || null,
+        f: (props && props.start) || null,
         // lst ls
         l: null,
         // obs wt
@@ -310,11 +311,11 @@ let STORE = function (value: any, props: any) {
       return v
     }
 
-    set(v: T, protect?: P): this {
+    set(v: T, pass?: P): this {
       const _ = this._
-      // if (COMPUTED) throw '@wareset/signal: side-effects in computed'
-      if (_.r && _.r(security) !== protect) THROW('protect')
-      _.c && computedCheckBeforeSet(_.c)
+      // if (COMPUTED) throw '@wareset/store: side-effects in computed'
+      if (_.r && _.r(security) !== pass) THROW('pass')
+      // _.c && computedCheckBeforeSet(_.c)
       if (!is(this._value, (this._value = _.p ? _.p(v, this._value) : v))) {
         ;(GVERSION = {}), _.c && (_.c.g = GVERSION)
         setNeedUpdate(_.w), run_queue(this)
@@ -338,7 +339,8 @@ let STORE = function (value: any, props: any) {
         if (_.c) computedStart(_.c)
         if (_.f) _.l = _.f(iam)
       }
-      ;(sub.f = callback)((sub.v = iam._value))
+      sub.f = callback
+      callback((sub.v = iam._value))
       return function () {
         if (sub) {
           ;(sub.p.n = sub.n), (sub.n.p = sub.p)
@@ -377,7 +379,7 @@ let STORE = function (value: any, props: any) {
     }
   }
 
-  STORE = WaresetSignal
+  STORE = WaresetStore
   const proto = STORE.prototype
   Object.defineProperty(proto, '$', { get: proto.get, set: proto.set })
   return new STORE(value, props)
@@ -386,21 +388,20 @@ let STORE = function (value: any, props: any) {
 // effector
 // batching
 // computed
-// paysignal
+// paystore
 
 // subject
 // compute
 // batched
 // effect
 
-// signal
+// store
 // batch
 // computed
 // effect
 
-export declare class ISignal<T> {
-  readonly _: IService
-  private readonly _value: T
+export declare class IStore<T> {
+  readonly _value: T
   get $(): T
   set $(v: T)
   get(): T
@@ -410,125 +411,115 @@ export declare class ISignal<T> {
   valueOf(...a: any): T extends { valueOf(...a: any): infer I } ? I : T
   toJSON(...a: any): T extends { toJSON(...a: any): infer I } ? I : T
 }
-export declare class ISignalProtected<T, P> {
-  readonly _: IService
-  private readonly _value: T
+export declare class IStoreSecure<T, P> {
+  readonly _value: T
   get $(): T
   get(): T
-  set(v: T, protect: P): this
+  set(v: T, pass: P): this
   subscribe(callback: (value: T) => void): () => void
   toString(...a: any): T extends { toString(...a: any): infer I } ? I : string
   valueOf(...a: any): T extends { valueOf(...a: any): infer I } ? I : T
   toJSON(...a: any): T extends { toJSON(...a: any): infer I } ? I : T
 }
 
-export type IObserve = readonly unknown[] | [] | null
+type IWatch = readonly [
+  IStore<any> | IStoreSecure<any, any>,
 
-// TODO: hack | undefined need to fix
-// export type IObserveValues<O extends IObserve> = O extends null | undefined
-//   ? O
-//   : {
-//       -readonly [P in keyof O]: O[P] extends ISignal<infer V> | ISignalProtected<infer V, any>
-//         ? V // ReturnType<O[P]['get']>
-//         : O[P] extends (ISignal<infer V> | ISignalProtected<infer V, any>) | undefined
-//         ? V | undefined
-//         : O[P]
-//     }
+  (IStore<any> | IStoreSecure<any, any>)?,
+  (IStore<any> | IStoreSecure<any, any>)?,
+  (IStore<any> | IStoreSecure<any, any>)?,
+  (IStore<any> | IStoreSecure<any, any>)?,
+  (IStore<any> | IStoreSecure<any, any>)?,
 
-type ISubscribed<T> = T extends null | undefined
-  ? T
-  : T extends object & { _: IService; subscribe(callback: infer F): any }
-  ? F extends (value: infer V, ...args: any) => any
-    ? V
-    : never
-  : T
+  (IStore<any> | IStoreSecure<any, any>)?,
+  (IStore<any> | IStoreSecure<any, any>)?,
+  (IStore<any> | IStoreSecure<any, any>)?,
+  (IStore<any> | IStoreSecure<any, any>)?,
+  (IStore<any> | IStoreSecure<any, any>)?,
 
-export type IObserveValues<O extends IObserve> = O extends null | undefined
-  ? O
+  (IStore<any> | IStoreSecure<any, any>)?,
+  (IStore<any> | IStoreSecure<any, any>)?,
+  (IStore<any> | IStoreSecure<any, any>)?,
+  (IStore<any> | IStoreSecure<any, any>)?,
+  (IStore<any> | IStoreSecure<any, any>)?,
+
+  (IStore<any> | IStoreSecure<any, any>)?,
+  (IStore<any> | IStoreSecure<any, any>)?,
+  (IStore<any> | IStoreSecure<any, any>)?,
+  (IStore<any> | IStoreSecure<any, any>)?,
+  (IStore<any> | IStoreSecure<any, any>)?,
+
+  ...(IStore<any> | IStoreSecure<any, any>)[]
+]
+
+type IValues<W extends IWatch | undefined> = W extends undefined
+  ? null
   : {
-      -readonly [P in keyof O]: ISubscribed<O[P]>
+      -readonly [P in keyof W]: W[P] extends IStore<any> | IStoreSecure<any, any>
+        ? W[P]['_value']
+        : never
     }
 
-function signal<T, P = any, O extends IObserve = null>(
+function store<T, P = any, O extends IWatch | undefined = undefined>(
   value: T,
   props: {
-    protect: P
-    prepare?: (iam: ISignalProtected<T, P>) => void | ((iam: ISignalProtected<T, P>) => void)
-    control?: (newValue: T, oldValue: T) => T
-    compute?: (value: T, observe: IObserveValues<O>) => T
+    pass: P
+    start?: (iam: IStoreSecure<T, P>) => void | ((iam: IStoreSecure<T, P>) => void)
+    preset?: (newValue: T, oldValue: T) => T
+    compute?: (value: T, observe: IValues<O>) => T
     observe?: O
   }
-): ISignalProtected<T, P>
+): IStoreSecure<T, P>
 
-function signal<T, O extends IObserve = null>(
+function store<T, O extends IWatch | undefined = undefined>(
   value: T,
   props?: {
-    prepare?: (iam: ISignal<T>) => void | ((iam: ISignal<T>) => void)
-    control?: (newValue: T, oldValue: T) => T
-    compute?: (value: T, observe: IObserveValues<O>) => T
+    start?: (iam: IStore<T>) => void | ((iam: IStore<T>) => void)
+    preset?: (newValue: T, oldValue: T) => T
+    compute?: (value: T, observe: IValues<O>) => T
     observe?: O
   }
-): ISignal<T>
+): IStore<T>
 
-function signal(value: any, props?: any) {
+function store(value: any, props?: any) {
   return new STORE(value, props)
 }
 
-function computed<T, O extends IObserve = null, V = T | undefined>(
-  observe: O,
-  compute: (_: V, observe: IObserveValues<O>) => T
-): ISignal<T> {
-  return new STORE(void 0 as any, { compute, observe })
+function computed<T>(compute: () => T): IStoreSecure<T, never> {
+  return new STORE(void 0 as any, { pass: {}, compute }) as IStoreSecure<T, never>
 }
 
-function effect<T, O extends IObserve = null, V = T | undefined>(
-  observe: O,
-  compute: (_: V, observe: IObserveValues<O>) => T,
-  onChange?: (value: T) => void
-): typeof noop {
-  return new STORE(void 0 as any, { compute, observe }).subscribe(onChange || noop)
+function effect<T>(compute: () => T, onChange?: (value: T) => void): typeof noop {
+  return new STORE(void 0 as any, { compute }).subscribe(onChange || noop)
 }
 
-let batcher$: IWSignal<{ f: typeof noop }>
+let batcher$: IWStore<typeof noop>
 function batch(func: () => void): void {
   if (!batcher$) {
-    batcher$ = new STORE({ f: noop })
+    batcher$ = new STORE(noop)
     batcher$.subscribe(function (v) {
-      v.f()
+      v()
     })
   }
   if (QUEUE.length > 0) func()
-  else batcher$.set({ f: func })
+  else batcher$.set(func)
 }
 
-function isSignal<T = any>(thing: any): thing is ISignal<T> | ISignalProtected<T, any> {
+function isStore(thing: any): thing is IStore<any> | IStoreSecure<any, any> {
   return thing instanceof STORE
 }
 
-function isSignalProtected<T = any>(thing: any): thing is ISignalProtected<T, any> {
+function isStoreSecure(thing: any): thing is IStoreSecure<any, any> {
   return thing instanceof STORE && !!thing._.r
 }
 
-export { signal, isSignal, isSignalProtected, computed, effect, batch }
+export { store, isStore, isStoreSecure, computed, effect, batch }
 
-// let a$!: ISignal<12> | null
+// const a$ = store<12>(12)
+// const b$ = store(true, { pass: 9 })
+// const c$ = store('')
 
-// computed([a$, 55], (_, aaaa) => {
-//   console.log(aaaa)
-// })
-
-// const a$ = signal<12>(12)
-// const b$ = signal('as')
-
-// console.log(computed([12, a$, b$], (_, a) => {
-//   console.log(a)
-// }).$)
-
-// const a$ = signal<12>(12)
-// const b$ = signal(true, { protect: 9 })
-// const c$ = signal('')
-
-// const qq$ = signal(11, {
+// const qq$ = store(11, {
 //   observe: [a$, b$, c$],
 //   compute: (v, a) => {
 //     a[0] = 12
@@ -539,7 +530,7 @@ export { signal, isSignal, isSignalProtected, computed, effect, batch }
 // })
 // console.log(qq$)
 
-// const qq2$ = signal(11, {
+// const qq2$ = store(11, {
 //   observe: [a$, b$, c$],
 // })
 // console.log(qq2$)

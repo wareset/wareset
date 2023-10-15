@@ -35,8 +35,8 @@
   },
   "scripts": {
     "test": "jest --",
-    "build": "dester -m",
-    "dev": "dester -mw"
+    "build": "dester --ie -m",
+    "dev": "dester --ie -mw"
   },
   "devDependencies": {
     "dester": "1.0.x",

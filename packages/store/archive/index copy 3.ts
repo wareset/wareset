@@ -34,8 +34,6 @@ interface IComputedService {
   readonly s: IWSignal
   // fn
   readonly c: Function
-  // observe
-  o: any[] | null
   // items
   readonly i: IWSignal[]
   // cache
@@ -97,11 +95,6 @@ let STORE = function (value: any, props: any) {
   }
 
   let COMPUTED: IComputedService | null = null
-  function peek(a: any[]) {
-    const res: any[] = Array(a.length)
-    for (let i = 0; i < a.length; i++) res[i] = isSignal(a[i]) ? a[i].get() : a[i]
-    return res
-  }
 
   function setNeedUpdate(a: IComputedService[]) {
     for (let i = a.length; i-- > 0; ) (a[i].t = a[i].u = true), setNeedUpdate(a[i].s._.w)
@@ -114,10 +107,10 @@ let STORE = function (value: any, props: any) {
       iam.l++
       const COMPUTED_PREV = COMPUTED
       COMPUTED = null
-      if (!iam.m && !iam.o) {
+      if (!iam.m) {
         iam.m = GVERSION
         COMPUTED = iam
-        iam.c(iam.s._value, null)
+        iam.c(iam.s._value)
         COMPUTED = null
       }
       for (let i = 0; i < iam.x.length; i++) {
@@ -150,11 +143,11 @@ let STORE = function (value: any, props: any) {
       let value: any
       if (iam.u) {
         iam.m = GVERSION
-        COMPUTED = iam.o ? null : iam
-        value = iam.c(iam.s._value, iam.o && peek(iam.o))
+        COMPUTED = iam
+        value = iam.c(iam.s._value)
         COMPUTED = null
         for (let i = iam.x.length; i-- > 0; ) {
-          if (iam.o || iam.x[i].m === iam.m) iam.x[i].v = iam.i[i]._value
+          if (iam.x[i].m === iam.m) iam.x[i].v = iam.i[i]._value
           else iam.i.splice(i, 1), iam.x.splice(i, 1)[0].u()
         }
       }
@@ -213,12 +206,11 @@ let STORE = function (value: any, props: any) {
     }
   }
 
-  function computedCreate(signal: WaresetSignal, compute: Function, observe?: WaresetSignal[]) {
+  function computedCreate(signal: WaresetSignal, compute: Function) {
     let count = 0
-    const iam: IComputedService = (signal._.c = {
+    const iam: IComputedService = {
       s: signal,
       c: compute,
-      o: null,
       i: [],
       x: [],
 
@@ -240,16 +232,8 @@ let STORE = function (value: any, props: any) {
           if (--count === 0) computedTest(iam)
         }
       }
-    })
-
-    if (observe) {
-      const o: any[] = []
-      for (let i = 0; i < observe.length; i++) {
-        if (isSignal(observe[i])) computedItemCheck(iam, observe[i])
-        o.push(observe[i])
-      }
-      iam.o = o
     }
+    return iam
   }
 
   function security(sec: any) {
@@ -269,8 +253,7 @@ let STORE = function (value: any, props: any) {
         protect?: P
         prepare?: (iam: WaresetSignal<T, P>) => void | ((iam: WaresetSignal<T, P>) => void)
         control?: (newValue: T, oldValue: T) => T
-        compute?: (value: T, observe: any[]) => T
-        observe?: WaresetSignal[]
+        compute?: (value: T) => T
       }
     ) {
       this._ = {
@@ -291,11 +274,10 @@ let STORE = function (value: any, props: any) {
         // obs wt
         w: [],
         // com cp
-        c: null
+        c: props && props.compute ? computedCreate(this, props.compute) : null
       }
       this._.s.p = this._.s.n = this._.n = this._.s
       this._value = value // this._.p ? this._.p(value, value) : value
-      props && props.compute && computedCreate(this, props.compute, props.observe)
     }
 
     get(): T {
@@ -399,8 +381,7 @@ let STORE = function (value: any, props: any) {
 // effect
 
 export declare class ISignal<T> {
-  readonly _: IService
-  private readonly _value: T
+  readonly _value: T
   get $(): T
   set $(v: T)
   get(): T
@@ -411,8 +392,7 @@ export declare class ISignal<T> {
   toJSON(...a: any): T extends { toJSON(...a: any): infer I } ? I : T
 }
 export declare class ISignalProtected<T, P> {
-  readonly _: IService
-  private readonly _value: T
+  readonly _value: T
   get $(): T
   get(): T
   set(v: T, protect: P): this
@@ -422,51 +402,22 @@ export declare class ISignalProtected<T, P> {
   toJSON(...a: any): T extends { toJSON(...a: any): infer I } ? I : T
 }
 
-export type IObserve = readonly unknown[] | [] | null
-
-// TODO: hack | undefined need to fix
-// export type IObserveValues<O extends IObserve> = O extends null | undefined
-//   ? O
-//   : {
-//       -readonly [P in keyof O]: O[P] extends ISignal<infer V> | ISignalProtected<infer V, any>
-//         ? V // ReturnType<O[P]['get']>
-//         : O[P] extends (ISignal<infer V> | ISignalProtected<infer V, any>) | undefined
-//         ? V | undefined
-//         : O[P]
-//     }
-
-type ISubscribed<T> = T extends null | undefined
-  ? T
-  : T extends object & { _: IService; subscribe(callback: infer F): any }
-  ? F extends (value: infer V, ...args: any) => any
-    ? V
-    : never
-  : T
-
-export type IObserveValues<O extends IObserve> = O extends null | undefined
-  ? O
-  : {
-      -readonly [P in keyof O]: ISubscribed<O[P]>
-    }
-
-function signal<T, P = any, O extends IObserve = null>(
+function signal<T, P = any>(
   value: T,
   props: {
     protect: P
     prepare?: (iam: ISignalProtected<T, P>) => void | ((iam: ISignalProtected<T, P>) => void)
     control?: (newValue: T, oldValue: T) => T
-    compute?: (value: T, observe: IObserveValues<O>) => T
-    observe?: O
+    compute?: (value: T) => T
   }
 ): ISignalProtected<T, P>
 
-function signal<T, O extends IObserve = null>(
+function signal<T>(
   value: T,
   props?: {
     prepare?: (iam: ISignal<T>) => void | ((iam: ISignal<T>) => void)
     control?: (newValue: T, oldValue: T) => T
-    compute?: (value: T, observe: IObserveValues<O>) => T
-    observe?: O
+    compute?: (value: T) => T
   }
 ): ISignal<T>
 
@@ -474,55 +425,35 @@ function signal(value: any, props?: any) {
   return new STORE(value, props)
 }
 
-function computed<T, O extends IObserve = null, V = T | undefined>(
-  observe: O,
-  compute: (_: V, observe: IObserveValues<O>) => T
-): ISignal<T> {
-  return new STORE(void 0 as any, { compute, observe })
+function computed<T>(compute: () => T): ISignal<T> {
+  return new STORE(void 0 as any, { compute })
 }
 
-function effect<T, O extends IObserve = null, V = T | undefined>(
-  observe: O,
-  compute: (_: V, observe: IObserveValues<O>) => T,
-  onChange?: (value: T) => void
-): typeof noop {
-  return new STORE(void 0 as any, { compute, observe }).subscribe(onChange || noop)
+function effect<T>(compute: () => T, onChange?: (value: T) => void): typeof noop {
+  return new STORE(void 0 as any, { compute }).subscribe(onChange || noop)
 }
 
-let batcher$: IWSignal<{ f: typeof noop }>
+let batcher$: IWSignal<typeof noop>
 function batch(func: () => void): void {
   if (!batcher$) {
-    batcher$ = new STORE({ f: noop })
+    batcher$ = new STORE(noop)
     batcher$.subscribe(function (v) {
-      v.f()
+      v()
     })
   }
   if (QUEUE.length > 0) func()
-  else batcher$.set({ f: func })
+  else batcher$.set(func)
 }
 
-function isSignal<T = any>(thing: any): thing is ISignal<T> | ISignalProtected<T, any> {
+function isSignal(thing: any): thing is ISignal<any> | ISignalProtected<any, any> {
   return thing instanceof STORE
 }
 
-function isSignalProtected<T = any>(thing: any): thing is ISignalProtected<T, any> {
+function isSignalProtected(thing: any): thing is ISignalProtected<any, any> {
   return thing instanceof STORE && !!thing._.r
 }
 
 export { signal, isSignal, isSignalProtected, computed, effect, batch }
-
-// let a$!: ISignal<12> | null
-
-// computed([a$, 55], (_, aaaa) => {
-//   console.log(aaaa)
-// })
-
-// const a$ = signal<12>(12)
-// const b$ = signal('as')
-
-// console.log(computed([12, a$, b$], (_, a) => {
-//   console.log(a)
-// }).$)
 
 // const a$ = signal<12>(12)
 // const b$ = signal(true, { protect: 9 })
