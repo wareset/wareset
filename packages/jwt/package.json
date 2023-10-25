@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@types/crypto-js": "4.1.1",
-    "crypto-js": "4.1.1",
+    "crypto-js": "4.2.0",
     "dester": "0.x",
     "typescript": "4.x",
     "bitwiseshiftleft--sjcl": "git+https://github.com/bitwiseshiftleft/sjcl.git"
