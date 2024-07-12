@@ -1,0 +1,52 @@
+{
+  "name": "@wareset/eventer",
+  "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "wip: Additional events for mobile and desktop",
+  "keywords": [
+    "eventer"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/wareset/wareset/tree/master/packages/eventer#readme",
+  "bugs": {
+    "url": "https://github.com/wareset/wareset/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wareset/wareset.git"
+  },
+  "author": "rease <cftcview@gmail.com>",
+  "main": "index",
+  "module": "index.mjs",
+  "types": "index.d.ts",
+  "files": [
+    "README.md",
+    "index.d.ts",
+    "index.js",
+    "index.mjs",
+    "types"
+  ],
+  "scripts": {
+    "dester": "dester ./src ./ --babel -t types",
+    "build": "npm run -s dester -- -s -r -m",
+    "dev": "npm run -s dester -- -w --no-r",
+    "build:dist": "rollup -c __scripts__/rollup.config.js",
+    "pkg:name": "cat package.json | grep '\"name\":' | cut -d '\"' -f4",
+    "pkg:version": "cat package.json | grep '\"version\":' | cut -d '\"' -f4",
+    "git:get:tag": "echo $(npm run -s pkg:name)@$(npm run -s pkg:version)",
+    "git:set:tag": "t=$(npm run -s git:get:tag) && git tag -a $t -m $t",
+    "git:commit": "npm run -s build && git add . && read -p 'Commit: ' c; c=${c:-v$(npm run -s pkg:version)} && n=$(npm run -s pkg:name) && git commit -m \"$n: $c\"",
+    "commit": "read -p 'Version [patch]: ' V; V=${V:-patch} && npm version --force --no-git-tag-version $V; echo $V && read -p 'Push? (y/N): ' G && read -p 'Publish? (y/N): ' P && npm run -s git:commit && case $G in Y|y) $(git push);; esac && case $P in Y|y) $(npm run -s git:set:tag && git push --tags && npm -s publish);; esac"
+  },
+  "devDependencies": {
+    "@rollup/plugin-babel": "^6.0.2",
+    "@rollup/plugin-node-resolve": "^15.2.1",
+    "dester": "1.0.x",
+    "rollup": "3.29.4",
+    "terser": "^5.19.4",
+    "tslib": "^2.6.1",
+    "typescript": "^5.2.2"
+  }
+}
